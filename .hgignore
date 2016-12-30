@@ -1,0 +1,13 @@
+syntax: glob
+
+*.pyc
+*.egg-info/
+
+.cache/
+.coverage/
+.tox/
+
+_build/
+dist/
+
+.idea/
