@@ -18,6 +18,19 @@ setup(
     ],
     py_modules=['pygenstub'],
     install_requires=['docutils'],
+    extras_require={
+        'dev': [
+            'flake8',
+            'mypy-lang'
+        ],
+        'doc': [
+            'sphinx'
+        ],
+        'test': [
+            'pytest',
+            'pytest-cov'
+        ],
+    },
     entry_points="""
         [console_scripts]
         pygenstub=pygenstub:main
