@@ -49,10 +49,20 @@ def test_get_stub_params_two_builtin_returns_none():
 
 
 def test_get_stub_params_one_imported_returns_none():
-    code = code_template % {'params': 'x', 'ptypes': 'A', 'rtype': 'None'}
-    assert get_stub(code) == 'from x import A\n\n\ndef f(x: A) -> None: ...\n'
+    code = code_template % {'params': 'a', 'ptypes': 'A', 'rtype': 'None'}
+    assert get_stub(code) == 'from x import A\n\n\ndef f(a: A) -> None: ...\n'
 
 
 def test_get_stub_params_none_returns_imported():
     code = code_template % {'params': '', 'ptypes': '', 'rtype': 'A'}
     assert get_stub(code) == 'from x import A\n\n\ndef f() -> A: ...\n'
+
+
+def test_get_stub_params_one_typing_returns_none():
+    code = code_template % {'params': 'd', 'ptypes': 'Dict', 'rtype': 'None'}
+    assert get_stub(code) == 'from typing import Dict\n\n\ndef f(d: Dict) -> None: ...\n'
+
+
+def test_get_stub_params_none_returns_typing():
+    code = code_template % {'params': '', 'ptypes': '', 'rtype': 'Dict'}
+    assert get_stub(code) == 'from typing import Dict\n\n\ndef f() -> Dict: ...\n'
