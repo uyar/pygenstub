@@ -13,7 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with pygenstub.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function, unicode_literals
+
 from argparse import ArgumentParser
+from codecs import open
 from collections import OrderedDict
 from docutils.core import publish_doctree
 from io import StringIO
@@ -56,7 +59,7 @@ def get_fields(node, fields_tag='field_list'):
 def get_prototype(node):
     """Get the prototype for a function.
 
-    :signature: (ast.FunctionDef) -> Optional[Tuple[str, Set[str]]
+    :signature: (ast.FunctionDef) -> Optional[Tuple[str, Set[str]]]
     :param node: Function node to get the prototype for.
     :return: Prototype and required type names.
     """
@@ -73,7 +76,8 @@ def get_prototype(node):
             _logger.debug('parameter types: %s', ptypes)
             _logger.debug('return type: %s', rtype)
 
-            params = [arg.arg for arg in node.args.args]
+            params = [arg.arg if hasattr(arg, 'arg') else arg.id
+                      for arg in node.args.args]
             assert len(ptypes) == len(params)
             pstub = ', '.join([('%s: %s' % p) for p in zip(params, ptypes)])
             prototype = 'def %s(%s) -> %s: ...\n' % (node.name, pstub, rtype)
@@ -117,9 +121,13 @@ def get_stub(code):
 
             remaining_names = unknown_names - dotted_names
 
-            typing_module = __import__('typing')
-            typing_names = {n for n in remaining_names if hasattr(typing_module, n)}
-            _logger.debug('names from typing module: %s', typing_names)
+            try:
+                typing_module = __import__('typing')
+                typing_names = {n for n in remaining_names if hasattr(typing_module, n)}
+                _logger.debug('names from typing module: %s', typing_names)
+            except ImportError:
+                _logger.debug('typing module not installed')
+                typing_names = set()
 
             missing_names = remaining_names - typing_names
             if len(missing_names) > 0:
@@ -159,14 +167,14 @@ def main():
     log_level = logging.DEBUG if arguments.debug else logging.INFO
     logging.basicConfig(level=log_level)
 
-    with open(arguments.source, mode='r') as f_in:
+    with open(arguments.source, mode='r', encoding='utf-8') as f_in:
         code = f_in.read()
 
     stub = get_stub(code)
 
     destination = arguments.source + 'i'
     if len(stub) > 0:
-        with open(destination, mode='w') as f_out:
+        with open(destination, mode='w', encoding='utf-8') as f_out:
             f_out.write('# %s\n' % (EDIT_WARNING,))
             f_out.write(stub)
 
