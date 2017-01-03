@@ -77,8 +77,8 @@ def get_prototype(node):
             assert len(ptypes) == len(params)
             pstub = ', '.join([('%s: %s' % p) for p in zip(params, ptypes)])
             prototype = 'def %s(%s) -> %s: ...\n' % (node.name, pstub, rtype)
-            requires = [n for n in re.findall(r'([\w\.]*)', signature)
-                        if n and (n not in BUILTIN_TYPES)]
+            requires = [n for n in re.findall(r'\w+(?:\.\w+)*', signature)
+                        if n not in BUILTIN_TYPES]
             _logger.debug('requires %s', requires)
             _logger.debug('prototype: %s', prototype)
             return prototype, requires
