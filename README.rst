@@ -2,12 +2,12 @@ pygenstub is a utility for generating stub files from Python source files.
 It takes a source file as input and creates a stub file
 with the same base name and the ``.pyi`` extension.
 
-When installed, this will generate a script named ``pygenstub`` which
+When installed, a script named ``pygenstub`` gets generated which
 can be used as follows::
 
   $ pygenstub foo.py
 
-This command will generate the file :file:`foo.pyi`.
+This command will generate the file ``foo.pyi``.
 
 This utility can be used with the Unix ``watch`` command or PyCharm
 file watchers to update stub files automatically from source files.
@@ -111,6 +111,6 @@ Disclaimer
 ----------
 
 Some of these (or maybe even all of them) are probably
-in the "not a good idea". The whole thing could also be pointless.
+in the "not a good idea" category. The whole thing could be pointless.
 I'm experimenting at the moment. Anyway, if you're not using ``.pyi``
 files, it should be harmless.
