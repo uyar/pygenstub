@@ -47,7 +47,7 @@ def get_fields(node, fields_tag='field_list'):
         return {}
     assert len(fields_nodes) == 1
     fields_node = fields_nodes[0]
-    # tagname[6:] strips the 'field_' prefix
+    # [6:] strips the 'field_' prefix
     fields = [{f.tagname[6:]: f.rawsource.strip() for f in n.children}
               for n in fields_node.children if n.tagname == 'field']
     return {f['name']: f['body'] for f in fields}
@@ -56,9 +56,9 @@ def get_fields(node, fields_tag='field_list'):
 def get_prototype(node):
     """Get the prototype for a function.
 
-    :signature: (ast.FunctionDef) -> Optional[Tuple[str, List[str]]
+    :signature: (ast.FunctionDef) -> Optional[Tuple[str, Set[str]]
     :param node: Function node to get the prototype for.
-    :return: Signature content and required type names.
+    :return: Prototype and required type names.
     """
     docstring = ast.get_docstring(node)
     if docstring:
@@ -77,8 +77,8 @@ def get_prototype(node):
             assert len(ptypes) == len(params)
             pstub = ', '.join([('%s: %s' % p) for p in zip(params, ptypes)])
             prototype = 'def %s(%s) -> %s: ...\n' % (node.name, pstub, rtype)
-            requires = [n for n in re.findall(r'\w+(?:\.\w+)*', signature)
-                        if n not in BUILTIN_TYPES]
+            requires = {n for n in re.findall(r'\w+(?:\.\w+)*', signature)
+                        if n not in BUILTIN_TYPES}
             _logger.debug('requires %s', requires)
             _logger.debug('prototype: %s', prototype)
             return prototype, requires
@@ -109,30 +109,37 @@ def get_stub(code):
     if len(signatures) > 0:
         required_names = {n for _, r in signatures.values() for n in r}
         if len(required_names) > 0:
+            known_names = [n for n in imported_names if n in required_names]
             unknown_names = required_names - set(imported_names.keys())
 
+            dotted_names = {n for n in unknown_names if '.' in n}
+            imported_modules = {'.'.join(n.split('.')[:-1]) for n in dotted_names}
+
+            remaining_names = unknown_names - dotted_names
+
             typing_module = __import__('typing')
-            typing_names = {n for n in unknown_names if hasattr(typing_module, n)}
+            typing_names = {n for n in remaining_names if hasattr(typing_module, n)}
             _logger.debug('names from typing module: %s', typing_names)
 
-            remaining_names = unknown_names - typing_names
-            dotted_names = {n for n in remaining_names if '.' in n}
-            missing_names = remaining_names - dotted_names
+            missing_names = remaining_names - typing_names
             if len(missing_names) > 0:
                 print('Following names could not be found: %s' % (', '.join(missing_names)),
                       file=sys.stderr)
                 sys.exit(1)
 
-            if typing_names:
+            if len(typing_names) > 0:
+                stub.write('\n')
                 stub.write('from typing import %s\n' % (', '.join(sorted(typing_names)),))
 
-            for name, module in imported_names.items():
-                if name in required_names:
-                    stub.write('from %s import %s\n' % (module, name))
+            if len(known_names) > 0:
+                stub.write('\n')
+                for name in known_names:
+                    stub.write('from %s import %s\n' % (imported_names[name], name))
 
-            modules = {'.'.join(n.split('.')[:-1]) for n in dotted_names}
-            for module in sorted(modules):
-                stub.write('import %s\n' % (module,))
+            if len(imported_modules) > 0:
+                stub.write('\n')
+                for module in sorted(imported_modules):
+                    stub.write('import %s\n' % (module,))
 
             stub.write('\n\n')
         stub.write('\n\n'.join([s for s, _ in signatures.values()]))
@@ -160,7 +167,7 @@ def main():
     destination = arguments.source + 'i'
     if len(stub) > 0:
         with open(destination, mode='w') as f_out:
-            f_out.write('# %s\n\n' % (EDIT_WARNING,))
+            f_out.write('# %s\n' % (EDIT_WARNING,))
             f_out.write(stub)
 
 
