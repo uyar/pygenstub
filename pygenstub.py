@@ -64,7 +64,7 @@ def get_prototype(node):
     :return: Prototype and required type names.
     """
     docstring = ast.get_docstring(node)
-    if docstring:
+    if docstring is not None:
         doctree = publish_doctree(docstring)
         fields = get_fields(doctree)
         signature = fields.get('signature')
@@ -135,17 +135,22 @@ def get_stub(code):
                       file=sys.stderr)
                 sys.exit(1)
 
+            started = False
+
             if len(typing_names) > 0:
-                stub.write('\n')
                 stub.write('from typing import %s\n' % (', '.join(sorted(typing_names)),))
+                started = True
 
             if len(known_names) > 0:
-                stub.write('\n')
+                if started:
+                    stub.write('\n')
                 for name in known_names:
                     stub.write('from %s import %s\n' % (imported_names[name], name))
+                    started = True
 
             if len(imported_modules) > 0:
-                stub.write('\n')
+                if started:
+                    stub.write('\n')
                 for module in sorted(imported_modules):
                     stub.write('import %s\n' % (module,))
 
@@ -175,7 +180,7 @@ def main():
     destination = arguments.source + 'i'
     if len(stub) > 0:
         with open(destination, mode='w', encoding='utf-8') as f_out:
-            f_out.write('# %s\n' % (EDIT_WARNING,))
+            f_out.write('# %s\n\n' % (EDIT_WARNING,))
             f_out.write(stub)
 
 
