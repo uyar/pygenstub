@@ -3,7 +3,12 @@
 History
 =======
 
-1.0a2 (unreleased)
+1.0a3 (unreleased)
+------------------
+
+* Proper support for names from the typing module in input parameters.
+
+1.0a2 (2017-01-03)
 ------------------
 
 * Support for Python 2.7.

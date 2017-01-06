@@ -102,7 +102,6 @@ will generate:
 TODO
 ----
 
-- Proper support for names from the typing module in the input parameter list.
 - Support for methods.
 - Sphinx extension for adjusting documentation.
 

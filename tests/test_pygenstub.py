@@ -63,6 +63,21 @@ def test_get_stub_params_one_typing_returns_none():
     assert get_stub(code) == 'from typing import Dict\n\n\ndef f(d: Dict) -> None: ...\n'
 
 
+def test_get_stub_params_two_qualified_typing_returns_none():
+    code = code_template % {'params': 'i, d', 'ptypes': 'int, Dict[str, str]', 'rtype': 'None'}
+    assert get_stub(code) == 'from typing import Dict\n\n\ndef f(i: int, d: Dict[str, str]) -> None: ...\n'
+
+
+def test_get_stub_params_two_nested_qualified_typing_returns_none():
+    code = code_template % {'params': 'i, d', 'ptypes': 'int, Dict[str, Dict[str, int]]', 'rtype': 'None'}
+    assert get_stub(code) == 'from typing import Dict\n\n\ndef f(i: int, d: Dict[str, Dict[str, int]]) -> None: ...\n'
+
+
 def test_get_stub_params_none_returns_typing():
     code = code_template % {'params': '', 'ptypes': '', 'rtype': 'Dict'}
     assert get_stub(code) == 'from typing import Dict\n\n\ndef f() -> Dict: ...\n'
+
+
+def test_get_stub_params_none_returns_dotted():
+    code = code_template % {'params': '', 'ptypes': '', 'rtype': 'r.s.T'}
+    assert get_stub(code) == 'import r.s\n\n\ndef f() -> r.s.T: ...\n'

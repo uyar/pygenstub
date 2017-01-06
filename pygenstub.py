@@ -72,7 +72,27 @@ def get_prototype(node):
             _logger.debug('parsing signature for %s', node.name)
             lhs, rtype = [s.strip() for s in signature.split(' -> ')]
             pstr = lhs[1:-1].strip()    # remove the () around parameter list
-            ptypes = [p.strip() for p in pstr.split(',')] if pstr != '' else []
+
+            if pstr == '':
+                ptypes = []
+            else:
+                commas = []
+                bracket_depth = 0
+                for i, c in enumerate(pstr):
+                    if (c == ',') and (bracket_depth == 0):
+                        commas.append(i)
+                    elif c == '[':
+                        bracket_depth += 1
+                    elif c == ']':
+                        bracket_depth -= 1
+                ptypes = []
+                last_i = 0
+                for i in commas:
+                    ptypes.append(pstr[last_i:i].strip())
+                    last_i = i + 1
+                else:
+                    ptypes.append(pstr[last_i:].strip())
+
             _logger.debug('parameter types: %s', ptypes)
             _logger.debug('return type: %s', rtype)
 
