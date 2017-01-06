@@ -68,10 +68,11 @@ def get_prototype(node):
     :param node: Function node to get the prototype for.
     :return: Prototype and required type names.
     """
-    def get_param(n, t, dv):
+    def get_param(i, n, t, defaults):
         s = StringIO()
         s.write('%s: %s' % (n, t))
-        if dv is not None:
+        if (i + 1) in defaults:
+            dv = defaults[i + 1]
             d = "'%s'" % (dv,) if isinstance(dv, basestring) else str(dv)
             s.write(' = %s' % (d,))
         return s.getvalue()
@@ -118,9 +119,9 @@ def get_prototype(node):
                 bisect(arg_locs, (d.lineno, d.col_offset)): getattr(d, d._fields[0])
                 for d in node.args.defaults
             }
-            defaults = [arg_defaults.get(i + 1) for i in range(len(params))]
 
-            pstub = ', '.join([get_param(*p) for p in zip(params, ptypes, defaults)])
+            pstub = ', '.join([get_param(i, n, t, arg_defaults)
+                               for i, (n, t) in enumerate(zip(params, ptypes))])
             prototype = 'def %s(%s) -> %s: ...\n' % (node.name, pstub, rtype)
             requires = {n for n in re.findall(r'\w+(?:\.\w+)*', signature)
                         if n not in BUILTIN_TYPES}
