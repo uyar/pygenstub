@@ -3,6 +3,13 @@
 History
 =======
 
+1.0a4 (2017-01-06)
+------------------
+
+* Long stubs are now spread over multiple lines.
+* Better handling of parameter defaults that are tuples.
+* Bugfix: handling of parameter defaults that have the value None.
+
 1.0a3 (2017-01-06)
 ------------------
 
