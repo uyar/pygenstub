@@ -1,0 +1,7 @@
+prune tests
+include tests/*.py
+
+include LICENSE.txt README.rst AUTHORS.rst HISTORY.rst
+
+recursive-include docs *.rst *.py Makefile *.png
+prune docs/_build
