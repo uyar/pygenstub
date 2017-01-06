@@ -72,14 +72,19 @@ def get_prototype(node):
         s = StringIO()
         s.write('%s: %s' % (n, t))
         if (i + 1) in defaults:
-            dv = defaults[i + 1]
-            d = "'%s'" % (dv,) if isinstance(dv, basestring) else str(dv)
-            s.write(' = %s' % (d,))
+            d = defaults[i + 1]
+            if isinstance(d, ast.Str):
+                dv = "'%s'" % (getattr(d, d._fields[0]),)
+            elif isinstance(d, ast.Tuple):
+                dv = '%s' % (tuple(getattr(d, d._fields[0])),)
+            else:
+                dv = '%s' % (getattr(d, d._fields[0]),)
+            s.write(' = %s' % (dv,))
         return s.getvalue()
 
     docstring = ast.get_docstring(node)
     if docstring is not None:
-        doctree = publish_doctree(docstring)
+        doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
         fields = get_fields(doctree)
         signature = fields.get('signature')
         if signature is not None:
@@ -115,10 +120,8 @@ def get_prototype(node):
             assert len(ptypes) == len(params)
 
             arg_locs = [(a.lineno, a.col_offset) for a in node.args.args]
-            arg_defaults = {
-                bisect(arg_locs, (d.lineno, d.col_offset)): getattr(d, d._fields[0])
-                for d in node.args.defaults
-            }
+            arg_defaults = {bisect(arg_locs, (d.lineno, d.col_offset)): d
+                            for d in node.args.defaults}
 
             pstub = ', '.join([get_param(i, n, t, arg_defaults)
                                for i, (n, t) in enumerate(zip(params, ptypes))])
