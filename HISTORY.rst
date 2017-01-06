@@ -3,7 +3,7 @@
 History
 =======
 
-1.0a3 (unreleased)
+1.0a3 (2017-01-06)
 ------------------
 
 * Proper support for names from the typing module in input parameters.
