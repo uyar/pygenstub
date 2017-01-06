@@ -16,6 +16,7 @@
 from __future__ import print_function, unicode_literals
 
 from argparse import ArgumentParser
+from bisect import bisect
 from codecs import open
 from collections import OrderedDict
 from docutils.core import publish_doctree
@@ -63,6 +64,14 @@ def get_prototype(node):
     :param node: Function node to get the prototype for.
     :return: Prototype and required type names.
     """
+    def get_param(n, t, dv):
+        s = StringIO()
+        s.write('%s: %s' % (n, t))
+        if dv is not None:
+            d = "'%s'" % (dv,) if isinstance(dv, (str, bytes)) else str(dv)
+            s.write(' = %s' % (d,))
+        return s.getvalue()
+
     docstring = ast.get_docstring(node)
     if docstring is not None:
         doctree = publish_doctree(docstring)
@@ -99,7 +108,13 @@ def get_prototype(node):
             params = [arg.arg if hasattr(arg, 'arg') else arg.id
                       for arg in node.args.args]
             assert len(ptypes) == len(params)
-            pstub = ', '.join([('%s: %s' % p) for p in zip(params, ptypes)])
+
+            arg_locations = [(arg.lineno, arg.col_offset) for arg in node.args.args]
+            arg_defaults = {bisect(arg_locations, (d.lineno, d.col_offset)): getattr(d, d._fields[0])
+                            for d in node.args.defaults}
+            defaults = [arg_defaults.get(i + 1) for i in range(len(params))]
+
+            pstub = ', '.join([get_param(*p) for p in zip(params, ptypes, defaults)])
             prototype = 'def %s(%s) -> %s: ...\n' % (node.name, pstub, rtype)
             requires = {n for n in re.findall(r'\w+(?:\.\w+)*', signature)
                         if n not in BUILTIN_TYPES}

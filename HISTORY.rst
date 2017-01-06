@@ -7,6 +7,7 @@ History
 ------------------
 
 * Proper support for names from the typing module in input parameters.
+* Added parameter default values to stubs.
 
 1.0a2 (2017-01-03)
 ------------------
