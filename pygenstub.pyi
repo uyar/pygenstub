@@ -6,10 +6,15 @@ import ast
 import docutils.nodes
 
 
-def get_fields(node: docutils.nodes.document, fields_tag: str = 'field_list') -> Mapping[str, str]: ...
+def get_fields(
+        node: docutils.nodes.document = [],
+        fields_tag: str = 'field_list'
+) -> Mapping[str, str]: ...
 
 
-def get_prototype(node: ast.FunctionDef) -> Optional[Tuple[str, Set[str]]]: ...
+def get_prototype(
+        node: ast.FunctionDef
+) -> Optional[Tuple[str, Set[str]]]: ...
 
 
 def get_stub(code: str) -> str: ...
