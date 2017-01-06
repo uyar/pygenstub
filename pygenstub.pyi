@@ -7,7 +7,7 @@ import docutils.nodes
 
 
 def get_fields(
-        node: docutils.nodes.document = [],
+        node: docutils.nodes.document,
         fields_tag: str = 'field_list'
 ) -> Mapping[str, str]: ...
 
