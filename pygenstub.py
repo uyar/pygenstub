@@ -29,8 +29,7 @@ import sys
 
 
 BUILTIN_TYPES = {
-    'int', 'float', 'bool',
-    'str', 'bytes', 'unicode',
+    'int', 'float', 'bool', 'str', 'bytes', 'unicode',
     'tuple', 'list', 'set', 'dict', 'None'
 }
 
@@ -114,9 +113,11 @@ def get_prototype(node):
                       for arg in node.args.args]
             assert len(ptypes) == len(params)
 
-            arg_locations = [(arg.lineno, arg.col_offset) for arg in node.args.args]
-            arg_defaults = {bisect(arg_locations, (d.lineno, d.col_offset)): getattr(d, d._fields[0])
-                            for d in node.args.defaults}
+            arg_locs = [(a.lineno, a.col_offset) for a in node.args.args]
+            arg_defaults = {
+                bisect(arg_locs, (d.lineno, d.col_offset)): getattr(d, d._fields[0])
+                for d in node.args.defaults
+            }
             defaults = [arg_defaults.get(i + 1) for i in range(len(params))]
 
             pstub = ', '.join([get_param(*p) for p in zip(params, ptypes, defaults)])
