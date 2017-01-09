@@ -19,7 +19,7 @@ At the moment, the utility only handles functions (not methods).
 If the docstring for the function includes a **sig** field,
 it uses this signature to generate a prototype for the function.
 
-For example:
+For example, considering the code given below:
 
 .. code-block:: python
 
@@ -37,7 +37,29 @@ The generated prototype will be:
    def foo(a: int, b: str) -> None: ...
 
 
-Imported names in the source will be used in the stub if needed:
+**Default values**
+
+Parameter default values will be preserved.
+
+.. code-block:: python
+
+   def foo(a, b=''):
+       """Whatever.
+
+       :sig: (int, str) -> None
+       :param a: ...
+       """
+
+Output:
+
+.. code-block:: python
+
+   def foo(a: int, b: str = '') -> None: ...
+
+
+**Imported names**
+
+Imported type names in the source will be used in the stub if needed:
 
 .. code-block:: python
 
@@ -50,7 +72,7 @@ Imported names in the source will be used in the stub if needed:
        :param a: ...
        """
 
-will generate:
+Output:
 
 .. code-block:: python
 
@@ -58,6 +80,8 @@ will generate:
 
    def foo(a: A, b: B) -> A: ...
 
+
+**Dotted names**
 
 Dotted type names will generate imports in the stub file:
 
@@ -70,7 +94,7 @@ Dotted type names will generate imports in the stub file:
        :param a: ...
        """
 
-will generate:
+Output:
 
 .. code-block:: python
 
@@ -79,7 +103,9 @@ will generate:
    def foo(a: x.A, b: x.B) -> x.A: ...
 
 
-It will also look up unknown names from the ``typing`` module:
+**Names from the ``typing`` module**
+
+Unresolved names will be looked up from the ``typing`` module:
 
 .. code-block:: python
 
@@ -90,7 +116,7 @@ It will also look up unknown names from the ``typing`` module:
        :param a: ...
        """
 
-will generate:
+Output:
 
 .. code-block:: python
 
