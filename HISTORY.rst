@@ -3,6 +3,11 @@
 History
 =======
 
+1.0a5 (unreleased)
+------------------
+
+* Shortened the field name from "signature" to "sig".
+
 1.0a4 (2017-01-06)
 ------------------
 

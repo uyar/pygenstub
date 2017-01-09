@@ -16,7 +16,7 @@ Features
 --------
 
 At the moment, the utility only handles functions (not methods).
-If the docstring for the function includes a **signature** field,
+If the docstring for the function includes a **sig** field,
 it uses this signature to generate a prototype for the function.
 
 For example:
@@ -26,7 +26,7 @@ For example:
    def foo(a, b):
        """Whatever.
 
-       :signature: (int, str) -> None
+       :sig: (int, str) -> None
        :param a: ...
        """
 
@@ -46,7 +46,7 @@ Imported names in the source will be used in the stub if needed:
    def foo(a, b):
        """Whatever.
 
-       :signature: (A, B) -> A
+       :sig: (A, B) -> A
        :param a: ...
        """
 
@@ -66,7 +66,7 @@ Dotted type names will generate imports in the stub file:
    def foo(a, b):
        """Whatever.
 
-       :signature: (x.A, x.B) -> x.A
+       :sig: (x.A, x.B) -> x.A
        :param a: ...
        """
 
@@ -86,7 +86,7 @@ It will also look up unknown names from the ``typing`` module:
    def foo(a, b):
        """Whatever.
 
-       :signature: (Dict, Tuple) -> Optional[str]
+       :sig: (Dict, Tuple) -> Optional[str]
        :param a: ...
        """
 

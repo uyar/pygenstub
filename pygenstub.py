@@ -42,7 +42,7 @@ _logger = logging.getLogger(__name__)
 def get_fields(node, fields_tag='field_list'):
     """Get field names and values of a node.
 
-    :signature: (docutils.nodes.document, str) -> Mapping[str, str]
+    :sig: (docutils.nodes.document, str) -> Mapping[str, str]
     :param node: Node to get the fields from.
     :param fields_tag: Tag of child node that contains the fields.
     :return: Field names and their values.
@@ -61,7 +61,7 @@ def get_fields(node, fields_tag='field_list'):
 def get_prototype(node):
     """Get the prototype for a function.
 
-    :signature: (ast.FunctionDef) -> Optional[Tuple[str, Set[str]]]
+    :sig: (ast.FunctionDef) -> Optional[Tuple[str, Set[str]]]
     :param node: Function node to get the prototype for.
     :return: Prototype and required type names.
     """
@@ -83,7 +83,7 @@ def get_prototype(node):
     if docstring is not None:
         doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
         fields = get_fields(doctree)
-        signature = fields.get('signature')
+        signature = fields.get('sig')
         if signature is not None:
             _logger.debug('parsing signature for %s', node.name)
             lhs, rtype = [s.strip() for s in signature.split(' -> ')]
@@ -140,7 +140,7 @@ def get_prototype(node):
 def get_stub(code):
     """Get the stub declarations for a source code.
 
-    :signature: (str) -> str
+    :sig: (str) -> str
     :param code: Source code to generate the stub for.
     :return: Stub declarations for the source code.
     """
@@ -210,7 +210,7 @@ def get_stub(code):
 def main():
     """Entry point of the command-line utility.
 
-    :signature: () -> None
+    :sig: () -> None
     """
     parser = ArgumentParser()
     parser.add_argument('source', help='source file to generate the stub for')

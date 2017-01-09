@@ -7,7 +7,7 @@ from x import A, B
 def f(%(params)s):
     """Func
 
-    :signature: (%(ptypes)s) -> %(rtype)s
+    :sig: (%(ptypes)s) -> %(rtype)s
     """
 '''
 
