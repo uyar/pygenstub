@@ -239,9 +239,8 @@ def _traverse_namespace(namespace, root, required_types):
                 namespace.components.append(prototype)
                 required_types |= requires
         if isinstance(node, ast.ClassDef):
-            docstring = ast.get_docstring(node)
             subnamespace = Namespace('class', node.name, namespace.level + 1)
-            subnamespace.docstring = docstring
+            subnamespace.docstring = ast.get_docstring(node)
             _traverse_namespace(subnamespace, node.body, required_types)
             namespace.components.append(subnamespace)
 
