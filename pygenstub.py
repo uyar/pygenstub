@@ -52,10 +52,9 @@ def get_fields(node, fields_tag='field_list'):
         return {}
     assert len(fields_nodes) == 1
     fields_node = fields_nodes[0]
-    # [6:] strips the 'field_' prefix
-    fields = [{f.tagname[6:]: f.rawsource.strip() for f in n.children}
+    fields = [{f.tagname: f.rawsource.strip() for f in n.children}
               for n in fields_node.children if n.tagname == 'field']
-    return {f['name']: f['body'] for f in fields}
+    return {f['field_name']: f['field_body'] for f in fields}
 
 
 def get_prototype(node):
@@ -65,19 +64,19 @@ def get_prototype(node):
     :param node: Function node to get the prototype for.
     :return: Prototype and required type names.
     """
-    def get_param(i, n, t, defaults):
-        s = StringIO()
-        s.write('%s: %s' % (n, t))
-        if (i + 1) in defaults:
-            d = defaults[i + 1]
-            if isinstance(d, ast.Str):
-                dv = "'%s'" % (getattr(d, d._fields[0]),)
-            elif isinstance(d, ast.Tuple):
-                dv = '%s' % (tuple(getattr(d, d._fields[0])),)
+    def get_param(index, name, type_, defaults):
+        out = name + ': ' + type_
+        if (index + 1) in defaults:
+            default = defaults[index + 1]
+            raw_value = getattr(default, default._fields[0])
+            if isinstance(default, ast.Str):
+                value = "'" + raw_value + "'"
+            elif isinstance(default, ast.Tuple):
+                value = tuple(raw_value)
             else:
-                dv = '%s' % (getattr(d, d._fields[0]),)
-            s.write(' = %s' % (dv,))
-        return s.getvalue()
+                value = raw_value
+            out += ' = ' + str(value)
+        return out
 
     docstring = ast.get_docstring(node)
     if docstring is not None:
