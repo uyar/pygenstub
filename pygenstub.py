@@ -57,6 +57,27 @@ def get_fields(node, fields_tag='field_list'):
     return {f['field_name']: f['field_body'] for f in fields}
 
 
+def get_parameter_stub(name, type_, default=None):
+    """Get the parameter definition part of a stub.
+
+    :sig: (str, str, Optional[Union[ast.NameConstant, ast.Str, ast.Tuple]]) -> str
+    :param name: Name of parameter.
+    :param type_: Type of parameter.
+    :param default: Default value of the parameter.
+    """
+    out = name + ': ' + type_
+    if default is not None:
+        raw_value = getattr(default, default._fields[0])
+        if isinstance(default, ast.Str):
+            value = "'" + raw_value + "'"
+        elif isinstance(default, ast.Tuple):
+            value = tuple(raw_value)
+        else:
+            value = raw_value
+        out += ' = ' + str(value)
+    return out
+
+
 def get_prototype(node):
     """Get the prototype for a function.
 
@@ -64,76 +85,65 @@ def get_prototype(node):
     :param node: Function node to get the prototype for.
     :return: Prototype and required type names.
     """
-    def get_param(index, name, type_, defaults):
-        out = name + ': ' + type_
-        if (index + 1) in defaults:
-            default = defaults[index + 1]
-            raw_value = getattr(default, default._fields[0])
-            if isinstance(default, ast.Str):
-                value = "'" + raw_value + "'"
-            elif isinstance(default, ast.Tuple):
-                value = tuple(raw_value)
-            else:
-                value = raw_value
-            out += ' = ' + str(value)
-        return out
-
     docstring = ast.get_docstring(node)
-    if docstring is not None:
-        doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
-        fields = get_fields(doctree)
-        signature = fields.get('sig')
-        if signature is not None:
-            _logger.debug('parsing signature for %s', node.name)
-            lhs, rtype = [s.strip() for s in signature.split(' -> ')]
-            pstr = lhs[1:-1].strip()    # remove the () around parameter list
+    if docstring is None:
+        return None
 
-            if pstr == '':
-                ptypes = []
-            else:
-                commas = []
-                bracket_depth = 0
-                for i, c in enumerate(pstr):
-                    if (c == ',') and (bracket_depth == 0):
-                        commas.append(i)
-                    elif c == '[':
-                        bracket_depth += 1
-                    elif c == ']':
-                        bracket_depth -= 1
-                ptypes = []
-                last_i = 0
-                for i in commas:
-                    ptypes.append(pstr[last_i:i].strip())
-                    last_i = i + 1
-                else:
-                    ptypes.append(pstr[last_i:].strip())
+    doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
+    fields = get_fields(doctree)
+    signature = fields.get('sig')
+    if signature is None:
+        return None
 
-            _logger.debug('parameter types: %s', ptypes)
-            _logger.debug('return type: %s', rtype)
+    _logger.debug('parsing signature for %s', node.name)
+    lhs, rtype = [s.strip() for s in signature.split(' -> ')]
+    pstr = lhs[1:-1].strip()    # remove the () around parameter list
 
-            params = [arg.arg if hasattr(arg, 'arg') else arg.id
-                      for arg in node.args.args]
-            assert len(ptypes) == len(params)
+    if pstr == '':
+        ptypes = []
+    else:
+        commas = []
+        bracket_depth = 0
+        for i, c in enumerate(pstr):
+            if (c == ',') and (bracket_depth == 0):
+                commas.append(i)
+            elif c == '[':
+                bracket_depth += 1
+            elif c == ']':
+                bracket_depth -= 1
+        ptypes = []
+        last_i = 0
+        for i in commas:
+            ptypes.append(pstr[last_i:i].strip())
+            last_i = i + 1
+        else:
+            ptypes.append(pstr[last_i:].strip())
 
-            arg_locs = [(a.lineno, a.col_offset) for a in node.args.args]
-            arg_defaults = {bisect(arg_locs, (d.lineno, d.col_offset)): d
-                            for d in node.args.defaults}
+    _logger.debug('parameter types: %s', ptypes)
+    _logger.debug('return type: %s', rtype)
 
-            pstub = ', '.join([get_param(i, n, t, arg_defaults)
-                               for i, (n, t) in enumerate(zip(params, ptypes))])
-            prototype = 'def %s(%s) -> %s: ...\n' % (node.name, pstub, rtype)
-            if len(prototype) > 79:
-                pstub = ',\n        '.join(
-                    [get_param(i, n, t, arg_defaults)
-                     for i, (n, t) in enumerate(zip(params, ptypes))]
-                )
-                prototype = 'def %s(\n        %s\n) -> %s: ...\n' % (node.name, pstub, rtype)
-            requires = {n for n in re.findall(r'\w+(?:\.\w+)*', signature)
-                        if n not in BUILTIN_TYPES}
-            _logger.debug('requires %s', requires)
-            _logger.debug('prototype: %s', prototype)
-            return prototype, requires
-    return None
+    params = [arg.arg if hasattr(arg, 'arg') else arg.id
+              for arg in node.args.args]
+    assert len(ptypes) == len(params)
+
+    arg_locs = [(a.lineno, a.col_offset) for a in node.args.args]
+    arg_defaults = {bisect(arg_locs, (d.lineno, d.col_offset)): d
+                    for d in node.args.defaults}
+
+    pstub = ', '.join([get_parameter_stub(n, t, arg_defaults.get(i + 1))
+                       for i, (n, t) in enumerate(zip(params, ptypes))])
+    prototype = 'def %s(%s) -> %s: ...\n' % (node.name, pstub, rtype)
+    if len(prototype) > 79:
+        pstub = ',\n        '.join(
+            [get_parameter_stub(n, t, arg_defaults.get(i + 1))
+             for i, (n, t) in enumerate(zip(params, ptypes))]
+        )
+        prototype = 'def %s(\n        %s\n) -> %s: ...\n' % (node.name, pstub, rtype)
+    requires = {n for n in re.findall(r'\w+(?:\.\w+)*', signature)
+                if n not in BUILTIN_TYPES}
+    _logger.debug('requires %s', requires)
+    _logger.debug('prototype: %s', prototype)
+    return prototype, requires
 
 
 def get_stub(code):
