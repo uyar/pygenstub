@@ -7,6 +7,7 @@ History
 ------------------
 
 * Shortened the field name from "signature" to "sig".
+* Support for class methods.
 
 1.0a4 (2017-01-06)
 ------------------

@@ -6,6 +6,10 @@ import ast
 import docutils.nodes
 
 
+class Namespace:
+    def get_stub(self) -> str: ...
+
+
 def get_fields(
         node: docutils.nodes.document,
         fields_tag: str = 'field_list'
