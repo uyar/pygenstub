@@ -65,7 +65,7 @@ def get_fields(node, fields_tag='field_list'):
 def get_parameter_types(parameter_defs):
     """Get the types of all parameters.
 
-    :sig: (str) -> Iterable[str]
+    :sig: (str) -> List[str]
     :param parameter_defs: Parameter definitions in signature.
     :return: Types of parameters.
     """
