@@ -55,14 +55,14 @@ class Namespace(object):
     :param scope: Scope of namespace.
     :param name: Name of namespace.
     :param level: Level of namespace, used for indentation.
-    :param signature: Signature of namespace, needed when it's a class.
+    :param docstring: Docstring of namespace, needed when it's a class.
     """
 
-    def __init__(self, scope, name, level, signature=None):
+    def __init__(self, scope, name, level, docstring=None):
         self.scope = scope
         self.name = name
         self.level = level
-        self.signature = signature
+        self.docstring = docstring
         self.components = []
 
     def get_stub(self):
@@ -113,7 +113,7 @@ def get_signature(node):
     :param node: Node to get the signature for.
     :return: Value of signature field in node docstring.
     """
-    docstring = ast.get_docstring(node)
+    docstring = node.docstring if hasattr(node, 'docstring') else ast.get_docstring(node)
     if docstring is None:
         return None
     doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
@@ -233,13 +233,16 @@ def _traverse_namespace(namespace, root, required_types):
     for node in root:
         if isinstance(node, ast.FunctionDef):
             prototype, requires = get_prototype(node)
+            if (prototype == '') and (node.name == '__init__'):
+                node.docstring = namespace.docstring
+                prototype, requires = get_prototype(node)
             if prototype != '':
                 namespace.components.append(prototype)
                 required_types |= requires
         if isinstance(node, ast.ClassDef):
-            signature = get_signature(node)
+            docstring = ast.get_docstring(node)
             subnamespace = Namespace('class', node.name, namespace.level + 1,
-                                     signature=signature)
+                                     docstring=docstring)
             _traverse_namespace(subnamespace, node.body, required_types)
             namespace.components.append(subnamespace)
 

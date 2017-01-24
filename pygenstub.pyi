@@ -7,6 +7,14 @@ import docutils.nodes
 
 
 class Namespace:
+    def __init__(
+            self,
+            scope: str,
+            name: str,
+            level: int,
+            docstring: Optional[str] = None
+    ) -> None: ...
+
     def get_stub(self) -> str: ...
 
 
