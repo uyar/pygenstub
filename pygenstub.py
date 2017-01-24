@@ -51,18 +51,17 @@ _logger = logging.getLogger(__name__)
 class Namespace(object):
     """A unit that can contain names, e.g. a module, a class, ...
 
-    :sig: (str, str, int, Optional[str]) -> None
+    :sig: (str, str, int) -> None
     :param scope: Scope of namespace.
     :param name: Name of namespace.
     :param level: Level of namespace, used for indentation.
-    :param docstring: Docstring of namespace, needed when it's a class.
     """
 
-    def __init__(self, scope, name, level, docstring=None):
+    def __init__(self, scope, name, level):
         self.scope = scope
         self.name = name
         self.level = level
-        self.docstring = docstring
+        self.docstring = None
         self.components = []
 
     def get_stub(self):
@@ -241,8 +240,8 @@ def _traverse_namespace(namespace, root, required_types):
                 required_types |= requires
         if isinstance(node, ast.ClassDef):
             docstring = ast.get_docstring(node)
-            subnamespace = Namespace('class', node.name, namespace.level + 1,
-                                     docstring=docstring)
+            subnamespace = Namespace('class', node.name, namespace.level + 1)
+            subnamespace.docstring = docstring
             _traverse_namespace(subnamespace, node.body, required_types)
             namespace.components.append(subnamespace)
 
