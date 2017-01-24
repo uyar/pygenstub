@@ -106,45 +106,60 @@ def get_fields(node, fields_tag='field_list'):
     return {f['field_name']: f['field_body'] for f in fields}
 
 
-def get_parameter_types(parameter_defs):
-    """Get the types of all parameters.
+def get_signature(node):
+    """Get the signature field from the docstring of a node.
+
+    :sig: (Union[ast.FunctionDef, ast.ClassDef]) -> Optional[str]
+    :param node: Node to get the signature for.
+    :return: Value of signature field in node docstring.
+    """
+    docstring = ast.get_docstring(node)
+    if docstring is None:
+        return None
+    doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
+    fields = get_fields(doctree)
+    return fields.get(SIGNATURE_FIELD)
+
+
+def split_parameter_types(parameter_types):
+    """Split a full parameter types declaration into individual types.
 
     :sig: (str) -> List[str]
-    :param parameter_defs: Parameter definitions in signature.
+    :param parameter_types: Parameter types declaration in the signature.
     :return: Types of parameters.
     """
-    if parameter_defs == '':
+    if parameter_types == '':
         return []
 
     # only consider the top level commas, ignore the ones in []
     commas = []
     bracket_depth = 0
-    for i, c in enumerate(parameter_defs):
-        if (c == ',') and (bracket_depth == 0):
+    for i, char in enumerate(parameter_types):
+        if (char == ',') and (bracket_depth == 0):
             commas.append(i)
-        elif c == '[':
+        elif char == '[':
             bracket_depth += 1
-        elif c == ']':
+        elif char == ']':
             bracket_depth -= 1
 
     types = []
     last_i = 0
     for i in commas:
-        types.append(parameter_defs[last_i:i].strip())
+        types.append(parameter_types[last_i:i].strip())
         last_i = i + 1
     else:
-        types.append(parameter_defs[last_i:].strip())
+        types.append(parameter_types[last_i:].strip())
     return types
 
 
-def get_parameter_stub(name, type_, default=None):
-    """Get the parameter definition part of a stub.
+def get_parameter_declaration(name, type_, default=None):
+    """Get the parameter declaration part of a stub.
 
     :sig: (str, str, Optional[Union[ast.NameConstant, ast.Str, ast.Tuple]]) -> str
     :param name: Name of parameter.
     :param type_: Type of parameter.
-    :param default: Default value of the parameter.
-    :return: Parameter definition to be used in function stub.
+    :param default: Default value of parameter.
+    :return: Parameter declaration to be used in function stub.
     """
     if type_ == '':
         return name
@@ -161,21 +176,6 @@ def get_parameter_stub(name, type_, default=None):
     return out
 
 
-def get_node_signature(node):
-    """Get the signature field from the docstring of a node.
-
-    :sig: (Union[ast.FunctionDef, ast.ClassDef]) -> Optional[str]
-    :param node: Node to get the signature for.
-    :return: Value of signature field in node docstring.
-    """
-    docstring = ast.get_docstring(node)
-    if docstring is None:
-        return None
-    doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
-    fields = get_fields(doctree)
-    return fields.get(SIGNATURE_FIELD)
-
-
 def get_prototype(node):
     """Get the prototype for a function or a method.
 
@@ -183,7 +183,7 @@ def get_prototype(node):
     :param node: Function or method node to get the prototype for.
     :return: Prototype and required type names.
     """
-    signature = get_node_signature(node)
+    signature = get_signature(node)
     if signature is None:
         return '', set()
 
@@ -191,7 +191,7 @@ def get_prototype(node):
     lhs, return_type = [s.strip() for s in signature.split(' -> ')]
     parameter_defs = lhs[1:-1].strip()  # remove the () around parameter list
 
-    parameter_types = get_parameter_types(parameter_defs)
+    parameter_types = split_parameter_types(parameter_defs)
     _logger.debug('parameter types: %s', parameter_types)
     _logger.debug('return type: %s', return_type)
 
@@ -206,7 +206,7 @@ def get_prototype(node):
     parameter_defaults = {bisect(parameter_locations, (d.lineno, d.col_offset)): d
                           for d in node.args.defaults}
 
-    parameter_stubs = [get_parameter_stub(n, t, parameter_defaults.get(i + 1))
+    parameter_stubs = [get_parameter_declaration(n, t, parameter_defaults.get(i + 1))
                        for i, (n, t) in enumerate(zip(parameters, parameter_types))]
     prototype = 'def %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
         'name': node.name,
@@ -237,7 +237,7 @@ def _traverse_namespace(namespace, root, required_types):
                 namespace.components.append(prototype)
                 required_types |= requires
         if isinstance(node, ast.ClassDef):
-            signature = get_node_signature(node)
+            signature = get_signature(node)
             subnamespace = Namespace('class', node.name, namespace.level + 1,
                                      signature=signature)
             _traverse_namespace(subnamespace, node.body, required_types)

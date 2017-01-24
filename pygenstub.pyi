@@ -16,19 +16,19 @@ def get_fields(
 ) -> Mapping[str, str]: ...
 
 
-def get_parameter_types(parameter_defs: str) -> List[str]: ...
+def get_signature(
+        node: Union[ast.FunctionDef, ast.ClassDef]
+) -> Optional[str]: ...
 
 
-def get_parameter_stub(
+def split_parameter_types(parameter_types: str) -> List[str]: ...
+
+
+def get_parameter_declaration(
         name: str,
         type_: str,
         default: Optional[Union[ast.NameConstant, ast.Str, ast.Tuple]] = None
 ) -> str: ...
-
-
-def get_node_signature(
-        node: Union[ast.FunctionDef, ast.ClassDef]
-) -> Optional[str]: ...
 
 
 def get_prototype(node: ast.FunctionDef) -> Tuple[str, Set[str]]: ...
