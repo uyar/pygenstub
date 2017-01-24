@@ -277,7 +277,7 @@ def main():
     destination = arguments.source + 'i'
     if len(stub) > 0:
         with open(destination, mode='w', encoding='utf-8') as f_out:
-            f_out.write('# %s\n\n' % (EDIT_WARNING,))
+            f_out.write('# ' + EDIT_WARNING + '\n\n')
             f_out.write(stub)
 
 
