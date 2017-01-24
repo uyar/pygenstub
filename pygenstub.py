@@ -178,66 +178,81 @@ def get_stub(code):
     :param code: Source code to generate the stub for.
     :return: Stub declarations for the source code.
     """
-    stub = StringIO()
     tree = ast.parse(code)
 
-    imported_names = OrderedDict([(name.name, node.module)
-                                  for node in tree.body
-                                  if isinstance(node, ast.ImportFrom)
-                                  for name in node.names])
+    signatures = list(filter(
+        lambda x: x is not None,
+        [get_prototype(node) for node in tree.body if isinstance(node, ast.FunctionDef)]
+    ))
+
+    if len(signatures) == 0:
+        return ''
+
+    prototypes, required_types = zip(*signatures)
+    needed_types = {t for r in required_types for t in r}
+
+    imported_names = OrderedDict(
+        [(name.name, node.module)
+         for node in tree.body if isinstance(node, ast.ImportFrom)
+         for name in node.names]
+    )
     _logger.debug('imported names: %s', imported_names)
 
-    signatures = OrderedDict(filter(lambda x: x[1] is not None,
-                                    [(node.name, get_prototype(node))
-                                     for node in tree.body
-                                     if isinstance(node, ast.FunctionDef)]))
+    imported_types = {n for n in imported_names if n in needed_types}
+    needed_types -= imported_types
+    _logger.debug('used imported types: %s', imported_types)
 
-    if len(signatures) > 0:
-        required_names = {n for _, r in signatures.values() for n in r}
-        if len(required_names) > 0:
-            known_names = [n for n in imported_names if n in required_names]
-            unknown_names = required_names - set(imported_names.keys())
+    dotted_types = {n for n in needed_types if '.' in n}
+    needed_types -= dotted_types
+    _logger.debug('dotted types: %s', dotted_types)
 
-            dotted_names = {n for n in unknown_names if '.' in n}
-            imported_modules = {'.'.join(n.split('.')[:-1]) for n in dotted_names}
+    try:
+        typing_module = __import__('typing')
+        typing_types = {n for n in needed_types if hasattr(typing_module, n)}
+        _logger.debug('types from typing module: %s', typing_types)
+    except ImportError:
+        _logger.debug('typing module not installed')
+        typing_types = set()
+    needed_types -= typing_types
 
-            remaining_names = unknown_names - dotted_names
+    if len(needed_types) > 0:
+        print('Following types could not be found: ' + ', '.join(needed_types),
+              file=sys.stderr)
+        sys.exit(1)
 
-            try:
-                typing_module = __import__('typing')
-                typing_names = {n for n in remaining_names if hasattr(typing_module, n)}
-                _logger.debug('names from typing module: %s', typing_names)
-            except ImportError:
-                _logger.debug('typing module not installed')
-                typing_names = set()
+    stub = StringIO()
+    started = False
 
-            missing_names = remaining_names - typing_names
-            if len(missing_names) > 0:
-                print('Following names could not be found: %s' % (', '.join(missing_names)),
-                      file=sys.stderr)
-                sys.exit(1)
+    if len(typing_types) > 0:
+        stub.write('from typing import ' + ', '.join(sorted(typing_types)) + '\n')
+        started = True
 
-            started = False
+    if len(imported_types) > 0:
+        if started:
+            stub.write('\n')
+        # preserve the import order in the source file
+        for name in imported_names:
+            if name in imported_types:
+                stub.write(
+                    'from %(module)s import %(name)s\n' % {
+                        'module': imported_names[name],
+                        'name': name
+                    }
+                )
+        started = True
 
-            if len(typing_names) > 0:
-                stub.write('from typing import %s\n' % (', '.join(sorted(typing_names)),))
-                started = True
+    if len(dotted_types) > 0:
+        if started:
+            stub.write('\n')
+        imported_modules = {'.'.join(n.split('.')[:-1]) for n in dotted_types}
+        for module in sorted(imported_modules):
+            stub.write('import ' + module + '\n')
+        started = True
 
-            if len(known_names) > 0:
-                if started:
-                    stub.write('\n')
-                for name in known_names:
-                    stub.write('from %s import %s\n' % (imported_names[name], name))
-                    started = True
+    if started:
+        stub.write('\n\n')
+    stub.write('\n\n'.join(prototypes))
 
-            if len(imported_modules) > 0:
-                if started:
-                    stub.write('\n')
-                for module in sorted(imported_modules):
-                    stub.write('import %s\n' % (module,))
-
-            stub.write('\n\n')
-        stub.write('\n\n'.join([s for s, _ in signatures.values()]))
     return stub.getvalue()
 
 
