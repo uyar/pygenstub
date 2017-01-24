@@ -49,10 +49,20 @@ _logger = logging.getLogger(__name__)
 
 
 class Namespace(object):
-    def __init__(self, type_, name, level):
-        self.type_ = type_
+    """A unit that can contain names, e.g. a module, a class, ...
+
+    :sig: (str, str, int, Optional[str]) -> None
+    :param scope: Scope of namespace.
+    :param name: Name of namespace.
+    :param level: Level of namespace, used for indentation.
+    :param signature: Signature of namespace, needed when it's a class.
+    """
+
+    def __init__(self, scope, name, level, signature=None):
+        self.scope = scope
         self.name = name
         self.level = level
+        self.signature = signature
         self.components = []
 
     def get_stub(self):
@@ -66,8 +76,9 @@ class Namespace(object):
 
         component_stubs = [c.get_stub() if isinstance(c, Namespace) else c
                            for c in self.components]
-        body = '\n\n'.join([s for s in component_stubs if s != ''])
-        if self.type_ == 'class':
+        blank_lines = '\n\n' if self.scope == 'module' else '\n'
+        body = blank_lines.join([s for s in component_stubs if s != ''])
+        if self.scope == 'class':
             body = 'class %(name)s:\n%(body)s' % {
                 'name': self.name,
                 'body': indent(body, INDENT)
@@ -150,6 +161,21 @@ def get_parameter_stub(name, type_, default=None):
     return out
 
 
+def get_node_signature(node):
+    """Get the signature field from the docstring of a node.
+
+    :sig: (Union[ast.FunctionDef, ast.ClassDef]) -> Optional[str]
+    :param node: Node to get the signature for.
+    :return: Value of signature field in node docstring.
+    """
+    docstring = ast.get_docstring(node)
+    if docstring is None:
+        return None
+    doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
+    fields = get_fields(doctree)
+    return fields.get(SIGNATURE_FIELD)
+
+
 def get_prototype(node):
     """Get the prototype for a function or a method.
 
@@ -157,13 +183,7 @@ def get_prototype(node):
     :param node: Function or method node to get the prototype for.
     :return: Prototype and required type names.
     """
-    docstring = ast.get_docstring(node)
-    if docstring is None:
-        return '', set()
-
-    doctree = publish_doctree(docstring, settings_overrides={'report_level': 5})
-    fields = get_fields(doctree)
-    signature = fields.get(SIGNATURE_FIELD)
+    signature = get_node_signature(node)
     if signature is None:
         return '', set()
 
@@ -217,7 +237,9 @@ def _traverse_namespace(namespace, root, required_types):
                 namespace.components.append(prototype)
                 required_types |= requires
         if isinstance(node, ast.ClassDef):
-            subnamespace = Namespace('class', node.name, namespace.level + 1)
+            signature = get_node_signature(node)
+            subnamespace = Namespace('class', node.name, namespace.level + 1,
+                                     signature=signature)
             _traverse_namespace(subnamespace, node.body, required_types)
             namespace.components.append(subnamespace)
 

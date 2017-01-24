@@ -26,6 +26,11 @@ def get_parameter_stub(
 ) -> str: ...
 
 
+def get_node_signature(
+        node: Union[ast.FunctionDef, ast.ClassDef]
+) -> Optional[str]: ...
+
+
 def get_prototype(node: ast.FunctionDef) -> Tuple[str, Set[str]]: ...
 
 
