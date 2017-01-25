@@ -151,27 +151,20 @@ def split_parameter_types(parameter_types):
     return types
 
 
-def get_parameter_declaration(name, type_, default=None):
+def get_parameter_declaration(name, type_, has_default=False):
     """Get the parameter declaration part of a stub.
 
-    :sig: (str, str, Optional[Union[ast.NameConstant, ast.Str, ast.Tuple]]) -> str
+    :sig: (str, str, Optional[bool]) -> str
     :param name: Name of parameter.
     :param type_: Type of parameter.
-    :param default: Default value of parameter.
+    :param has_default: Whether parameter has a default value or not.
     :return: Parameter declaration to be used in function stub.
     """
     if type_ == '':
         return name
     out = name + ': ' + type_
-    if default is not None:
-        raw_value = getattr(default, default._fields[0])
-        if isinstance(default, ast.Str):
-            value = "'" + raw_value + "'"
-        elif isinstance(default, ast.Tuple):
-            value = tuple(raw_value)
-        else:
-            value = raw_value
-        out += ' = ' + str(value)
+    if has_default:
+        out += ' = ...'
     return out
 
 
@@ -202,10 +195,10 @@ def get_prototype(node):
     assert len(parameter_types) == len(parameters)
 
     parameter_locations = [(a.lineno, a.col_offset) for a in node.args.args]
-    parameter_defaults = {bisect(parameter_locations, (d.lineno, d.col_offset)): d
+    parameter_defaults = {bisect(parameter_locations, (d.lineno, d.col_offset)) - 1
                           for d in node.args.defaults}
 
-    parameter_stubs = [get_parameter_declaration(n, t, parameter_defaults.get(i + 1))
+    parameter_stubs = [get_parameter_declaration(n, t, i in parameter_defaults)
                        for i, (n, t) in enumerate(zip(parameters, parameter_types))]
     prototype = 'def %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
         'name': node.name,

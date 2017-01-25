@@ -8,6 +8,7 @@ History
 
 * Shortened the field name from "signature" to "sig".
 * Support for class methods.
+* Use three dots instead of actual value for parameter defaults.
 
 1.0a4 (2017-01-06)
 ------------------

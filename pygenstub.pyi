@@ -14,7 +14,7 @@ class Namespace:
 
 def get_fields(
         node: docutils.nodes.document,
-        fields_tag: str = 'field_list'
+        fields_tag: str = ...
 ) -> Mapping[str, str]: ...
 
 
@@ -29,7 +29,7 @@ def split_parameter_types(parameter_types: str) -> List[str]: ...
 def get_parameter_declaration(
         name: str,
         type_: str,
-        default: Optional[Union[ast.NameConstant, ast.Str, ast.Tuple]] = None
+        has_default: Optional[bool] = ...
 ) -> str: ...
 
 

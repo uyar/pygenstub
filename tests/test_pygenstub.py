@@ -95,4 +95,4 @@ def test_get_stub_params_typing_qualified_multiple():
 
 def test_get_stub_params_default_value():
     code = code_template % {'params': 's, i=0', 'ptypes': 'str, int', 'rtype': 'None'}
-    assert get_stub(code) == 'def f(s: str, i: int = 0) -> None: ...\n'
+    assert get_stub(code) == 'def f(s: str, i: int = ...) -> None: ...\n'
