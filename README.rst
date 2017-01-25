@@ -15,9 +15,8 @@ file watchers to update stub files automatically from source files.
 Features
 --------
 
-At the moment, the utility only handles functions (not methods).
-If the docstring for the function includes a **sig** field,
-it uses this signature to generate a prototype for the function.
+If the docstring of a function or method includes a **sig** field,
+this signature is used to generate a prototype.
 
 For example, considering the code given below:
 
@@ -39,7 +38,9 @@ The generated prototype will be:
 
 **Default values**
 
-Parameter default values will be preserved.
+The stub will contain placeholders for parameter default values.
+
+Code:
 
 .. code-block:: python
 
@@ -50,16 +51,18 @@ Parameter default values will be preserved.
        :param a: ...
        """
 
-Output:
+Stub:
 
 .. code-block:: python
 
-   def foo(a: int, b: str = '') -> None: ...
+   def foo(a: int, b: str = ...) -> None: ...
 
 
 **Imported names**
 
-Imported type names in the source will be used in the stub if needed:
+Imported type names in the source will be used in the stub *if needed*:
+
+Code:
 
 .. code-block:: python
 
@@ -72,7 +75,7 @@ Imported type names in the source will be used in the stub if needed:
        :param a: ...
        """
 
-Output:
+Stub (note that the name ``C`` is not imported):
 
 .. code-block:: python
 
@@ -83,29 +86,33 @@ Output:
 
 **Dotted names**
 
-Dotted type names will generate imports in the stub file:
+Dotted type names will generate imports in the stub file.
+
+Code:
 
 .. code-block:: python
 
    def foo(a, b):
        """Whatever.
 
-       :sig: (x.A, x.B) -> x.A
+       :sig: (x.y.A, x.y.B) -> x.y.A
        :param a: ...
        """
 
-Output:
+Stub:
 
 .. code-block:: python
 
-   import x
+   import x.y
 
-   def foo(a: x.A, b: x.B) -> x.A: ...
+   def foo(a: x.y.A, b: x.y.B) -> x.y.A: ...
 
 
-**Names from the ``typing`` module**
+**Names from the typing module**
 
-Unresolved names will be looked up from the ``typing`` module:
+Unresolved names will be looked up from the ``typing`` module.
+
+Code:
 
 .. code-block:: python
 
@@ -116,7 +123,7 @@ Unresolved names will be looked up from the ``typing`` module:
        :param a: ...
        """
 
-Output:
+Stub:
 
 .. code-block:: python
 
@@ -128,7 +135,8 @@ Output:
 TODO
 ----
 
-- Support for methods.
+- Support for instance/class variables.
+- Support for annotations.
 - Sphinx extension for adjusting documentation.
 
 
