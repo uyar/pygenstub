@@ -217,7 +217,20 @@ def get_prototype(node):
     return prototype, required_types
 
 
-def _traverse_namespace(namespace, root, required_types):
+def _traverse_namespace(namespace, root, required_types, defined_types):
+    """Recursively traverse and collect the prototypes under a node.
+
+    The prototypes are accumulated in the ``components`` attribute
+    of the namespace. Any types required by the annotations will be accumulated
+    in the ``required_types`` parameter and all types/classes defined
+    in the module will be accumulated in the ``defined_types`` parameter.
+
+    :sig: (Namespace, Any, Set[str], Set[str]) -> None
+    :param namespace: Namespace collecting the prototypes.
+    :param root: Root node to collect the prototypes from.
+    :param required_types: All types required by type annotations.
+    :param defined_types: All types defined in the module.
+    """
     for node in root:
         if isinstance(node, ast.FunctionDef):
             prototype, requires = get_prototype(node)
@@ -229,8 +242,9 @@ def _traverse_namespace(namespace, root, required_types):
                 required_types |= requires
         if isinstance(node, ast.ClassDef):
             subnamespace = Namespace('class', node.name, namespace.level + 1)
+            defined_types.add(node.name)
             subnamespace.docstring = ast.get_docstring(node)
-            _traverse_namespace(subnamespace, node.body, required_types)
+            _traverse_namespace(subnamespace, node.body, required_types, defined_types)
             if len(subnamespace.components) > 0:
                namespace.components.append(subnamespace)
 
@@ -246,10 +260,14 @@ def get_stub(code):
 
     namespace = Namespace('module', '', level=0)
     needed_types = set()
-    _traverse_namespace(namespace, tree.body, needed_types)
+    defined_types = set()
+    _traverse_namespace(namespace, tree.body, needed_types, defined_types)
 
     if len(namespace.components) == 0:
         return ''
+
+    needed_types -= defined_types
+    _logger.debug('defined types: %s', defined_types)
 
     imported_names = OrderedDict(
         [(name.name, node.module)
