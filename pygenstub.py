@@ -225,7 +225,7 @@ def _traverse_namespace(namespace, root, required_types, defined_types):
     in the ``required_types`` parameter and all types/classes defined
     in the module will be accumulated in the ``defined_types`` parameter.
 
-    :sig: (Namespace, Any, Set[str], Set[str]) -> None
+    :sig: (Namespace, List[ast.AST], Set[str], Set[str]) -> None
     :param namespace: Namespace collecting the prototypes.
     :param root: Root node to collect the prototypes from.
     :param required_types: All types required by type annotations.
