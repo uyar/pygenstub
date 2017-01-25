@@ -70,13 +70,9 @@ class Namespace(object):
         :sig: () -> str
         :return: Stub code for this namespace.
         """
-        if len(self.components) == 0:
-            return ''
-
-        component_stubs = [c.get_stub() if isinstance(c, Namespace) else c
-                           for c in self.components]
         blank_lines = '\n\n' if self.scope == 'module' else '\n'
-        body = blank_lines.join([s for s in component_stubs if s != ''])
+        body = blank_lines.join([c.get_stub() if isinstance(c, Namespace) else c
+                                 for c in self.components])
         if self.scope == 'class':
             body = 'class %(name)s:\n%(body)s' % {
                 'name': self.name,
@@ -235,7 +231,8 @@ def _traverse_namespace(namespace, root, required_types):
             subnamespace = Namespace('class', node.name, namespace.level + 1)
             subnamespace.docstring = ast.get_docstring(node)
             _traverse_namespace(subnamespace, node.body, required_types)
-            namespace.components.append(subnamespace)
+            if len(subnamespace.components) > 0:
+               namespace.components.append(subnamespace)
 
 
 def get_stub(code):
