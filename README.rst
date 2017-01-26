@@ -135,6 +135,7 @@ Stub:
 TODO
 ----
 
+- *args and **kwargs
 - class variables
 - decorators
 - superclasses

@@ -29,7 +29,7 @@ import sys
 
 try:
     from textwrap import indent
-except ImportError:
+except ImportError:     # PY2
     def indent(body, start):
         return '\n'.join([start + line for line in body.splitlines()]) + '\n'
 
@@ -55,12 +55,12 @@ _logger = logging.getLogger(__name__)
 
 
 class Namespace(object):
-    """A unit that can contain names, e.g. a module, a class, ...
+    """A unit that can contain names, e.g. a module, a class.
 
     :sig: (str, str, int) -> None
-    :param scope: Scope of namespace.
-    :param name: Name of namespace.
-    :param level: Level of namespace, used for indentation.
+    :param scope: Scope of namespace, 'module' or 'class'.
+    :param name: Name of namespace, '' for module.
+    :param level: Level of namespace, 0 for module.
     """
 
     def __init__(self, scope, name, level):
@@ -87,7 +87,7 @@ class Namespace(object):
             } for v, t in self.variables]
             body = '\n'.join(attr_defs) + '\n\n'
 
-        blank_lines = '\n\n' if self.scope == 'module' else '\n'
+        blank_lines = '\n' * (2 if self.scope == 'module' else 1)
         body += blank_lines.join([c.get_stub() if isinstance(c, Namespace) else c
                                   for c in self.components])
         if self.scope == 'class':
