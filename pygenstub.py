@@ -31,7 +31,8 @@ try:
     from textwrap import indent
 except ImportError:     # PY2
     def indent(body, start):
-        return '\n'.join([start + line for line in body.splitlines()]) + '\n'
+        return body if start == '' else \
+            '\n'.join([start + line for line in body.splitlines()]) + '\n'
 
 
 BUILTIN_TYPES = {
@@ -59,8 +60,8 @@ class Namespace(object):
 
     :sig: (str, str, int) -> None
     :param scope: Scope of namespace, 'module' or 'class'.
-    :param name: Name of namespace, '' for module.
-    :param level: Level of namespace, 0 for module.
+    :param name: Name of namespace. '' for module, class name for class.
+    :param level: Level of namespace. 0 for module, 1 for module-level class.
     """
 
     def __init__(self, scope, name, level):
@@ -75,21 +76,29 @@ class Namespace(object):
         """Get the stub code for this namespace.
 
         :sig: () -> str
-        :return: Stub code for this namespace.
+        :return: Stub code.
         """
         body = ''
-        if len(self.variables) > 0:
-            maxlen = max([len(v) for v, _ in self.variables])
-            attr_defs = ['%(name)s = ... %(space)s # type: %(type)s' % {
-                'name': v,
-                'space': ' ' * (maxlen - len(v)),
-                'type': t
-            } for v, t in self.variables]
-            body = '\n'.join(attr_defs) + '\n\n'
 
-        blank_lines = '\n' * (2 if self.scope == 'module' else 1)
-        body += blank_lines.join([c.get_stub() if isinstance(c, Namespace) else c
-                                  for c in self.components])
+        if len(self.variables) > 0:
+            # find the longest variable name in order to align type comments
+            max_len = max([len(var) for var, _ in self.variables])
+            var_defs = ['%(name)s = ... %(space)s # type: %(type)s\n' % {
+                'name': var,
+                'space': ' ' * (max_len - len(var)),
+                'type': type_
+            } for var, type_ in self.variables]
+            body += ''.join(var_defs)
+
+        if len(self.components) > 0:
+            if body != '':
+                body += '\n'
+
+            sub_stubs = [c.get_stub() if isinstance(c, Namespace) else c
+                         for c in self.components]
+            sep = '\n' * (2 if self.scope == 'module' else 1)
+            body += sep.join(sub_stubs)
+
         if self.scope == 'class':
             body = 'class %(name)s:\n%(body)s' % {
                 'name': self.name,
