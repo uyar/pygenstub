@@ -11,7 +11,7 @@ class Namespace:
     name = ...        # type: str
     level = ...       # type: int
     docstring = ...   # type: Optional[str]
-    components = ...  # type: List
+    components = ...  # type: List[Union[str, Namespace]]
     variables = ...   # type: List[Tuple[str, str]]
 
     def __init__(self, scope: str, name: str, level: int) -> None: ...

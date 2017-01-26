@@ -27,7 +27,6 @@ import logging
 import re
 import sys
 
-
 try:
     from textwrap import indent
 except ImportError:
@@ -69,7 +68,7 @@ class Namespace(object):
         self.name = name        # sig: str
         self.level = level      # sig: int
         self.docstring = None   # sig: Optional[str]
-        self.components = []    # sig: List
+        self.components = []    # sig: List[Union[str, Namespace]]
         self.variables = []     # sig: List[Tuple[str, str]]
 
     def get_stub(self):
