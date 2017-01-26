@@ -291,6 +291,59 @@ def _traverse_namespace(namespace, nodes, required_types, defined_types, code_li
         #     print([n.id for n in node.targets])
 
 
+class PrototypeTransformer(ast.NodeTransformer):
+
+    def __init__(self):
+        self.imported_names = OrderedDict()
+        self.defined_types = set()
+        self.required_types = set()
+        self.parents = {}
+
+    def parse_signature(self, node):
+        signature = get_signature(node)
+        requires = {n for n in re.findall(r'\w+(?:\.\w+)*', signature)
+                    if n not in BUILTIN_TYPES} if signature is not None else set()
+        return requires
+
+    def visit_Module(self, node):
+        for child in node.body:
+            self.parents[child] = node
+        return self.generic_visit(node)
+
+    def visit_ImportFrom(self, node):
+        for name in node.names:
+            self.imported_names[name.name] = node.module
+        return node
+
+    def visit_ClassDef(self, node):
+        self.defined_types.add(node.name)
+        requires = self.parse_signature(node)
+        self.required_types |= requires
+        for child in node.body:
+            self.parents[child] = node
+        self.generic_visit(node)
+        return node
+
+    def visit_FunctionDef(self, node):
+        requires = self.parse_signature(node)
+        self.required_types |= requires
+        for child in node.body:
+            self.parents[child] = node
+        self.generic_visit(node)
+        return node
+
+    def visit_Assign(self, node):
+        parent = self.parents.get(node)
+        for var in node.targets:
+            if isinstance(var, ast.Name):
+                print(parent, var.id)
+            if isinstance(var, ast.Attribute):
+                if var.value.id == 'self':
+                    cls = self.parents[parent]
+                    print(cls.name, var.attr)
+        return node
+
+
 def get_stub(code):
     """Get the stub declarations for a source code.
 
@@ -299,6 +352,9 @@ def get_stub(code):
     :return: Stub declarations for the source code.
     """
     tree = ast.parse(code)
+
+    transformer = PrototypeTransformer()
+    tree = transformer.visit(tree)
 
     namespace = Namespace('module', '', level=0)
     needed_types = set()
@@ -311,14 +367,12 @@ def get_stub(code):
     if len(namespace.components) == 0:
         return ''
 
-    needed_types -= defined_types
+    needed_types = transformer.required_types
+
+    needed_types -= transformer.defined_types
     _logger.debug('defined types: %s', defined_types)
 
-    imported_names = OrderedDict(
-        [(name.name, node.module)
-         for node in tree.body if isinstance(node, ast.ImportFrom)
-         for name in node.names]
-    )
+    imported_names = transformer.imported_names
     _logger.debug('imported names: %s', imported_names)
 
     imported_types = {n for n in imported_names if n in needed_types}
