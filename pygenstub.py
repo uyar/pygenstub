@@ -120,7 +120,7 @@ def get_fields(node, fields_tag='field_list'):
     fields_nodes = [c for c in node.children if c.tagname == fields_tag]
     if len(fields_nodes) == 0:
         return {}
-    assert len(fields_nodes) == 1
+    assert len(fields_nodes) == 1, 'multiple nodes with tag ' + fields_tag
     fields_node = fields_nodes[0]
     fields = [{f.tagname: f.rawsource.strip() for f in n.children}
               for n in fields_node.children if n.tagname == 'field']
