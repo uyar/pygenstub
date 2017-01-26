@@ -285,7 +285,7 @@ def _traverse_namespace(namespace, nodes, required_types, defined_types, code_li
                                 required_types=required_types,
                                 defined_types=defined_types,
                                 code_lines=code_lines)
-            if len(subnamespace.components) > 0:
+            if (len(subnamespace.variables) > 0) or (len(subnamespace.components) > 0):
                 namespace.components.append(subnamespace)
         # elif isinstance(node, ast.Assign):
         #     print([n.id for n in node.targets])
