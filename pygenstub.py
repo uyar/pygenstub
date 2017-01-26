@@ -260,6 +260,9 @@ def _traverse_namespace(namespace, nodes, required_types, defined_types, code_li
                 if SIGNATURE_COMMENT in code_line:
                     _, type_ = code_line.split(SIGNATURE_COMMENT)
                     namespace.variables.append((attribute, type_.strip()))
+                    requires = {n for n in re.findall(r'\w+(?:\.\w+)*', type_)
+                                if n not in BUILTIN_TYPES}
+                    required_types |= requires
         elif isinstance(node, ast.ClassDef):
             subnamespace = Namespace('class', node.name, namespace.level + 1)
             defined_types.add(node.name)
