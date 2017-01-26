@@ -35,6 +35,7 @@ BUILTIN_TYPES = {
 }
 
 SIGNATURE_FIELD = 'sig'
+SIGNATURE_COMMENT = ' # sig: '
 
 LINE_LENGTH_LIMIT = 79
 INDENT_SIZE = 4
@@ -58,11 +59,12 @@ class Namespace(object):
     """
 
     def __init__(self, scope, name, level):
-        self.scope = scope
-        self.name = name
-        self.level = level
-        self.docstring = None
-        self.components = []
+        self.scope = scope      # sig: str
+        self.name = name        # sig: str
+        self.level = level      # sig: int
+        self.docstring = None   # sig: Optional[str]
+        self.components = []    # sig: List
+        self.variables = []     # sig: List[Tuple[str, str]]
 
     def get_stub(self):
         """Get the stub code for this namespace.
@@ -70,9 +72,19 @@ class Namespace(object):
         :sig: () -> str
         :return: Stub code for this namespace.
         """
+        body = ''
+        if len(self.variables) > 0:
+            maxlen = max([len(v) for v, _ in self.variables])
+            attr_defs = ['%(name)s = ... %(space)s # type: %(type)s' % {
+                'name': v,
+                'space': ' ' * (maxlen - len(v)),
+                'type': t
+            } for v, t in self.variables]
+            body = '\n'.join(attr_defs) + '\n\n'
+
         blank_lines = '\n\n' if self.scope == 'module' else '\n'
-        body = blank_lines.join([c.get_stub() if isinstance(c, Namespace) else c
-                                 for c in self.components])
+        body += blank_lines.join([c.get_stub() if isinstance(c, Namespace) else c
+                                  for c in self.components])
         if self.scope == 'class':
             body = 'class %(name)s:\n%(body)s' % {
                 'name': self.name,
@@ -217,7 +229,7 @@ def get_prototype(node):
     return prototype, required_types
 
 
-def _traverse_namespace(namespace, root, required_types, defined_types):
+def _traverse_namespace(namespace, nodes, required_types, defined_types, code_lines):
     """Recursively traverse and collect the prototypes under a node.
 
     The prototypes are accumulated in the ``components`` attribute
@@ -225,13 +237,14 @@ def _traverse_namespace(namespace, root, required_types, defined_types):
     in the ``required_types`` parameter and all types/classes defined
     in the module will be accumulated in the ``defined_types`` parameter.
 
-    :sig: (Namespace, List[ast.AST], Set[str], Set[str]) -> None
+    :sig: (Namespace, List[ast.AST], Set[str], Set[str], Sequence[str]) -> None
     :param namespace: Namespace collecting the prototypes.
-    :param root: Root node to collect the prototypes from.
+    :param nodes: Nodes to collect the prototypes from.
     :param required_types: All types required by type annotations.
     :param defined_types: All types defined in the module.
+    :param code_lines: Source code of module as a sequence of lines.
     """
-    for node in root:
+    for node in nodes:
         if isinstance(node, ast.FunctionDef):
             prototype, requires = get_prototype(node)
             if (prototype == '') and (node.name == '__init__'):
@@ -240,13 +253,25 @@ def _traverse_namespace(namespace, root, required_types, defined_types):
             if prototype != '':
                 namespace.components.append(prototype)
                 required_types |= requires
-        if isinstance(node, ast.ClassDef):
+            attributes = [(t.attr, code_lines[n.lineno - 1])
+                          for n in node.body if isinstance(n, ast.Assign)
+                          for t in n.targets if isinstance(t, ast.Attribute)]
+            for attribute, code_line in attributes:
+                if SIGNATURE_COMMENT in code_line:
+                    _, type_ = code_line.split(SIGNATURE_COMMENT)
+                    namespace.variables.append((attribute, type_.strip()))
+        elif isinstance(node, ast.ClassDef):
             subnamespace = Namespace('class', node.name, namespace.level + 1)
             defined_types.add(node.name)
             subnamespace.docstring = ast.get_docstring(node)
-            _traverse_namespace(subnamespace, node.body, required_types, defined_types)
+            _traverse_namespace(subnamespace, node.body,
+                                required_types=required_types,
+                                defined_types=defined_types,
+                                code_lines=code_lines)
             if len(subnamespace.components) > 0:
                 namespace.components.append(subnamespace)
+        # elif isinstance(node, ast.Assign):
+        #     print([n.id for n in node.targets])
 
 
 def get_stub(code):
@@ -261,7 +286,10 @@ def get_stub(code):
     namespace = Namespace('module', '', level=0)
     needed_types = set()
     defined_types = set()
-    _traverse_namespace(namespace, tree.body, needed_types, defined_types)
+    _traverse_namespace(namespace, tree.body,
+                        required_types=needed_types,
+                        defined_types=defined_types,
+                        code_lines=code.splitlines())
 
     if len(namespace.components) == 0:
         return ''
