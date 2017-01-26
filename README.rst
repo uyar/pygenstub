@@ -135,9 +135,10 @@ Stub:
 TODO
 ----
 
-- Support for instance/class variables.
-- Support for annotations.
-- Sphinx extension for adjusting documentation.
+- class variables
+- decorators
+- superclasses
+- Sphinx extension for adjusting documentation
 
 
 Disclaimer
