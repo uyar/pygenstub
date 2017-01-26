@@ -246,7 +246,7 @@ def _traverse_namespace(namespace, root, required_types, defined_types):
             subnamespace.docstring = ast.get_docstring(node)
             _traverse_namespace(subnamespace, node.body, required_types, defined_types)
             if len(subnamespace.components) > 0:
-               namespace.components.append(subnamespace)
+                namespace.components.append(subnamespace)
 
 
 def get_stub(code):
