@@ -6,7 +6,7 @@ import ast
 import docutils.nodes
 
 
-SIGNATURE_COMMENT = ... # type: '
+SIGNATURE_COMMENT = ...  # type: '
 
 def get_fields(
         node: docutils.nodes.document,
@@ -22,15 +22,30 @@ def split_parameter_types(parameters_def: str) -> List[str]: ...
 def parse_signature(signature: str) -> Tuple[List[str], str]: ...
 
 class StubNode(object):
+    parent = ...    # type: Optional[StubNode]
+    children = ...  # type: List[StubNode]
+
     def __init__(self, parent: Optional['StubNode'] = ...) -> None: ...
-    def add_child(self, node: 'StubNode') -> None: ...
-    def get_code(self) -> str: ...
+
+    def get_code(self, max_var: Optional[int] = ...) -> str: ...
 
 class ClassStubNode(StubNode): ...
+
 class FunctionStubNode(StubNode): ...
+
 class VariableStubNode(StubNode): ...
+
 class SignatureCollector(ast.NodeVisitor):
+    tree = ...            # type: ast.AST
+    stub_tree = ...       # type: StubNode
+    imported_names = ...  # type: OrderedDict
+    defined_types = ...   # type: Set[str]
+    required_types = ...  # type: Set[str]
+    units = ...           # type: List[StubNode]
+    code_lines = ...      # type: Sequence[str]
+
     def __init__(self, code: str) -> None: ...
+
     def traverse(self) -> None: ...
 
 def get_stub(code: str) -> str: ...

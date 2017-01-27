@@ -30,8 +30,10 @@ import sys
 try:
     from textwrap import indent
 except ImportError:     # PY2
-    def indent(t, i):
-        return t if i == '' else '\n'.join([i + l for l in t.splitlines()]) + '\n'
+    def indent(text, lead):
+        if lead == '':
+            return text
+        return '\n'.join([lead + line for line in text.splitlines()]) + '\n'
 
 
 BUILTIN_TYPES = {
@@ -73,10 +75,10 @@ def get_fields(node, fields_tag='field_list'):
 
 
 def get_signature(node):
-    """Get the signature field from the docstring of a node.
+    """Get the signature from the docstring of a node.
 
     :sig: (Union[ast.FunctionDef, ast.ClassDef]) -> Optional[str]
-    :param node: Node to get the signature for.
+    :param node: Node to get the signature from.
     :return: Value of signature field in node docstring.
     """
     docstring = ast.get_docstring(node)
@@ -144,23 +146,19 @@ class StubNode(object):
         self.parent = parent        # sig: Optional[StubNode]
         self.children = []          # sig: List[StubNode]
         if parent is not None:
-            parent.add_child(self)
+            parent.children.append(self)
 
-    def add_child(self, node):
-        """Add a child node to this node.
-
-        :sig: ('StubNode') -> None
-        :param node: Child to add.
-        """
-        self.children.append(node)
-
-    def get_code(self):
+    def get_code(self, max_var=None):
         """Get the prototype code for this node.
 
-        :sig: () -> str
+        :sig: (Optional[int]) -> str
         """
-        blank_lines = '\n' if self.parent is None else ''
-        return blank_lines.join([c.get_code() for c in self.children])
+        var_nodes = [c for c in self.children if isinstance(c, VariableStubNode)]
+        max_len = max([len(v.name) for v in var_nodes])
+        var_stubs = ''.join([c.get_code(max_var=max_len) for c in var_nodes])
+        code_stubs = '\n'.join([c.get_code() for c in self.children
+                                if not isinstance(c, VariableStubNode)])
+        return var_stubs + '\n' + code_stubs
 
 
 class ClassStubNode(StubNode):
@@ -173,11 +171,15 @@ class ClassStubNode(StubNode):
         self.signature = signature
 
     def get_code(self):
-        body = super(ClassStubNode, self).get_code()
-        return 'class %(name)s(%(bases)s):%(body)s' % {
+        if len(self.children) == 0:
+            body = ' ...\n'
+        else:
+            sub_code = super(ClassStubNode, self).get_code()
+            body = '\n' + indent(sub_code, INDENT)
+        return 'class %(name)s%(bases)s:%(body)s' % {
             'name': self.name,
-            'bases': ', '.join(self.bases) if self.bases else '',
-            'body': '\n' + indent(body, INDENT) if len(self.children) > 0 else ' ...'
+            'bases': '(' + ', '.join(self.bases) + ')' if len(self.bases) > 0 else '',
+            'body': body
         }
 
 
@@ -201,7 +203,7 @@ class FunctionStubNode(StubNode):
         parameter_locations = [(a.lineno, a.col_offset)
                                for a in self.ast_node.args.args]
         parameter_defaults = {bisect(parameter_locations, (d.lineno, d.col_offset)) - 1
-                                   for d in self.ast_node.args.defaults}
+                              for d in self.ast_node.args.defaults}
 
         parameter_stubs = [
             n + (': ' + t if t != '' else '') + (' = ...' if i in parameter_defaults else '')
@@ -227,9 +229,12 @@ class VariableStubNode(StubNode):
         self.name = name
         self.type_ = type_
 
-    def get_code(self):
-        return '%(name)s = ... # type: %(type)s\n' % {
+    def get_code(self, max_var=None):
+        if max_var is None:
+            max_var = len(self.name)
+        return '%(name)s = ... %(space)s # type: %(type)s\n' % {
             'name': self.name,
+            'space': (max_var - len(self.name)) * ' ',
             'type': self.type_
         }
 
@@ -242,8 +247,6 @@ class SignatureCollector(ast.NodeVisitor):
     """
 
     def __init__(self, code):
-        self.code_lines = code.splitlines()     # sig: Sequence[str]
-
         self.tree = ast.parse(code)             # sig: ast.AST
         self.stub_tree = StubNode()             # sig: StubNode
 
@@ -252,6 +255,7 @@ class SignatureCollector(ast.NodeVisitor):
         self.required_types = set()             # sig: Set[str]
 
         self.units = [self.stub_tree]           # sig: List[StubNode]
+        self.code_lines = code.splitlines()     # sig: Sequence[str]
 
     def traverse(self):
         """Recursively visit all nodes of the tree and gather signature data.
@@ -309,7 +313,7 @@ class SignatureCollector(ast.NodeVisitor):
                 if isinstance(var, ast.Name):
                     stub_node = VariableStubNode(parent, var.id, type_.strip())
                 if isinstance(var, ast.Attribute) and (var.value.id == 'self'):
-                    stub_node = VariableStubNode(parent, var.attr, type_.strip())
+                    stub_node = VariableStubNode(parent.parent, var.attr, type_.strip())
 
     def get_stub(self):
         needed_types = self.required_types
