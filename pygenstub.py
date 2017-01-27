@@ -128,7 +128,6 @@ class StubNode:
 
     :sig: () -> None
     """
-
     def __init__(self):
         self.variables = []     # sig: List[VariableNode]
         self.children = []      # sig: List[Union[FunctionNode, ClassNode]]
@@ -185,8 +184,13 @@ class VariableNode(StubNode):
 
 
 class FunctionNode(StubNode):
-    """A node representing a function in a stub tree."""
+    """A node representing a function in a stub tree.
 
+    :sig: (str, str, ast.AST) -> None
+    :param name: Name of function.
+    :param signature: Signature of function.
+    :param ast_node: Node in AST tree corresponding to function.
+    """
     def __init__(self, name, signature, ast_node):
         super().__init__()
         self.name = name            # sig: str
@@ -227,8 +231,13 @@ class FunctionNode(StubNode):
 
 
 class ClassNode(StubNode):
-    """A node representing a class in a stub tree."""
+    """A node representing a class in a stub tree.
 
+    :sig: (str, Sequence[str], str) -> None
+    :param name: Name of class.
+    :param bases: Base classes of class.
+    :param signature: Signature of class.
+    """
     def __init__(self, name, bases, signature):
         super().__init__()
         self.name = name            # sig: str

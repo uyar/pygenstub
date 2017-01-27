@@ -42,9 +42,24 @@ class VariableNode(StubNode):
 
     def __init__(self, name: str, type_: str) -> None: ...
 
-class FunctionNode(StubNode): ...
+class FunctionNode(StubNode):
+    name = ...       # type: str
+    signature = ...  # type: str
+    ast_node = ...   # type: ast.AST
 
-class ClassNode(StubNode): ...
+    def __init__(self, name: str, signature: str, ast_node: ast.AST) -> None: ...
+
+class ClassNode(StubNode):
+    name = ...       # type: str
+    bases = ...      # type: Sequence[str]
+    signature = ...  # type: str
+
+    def __init__(
+            self,
+            name: str,
+            bases: Sequence[str],
+            signature: str
+    ) -> None: ...
 
 class SignatureCollector(ast.NodeVisitor):
     tree = ...            # type: ast.AST
