@@ -35,7 +35,7 @@ class StubNode:
 
     def add_child(self, node: Union[FunctionNode, ClassNode]) -> None: ...
 
-    def get_code(self, *args, **kwargs) -> str: ...
+    def get_code(self, **kwargs) -> str: ...
 
 class VariableNode(StubNode):
     name = ...   # type: str
@@ -63,6 +63,8 @@ class ClassNode(StubNode):
             bases: Sequence[str],
             signature: str
     ) -> None: ...
+
+    def get_code(self) -> str: ...
 
 class SignatureCollector(ast.NodeVisitor):
     tree = ...            # type: ast.AST

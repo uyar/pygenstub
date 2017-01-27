@@ -151,7 +151,7 @@ class StubNode:
         self.children.append(node)
         node.parent = self
 
-    def get_code(self, *args, **kwargs):
+    def get_code(self, **kwargs):
         """Get the prototype code for this node.
 
         :sig: () -> str
@@ -178,7 +178,7 @@ class VariableNode(StubNode):
         """Get the prototype code for this variable.
 
         :sig: (Optional[int]) -> str
-        :param align: Number of spaces to use for alignment.
+        :param align: Position of hash symbol for alignment.
         """
         spaces = align - len(self.name) if align > 0 else 0
         return '%(name)s = ... %(space)s # type: %(type)s\n' % {
@@ -202,7 +202,8 @@ class FunctionNode(StubNode):
         self.signature = signature  # sig: str
         self.ast_node = ast_node    # sig: ast.AST
 
-    def get_code(self, **kwargs):
+    def get_code(self):
+        _logger.debug('parsing signature for %s', self.name)
         parameter_types, return_type = parse_signature(self.signature)
         _logger.debug('parameter types: %s', parameter_types)
         _logger.debug('return type: %s', return_type)
@@ -257,7 +258,11 @@ class ClassNode(StubNode):
         self.bases = bases          # sig: Sequence[str]
         self.signature = signature  # sig: str
 
-    def get_code(self, **kwargs):
+    def get_code(self):
+        """Get the prototype code for this class.
+
+        :sig: () -> str
+        """
         if len(self.children) == 0:
             body = ' ...\n'
         else:
@@ -277,7 +282,6 @@ class SignatureCollector(ast.NodeVisitor):
     :sig: (str) -> None
     :param code: Source code to scan.
     """
-
     def __init__(self, code):
         self.tree = ast.parse(code)             # sig: ast.AST
         self.stub_tree = StubNode()             # sig: StubNode
@@ -328,7 +332,7 @@ class SignatureCollector(ast.NodeVisitor):
             self.required_types |= requires
 
             parent = self.units[-1]
-            stub_node = FunctionNode(node.name, signature, node)
+            stub_node = FunctionNode(node.name, signature=signature, ast_node=node)
             parent.add_child(stub_node)
 
             self.units.append(stub_node)
@@ -337,16 +341,18 @@ class SignatureCollector(ast.NodeVisitor):
 
     def visit_ClassDef(self, node):
         self.defined_types.add(node.name)
+
         signature = get_signature(node)
         if signature is not None:
             requires = set(_RE_NAMES.findall(signature)) - BUILTIN_TYPES
             self.required_types |= requires
 
-        parent = self.units[-1]
         bases = [n.value.id + '.' + n.attr if isinstance(n, ast.Attribute) else n.id
                  for n in node.bases]
         self.required_types |= set(bases) - BUILTIN_TYPES
+
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
+        parent = self.units[-1]
         parent.add_child(stub_node)
 
         self.units.append(stub_node)
