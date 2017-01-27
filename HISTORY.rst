@@ -11,6 +11,7 @@ History
 * Support for superclasses.
 * Shortened the field name from "signature" to "sig".
 * Use three dots instead of actual value for parameter defaults.
+* Dropped support for Python 2.
 
 1.0a4 (2017-01-06)
 ------------------

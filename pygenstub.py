@@ -13,32 +13,22 @@
 # You should have received a copy of the GNU General Public License
 # along with pygenstub.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, unicode_literals
-
 from argparse import ArgumentParser
 from bisect import bisect
-from codecs import open
 from collections import OrderedDict
 from docutils.core import publish_doctree
 from io import StringIO
+from textwrap import indent
 
 import ast
 import logging
 import re
 import sys
 
-try:
-    from textwrap import indent
-except ImportError:     # PY2
-    def indent(text, lead):
-        if lead == '':
-            return text
-        return '\n'.join([lead + line for line in text.splitlines()]) + '\n'
-
 
 BUILTIN_TYPES = {
-    'int', 'float', 'bool', 'str', 'bytes', 'unicode',
-    'tuple', 'list', 'set', 'dict', 'None', 'object'
+    'int', 'float', 'bool', 'str', 'bytes',
+    'tuple', 'list', 'set', 'dict', 'None'
 }
 
 SIGNATURE_FIELD = 'sig'
@@ -130,12 +120,10 @@ def parse_signature(signature):
     lhs, return_type = [s.strip() for s in signature.split(' -> ')]
     parameters_def = lhs[1:-1].strip()  # remove the () around parameter list
     parameter_types = split_parameter_types(parameters_def)
-    _logger.debug('parameter types: %s', parameter_types)
-    _logger.debug('return type: %s', return_type)
     return parameter_types, return_type
 
 
-class StubNode(object):
+class StubNode:
     """A node in a stub tree.
 
     :sig: (Optional['StubNode']) -> None
@@ -148,29 +136,32 @@ class StubNode(object):
         if parent is not None:
             parent.children.append(self)
 
-    def get_code(self, max_var=None):
+    def get_code(self, **kwargs):
         """Get the prototype code for this node.
 
         :sig: (Optional[int]) -> str
         """
         var_nodes = [c for c in self.children if isinstance(c, VariableNode)]
         max_len = max([len(v.name) for v in var_nodes])
-        var_stubs = ''.join([c.get_code(max_var=max_len) for c in var_nodes])
+        var_stubs = ''.join([c.get_code(max_len=max_len) for c in var_nodes])
         code_stubs = '\n'.join([c.get_code() for c in self.children
                                 if not isinstance(c, VariableNode)])
         return var_stubs + '\n' + code_stubs
 
 
 class ClassNode(StubNode):
-    """A node representing a class in a stub tree."""
+    """A node representing a class in a stub tree.
 
-    def __init__(self, parent, name, bases, signature):
-        super(ClassNode, self).__init__(parent)
+    :sig: (str, Sequence[str], str) -> None
+    """
+
+    def __init__(self, name, bases, signature, **kwargs):
+        super().__init__(**kwargs)
         self.name = name            # sig: str
         self.bases = bases          # sig: Sequence[str]
         self.signature = signature  # sig: str
 
-    def get_code(self):
+    def get_code(self, **kwargs):
         if len(self.children) == 0:
             body = ' ...\n'
         else:
@@ -186,19 +177,20 @@ class ClassNode(StubNode):
 class FunctionNode(StubNode):
     """A node representing a function in a stub tree."""
 
-    def __init__(self, parent, name, signature, ast_node):
-        super(FunctionNode, self).__init__(parent)
+    def __init__(self, name, signature, ast_node, **kwargs):
+        super().__init__(**kwargs)
         self.name = name            # sig: str
         self.signature = signature  # sig: str
         self.ast_node = ast_node    # sig: ast.AST
 
-    def get_code(self):
+    def get_code(self, **kwargs):
         parameter_types, return_type = parse_signature(self.signature)
-        parameters = [arg.arg if hasattr(arg, 'arg') else arg.id
-                      for arg in self.ast_node.args.args]
+        _logger.debug('parameter types: %s', parameter_types)
+        _logger.debug('return type: %s', return_type)
+        parameters = [arg.arg for arg in self.ast_node.args.args]
         if (len(parameters) > 0) and (parameters[0] == 'self'):
             parameter_types.insert(0, '')
-        assert len(parameter_types) == len(parameters)
+        # assert len(parameter_types) == len(parameters)
 
         parameter_locations = [(a.lineno, a.col_offset)
                                for a in self.ast_node.args.args]
@@ -224,17 +216,17 @@ class FunctionNode(StubNode):
 
 
 class VariableNode(StubNode):
-    def __init__(self, parent, name, type_):
-        super(VariableNode, self).__init__(parent)
+    def __init__(self, name, type_, **kwargs):
+        super().__init__(**kwargs)
         self.name = name    # sig: str
         self.type_ = type_  # sig: str
 
-    def get_code(self, max_var=None):
-        if max_var is None:
-            max_var = len(self.name)
+    def get_code(self, max_len=None):
+        if max_len is None:
+            max_len = len(self.name)
         return '%(name)s = ... %(space)s # type: %(type)s\n' % {
             'name': self.name,
-            'space': (max_var - len(self.name)) * ' ',
+            'space': (max_len - len(self.name)) * ' ',
             'type': self.type_
         }
 
@@ -279,7 +271,7 @@ class SignatureCollector(ast.NodeVisitor):
         bases = [n.value.id + '.' + n.attr if isinstance(n, ast.Attribute) else n.id
                  for n in node.bases]
         self.required_types |= set(bases) - BUILTIN_TYPES
-        stub_node = ClassNode(parent, node.name, bases=bases, signature=signature)
+        stub_node = ClassNode(node.name, parent=parent, bases=bases, signature=signature)
 
         self.units.append(stub_node)
         self.generic_visit(node)
@@ -298,7 +290,7 @@ class SignatureCollector(ast.NodeVisitor):
             self.required_types |= requires
 
             parent = self.units[-1]
-            stub_node = FunctionNode(parent, node.name, signature, node)
+            stub_node = FunctionNode(node.name, signature, node, parent=parent)
 
             self.units.append(stub_node)
             self.generic_visit(node)
@@ -313,9 +305,9 @@ class SignatureCollector(ast.NodeVisitor):
             self.required_types |= requires
             for var in node.targets:
                 if isinstance(var, ast.Name):
-                    stub_node = VariableNode(parent, var.id, type_.strip())
+                    stub_node = VariableNode(var.id, type_.strip(), parent=parent)
                 if isinstance(var, ast.Attribute) and (var.value.id == 'self'):
-                    stub_node = VariableNode(parent.parent, var.attr, type_.strip())
+                    stub_node = VariableNode(var.attr, type_.strip(), parent=parent.parent)
 
     def get_stub(self):
         needed_types = self.required_types
