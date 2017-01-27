@@ -135,7 +135,6 @@ Stub:
 TODO
 ----
 
-- *args
 - class variables
 - decorators
 - Sphinx extension for adjusting documentation

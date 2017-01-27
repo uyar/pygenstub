@@ -151,7 +151,7 @@ class StubNode:
         self.children.append(node)
         node.parent = self
 
-    def get_code(self, **kwargs):
+    def get_code(self, *args, **kwargs):
         """Get the prototype code for this node.
 
         :sig: () -> str
@@ -210,6 +210,10 @@ class FunctionNode(StubNode):
         parameters = [arg.arg for arg in self.ast_node.args.args]
         if (len(parameters) > 0) and (parameters[0] == 'self'):
             parameter_types.insert(0, '')
+        vararg = self.ast_node.args.vararg
+        if vararg is not None:
+            parameters.append('*' + vararg.arg)
+            parameter_types.append('')
         kw_args = self.ast_node.args.kwarg
         if kw_args is not None:
             parameters.append('**' + kw_args.arg)
