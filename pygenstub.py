@@ -274,7 +274,7 @@ class SignatureCollector(ast.NodeVisitor):
             self.required_types |= requires
 
         parent = self.units[-1]
-        bases = [n.id for n in node.bases if isinstance(n, ast.Name)]
+        bases = [n.value.id if isinstance(n, ast.Attribute) else n.id for n in node.bases]
         self.required_types |= {c for c in bases if c not in BUILTIN_TYPES}
         stub_node = ClassStubNode(parent, node.name, bases=bases, signature=signature)
 
