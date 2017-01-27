@@ -37,7 +37,7 @@ except ImportError:     # PY2
 
 BUILTIN_TYPES = {
     'int', 'float', 'bool', 'str', 'bytes', 'unicode',
-    'tuple', 'list', 'set', 'dict', 'None'
+    'tuple', 'list', 'set', 'dict', 'None', 'object'
 }
 
 SIGNATURE_FIELD = 'sig'
@@ -90,20 +90,20 @@ def get_signature(node):
     return fields.get(SIGNATURE_FIELD)
 
 
-def split_parameter_types(parameter_types):
+def split_parameter_types(parameters_def):
     """Split a full parameter types declaration into individual types.
 
     :sig: (str) -> List[str]
-    :param parameter_types: Parameter types declaration in the signature.
+    :param parameters_def: Parameter types declaration in the signature.
     :return: Types of parameters.
     """
-    if parameter_types == '':
+    if parameters_def == '':
         return []
 
     # only consider the top level commas, ignore the ones in []
     commas = []
     bracket_depth = 0
-    for i, char in enumerate(parameter_types):
+    for i, char in enumerate(parameters_def):
         if (char == ',') and (bracket_depth == 0):
             commas.append(i)
         elif char == '[':
@@ -114,10 +114,10 @@ def split_parameter_types(parameter_types):
     types = []
     last_i = 0
     for i in commas:
-        types.append(parameter_types[last_i:i].strip())
+        types.append(parameters_def[last_i:i].strip())
         last_i = i + 1
     else:
-        types.append(parameter_types[last_i:].strip())
+        types.append(parameters_def[last_i:].strip())
     return types
 
 
@@ -134,23 +134,6 @@ def parse_signature(signature):
     _logger.debug('parameter types: %s', parameter_types)
     _logger.debug('return type: %s', return_type)
     return parameter_types, return_type
-
-
-def get_parameter_declaration(name, type_, has_default=False):
-    """Get the parameter declaration part of a stub.
-
-    :sig: (str, str, Optional[bool]) -> str
-    :param name: Name of parameter.
-    :param type_: Type of parameter.
-    :param has_default: Whether parameter has a default value or not.
-    :return: Parameter declaration to be used in function stub.
-    """
-    if type_ == '':
-        return name
-    out = name + ': ' + type_
-    if has_default:
-        out += ' = ...'
-    return out
 
 
 class StubNode(object):
@@ -188,15 +171,17 @@ class StubNode(object):
 class ClassStubNode(StubNode):
     """A node representing a class in a stub tree."""
 
-    def __init__(self, parent, name, signature):
+    def __init__(self, parent, name, bases, signature):
         super(ClassStubNode, self).__init__(parent)
         self.name = name
+        self.bases = bases
         self.signature = signature
 
     def get_code(self):
         body = super(ClassStubNode, self).get_code()
-        return 'class %(name)s:\n%(body)s' % {
+        return 'class %(name)s(%(bases)s):\n%(body)s' % {
             'name': self.name,
+            'bases': ', '.join(self.bases) if self.bases else '',
             'body': indent(body, INDENT)
         }
 
@@ -224,21 +209,20 @@ class FunctionStubNode(StubNode):
                                    for d in self.ast_node.args.defaults}
 
         parameter_stubs = [
-            get_parameter_declaration(n, t, i in parameter_defaults)
+            n + (': ' + t if t != '' else '') + (' = ...' if i in parameter_defaults else '')
             for i, (n, t) in enumerate(zip(parameters, parameter_types))]
         prototype = 'def %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
             'name': self.ast_node.name,
             'params': ', '.join(parameter_stubs),
             'rtype': return_type
         }
-        if len(prototype) > LINE_LENGTH_LIMIT:
-            prototype = 'def %(name)s(\n%(indent)s%(params)s\n) -> %(rtype)s: ...\n' % {
-                'name': self.ast_node.name,
-                'indent': MULTILINE_STUB_INDENT,
-                'params': (',\n' + MULTILINE_STUB_INDENT).join(
-                    parameter_stubs),
-                'rtype': return_type
-            }
+        # if len(prototype) > LINE_LENGTH_LIMIT:
+        #     prototype = 'def %(name)s(\n%(indent)s%(params)s\n) -> %(rtype)s: ...\n' % {
+        #         'name': self.ast_node.name,
+        #         'indent': MULTILINE_STUB_INDENT,
+        #         'params': (',\n' + MULTILINE_STUB_INDENT).join(parameter_stubs),
+        #         'rtype': return_type
+        #     }
         return prototype
 
 
@@ -256,7 +240,7 @@ class SignatureCollector(ast.NodeVisitor):
     """A collector that scans a source code and gathers signature data.
 
     :sig: (str) -> None
-    :param code: Source code to traverse.
+    :param code: Source code to scan.
     """
 
     def __init__(self, code):
@@ -290,7 +274,9 @@ class SignatureCollector(ast.NodeVisitor):
             self.required_types |= requires
 
         parent = self.units[-1]
-        stub_node = ClassStubNode(parent, node.name, signature=signature)
+        bases = [n.id for n in node.bases if isinstance(n, ast.Name)]
+        self.required_types |= {c for c in bases if c not in BUILTIN_TYPES}
+        stub_node = ClassStubNode(parent, node.name, bases=bases, signature=signature)
 
         self.units.append(stub_node)
         self.generic_visit(node)

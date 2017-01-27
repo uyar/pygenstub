@@ -8,6 +8,7 @@ History
 
 * Support for methods.
 * Support for instance variables.
+* Support for superclasses.
 * Shortened the field name from "signature" to "sig".
 * Use three dots instead of actual value for parameter defaults.
 

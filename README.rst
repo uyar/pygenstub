@@ -138,7 +138,6 @@ TODO
 - *args and **kwargs
 - class variables
 - decorators
-- superclasses
 - Sphinx extension for adjusting documentation
 
 
