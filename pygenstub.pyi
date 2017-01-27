@@ -24,28 +24,18 @@ def split_parameter_types(parameters_def: str) -> List[str]: ...
 def parse_signature(signature: str) -> Tuple[List[str], str]: ...
 
 class StubNode:
-    parent = ...    # type: Optional[StubNode]
-    children = ...  # type: List[StubNode]
-
-    def __init__(self, parent: Optional['StubNode'] = ...) -> None: ...
 
     def get_code(self) -> str: ...
 
-class ClassNode(StubNode):
-    name = ...       # type: str
-    bases = ...      # type: Sequence[str]
-    signature = ...  # type: str
+class VariableNode(StubNode):
+    name = ...   # type: str
+    type_ = ...  # type: str
 
-    def __init__(
-            self,
-            name: str,
-            bases: Sequence[str],
-            signature: str
-    ) -> None: ...
+    def __init__(self, name: str, type_: str) -> None: ...
 
 class FunctionNode(StubNode): ...
 
-class VariableNode(StubNode): ...
+class ClassNode(StubNode): ...
 
 class SignatureCollector(ast.NodeVisitor):
     tree = ...            # type: ast.AST
