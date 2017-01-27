@@ -166,9 +166,9 @@ class ClassNode(StubNode):
 
     def __init__(self, parent, name, bases, signature):
         super(ClassNode, self).__init__(parent)
-        self.name = name
-        self.bases = bases
-        self.signature = signature
+        self.name = name            # sig: str
+        self.bases = bases          # sig: Sequence[str]
+        self.signature = signature  # sig: str
 
     def get_code(self):
         if len(self.children) == 0:
@@ -188,9 +188,9 @@ class FunctionNode(StubNode):
 
     def __init__(self, parent, name, signature, ast_node):
         super(FunctionNode, self).__init__(parent)
-        self.name = name
-        self.signature = signature
-        self.ast_node = ast_node
+        self.name = name            # sig: str
+        self.signature = signature  # sig: str
+        self.ast_node = ast_node    # sig: ast.AST
 
     def get_code(self):
         parameter_types, return_type = parse_signature(self.signature)
@@ -226,8 +226,8 @@ class FunctionNode(StubNode):
 class VariableNode(StubNode):
     def __init__(self, parent, name, type_):
         super(VariableNode, self).__init__(parent)
-        self.name = name
-        self.type_ = type_
+        self.name = name    # sig: str
+        self.type_ = type_  # sig: str
 
     def get_code(self, max_var=None):
         if max_var is None:
@@ -272,7 +272,7 @@ class SignatureCollector(ast.NodeVisitor):
         self.defined_types.add(node.name)
         signature = get_signature(node)
         if signature is not None:
-            requires = {n for n in _RE_NAMES.findall(signature) if n not in BUILTIN_TYPES}
+            requires = set( _RE_NAMES.findall(signature)) - BUILTIN_TYPES
             self.required_types |= requires
 
         parent = self.units[-1]
@@ -294,7 +294,7 @@ class SignatureCollector(ast.NodeVisitor):
                 signature = parent.signature
 
         if signature is not None:
-            requires = {n for n in _RE_NAMES.findall(signature) if n not in BUILTIN_TYPES}
+            requires = set(_RE_NAMES.findall(signature)) - BUILTIN_TYPES
             self.required_types |= requires
 
             parent = self.units[-1]
@@ -309,7 +309,7 @@ class SignatureCollector(ast.NodeVisitor):
         code_line = self.code_lines[node.lineno - 1]
         if SIGNATURE_COMMENT in code_line:
             _, type_ = code_line.split(SIGNATURE_COMMENT)
-            requires = {n for n in _RE_NAMES.findall(type_) if n not in BUILTIN_TYPES}
+            requires = set(_RE_NAMES.findall(type_)) - BUILTIN_TYPES
             self.required_types |= requires
             for var in node.targets:
                 if isinstance(var, ast.Name):
@@ -323,7 +323,7 @@ class SignatureCollector(ast.NodeVisitor):
         needed_types -= self.defined_types
         _logger.debug('defined types: %s', self.defined_types)
 
-        imported_types = {n for n in self.imported_names if n in needed_types}
+        imported_types = set(self.imported_names) & needed_types
         needed_types -= imported_types
         _logger.debug('imported names: %s', self.imported_names)
         _logger.debug('used imported types: %s', imported_types)
