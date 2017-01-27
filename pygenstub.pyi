@@ -55,13 +55,13 @@ class FunctionNode(StubNode):
 class ClassNode(StubNode):
     name = ...       # type: str
     bases = ...      # type: Sequence[str]
-    signature = ...  # type: str
+    signature = ...  # type: Optional[str]
 
     def __init__(
             self,
             name: str,
             bases: Sequence[str],
-            signature: str
+            signature: Optional[str] = ...
     ) -> None: ...
 
     def get_code(self) -> str: ...

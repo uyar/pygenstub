@@ -247,16 +247,16 @@ class FunctionNode(StubNode):
 class ClassNode(StubNode):
     """A node representing a class in a stub tree.
 
-    :sig: (str, Sequence[str], str) -> None
+    :sig: (str, Sequence[str], Optional[str]) -> None
     :param name: Name of class.
     :param bases: Base classes of class.
-    :param signature: Signature of class.
+    :param signature: Signature of class to be used in __init__ method.
     """
-    def __init__(self, name, bases, signature):
+    def __init__(self, name, bases, signature=None):
         super().__init__()
         self.name = name            # sig: str
         self.bases = bases          # sig: Sequence[str]
-        self.signature = signature  # sig: str
+        self.signature = signature  # sig: Optional[str]
 
     def get_code(self):
         """Get the prototype code for this class.
@@ -266,8 +266,7 @@ class ClassNode(StubNode):
         if len(self.children) == 0:
             body = ' ...\n'
         else:
-            sub_code = super().get_code()
-            body = '\n' + indent(sub_code, INDENT)
+            body = '\n' + indent(super().get_code(), INDENT)
         bases = ', '.join(self.bases)
         return 'class %(name)s%(bases)s:%(body)s' % {
             'name': self.name,
@@ -310,6 +309,7 @@ class SignatureCollector(ast.NodeVisitor):
             _, type_ = line.split(SIGNATURE_COMMENT)
             requires = set(_RE_NAMES.findall(type_)) - BUILTIN_TYPES
             self.required_types |= requires
+
             parent = self.units[-1]
             for var in node.targets:
                 if isinstance(var, ast.Name):
@@ -351,8 +351,8 @@ class SignatureCollector(ast.NodeVisitor):
                  for n in node.bases]
         self.required_types |= set(bases) - BUILTIN_TYPES
 
-        stub_node = ClassNode(node.name, bases=bases, signature=signature)
         parent = self.units[-1]
+        stub_node = ClassNode(node.name, bases=bases, signature=signature)
         parent.add_child(stub_node)
 
         self.units.append(stub_node)
