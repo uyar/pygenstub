@@ -157,16 +157,16 @@ class StubNode:
         :sig: () -> str
         """
         max_len = max([len(v.name) for v in self.variables] + [0])
-        var_stubs = ''.join([c.get_code(max_len) for c in self.variables])
-        code_stubs = '\n'.join([c.get_code() for c in self.children])
-        return var_stubs + '\n' if var_stubs != '' else '' + code_stubs
+        sub_vars = ''.join([c.get_code(align=max_len) for c in self.variables])
+        sub_codes = '\n'.join([c.get_code() for c in self.children])
+        return sub_vars + ('\n' if sub_vars != '' else '') + sub_codes
 
 
 class VariableNode(StubNode):
     """A node representing an assignment in a stub tree.
 
     :sig: (str, str) -> None
-    :param name: Name of variable or attribute.
+    :param name: Name of variable that is being assigned to.
     :param type_: Type of variable.
     """
     def __init__(self, name, type_):
@@ -174,13 +174,13 @@ class VariableNode(StubNode):
         self.name = name    # sig: str
         self.type_ = type_  # sig: str
 
-    def get_code(self, max_len):
+    def get_code(self, align=0):
         """Get the prototype code for this variable.
 
-        :sig: (int) -> str
-        :param max_len: Maximum length of all variables in this scope.
+        :sig: (Optional[int]) -> str
+        :param align: Number of spaces to use for alignment.
         """
-        spaces = max_len - len(self.name) if max_len > 0 else 0
+        spaces = align - len(self.name) if align > 0 else 0
         return '%(name)s = ... %(space)s # type: %(type)s\n' % {
             'name': self.name,
             'space': spaces * ' ',
