@@ -34,13 +34,15 @@ class StubNode:
 
     def add_child(self, node: Union[FunctionNode, ClassNode]) -> None: ...
 
-    def get_code(self) -> str: ...
+    def get_code(self, **kwargs) -> str: ...
 
 class VariableNode(StubNode):
     name = ...   # type: str
     type_ = ...  # type: str
 
     def __init__(self, name: str, type_: str) -> None: ...
+
+    def get_code(self, max_len: int) -> str: ...
 
 class FunctionNode(StubNode):
     name = ...       # type: str

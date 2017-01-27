@@ -134,7 +134,7 @@ class StubNode:
         self.parent = None      # sig: Optional[StubNode]
 
     def add_variable(self, node):
-        """Add a variable child node to this node.
+        """Add a variable node to this node.
 
         :sig: (VariableNode) -> None
         :param node: Variable node to add.
@@ -143,7 +143,7 @@ class StubNode:
         node.parent = self
 
     def add_child(self, node):
-        """Add a function or class child node to this node.
+        """Add a function or class node to this node.
 
         :sig: (Union[FunctionNode, ClassNode]) -> None
         :param node: Variable node to add.
@@ -154,10 +154,10 @@ class StubNode:
     def get_code(self, **kwargs):
         """Get the prototype code for this node.
 
-        :sig: (Optional[int]) -> str
+        :sig: () -> str
         """
         max_len = max([len(v.name) for v in self.variables] + [0])
-        var_stubs = ''.join([c.get_code(max_len=max_len) for c in self.variables])
+        var_stubs = ''.join([c.get_code(max_len) for c in self.variables])
         code_stubs = '\n'.join([c.get_code() for c in self.children])
         return var_stubs + '\n' + code_stubs
 
@@ -174,8 +174,13 @@ class VariableNode(StubNode):
         self.name = name    # sig: str
         self.type_ = type_  # sig: str
 
-    def get_code(self, **kwargs):
-        spaces = kwargs.get('max_len', len(self.name)) - len(self.name)
+    def get_code(self, max_len):
+        """Get the prototype code for this variable.
+
+        :sig: (int) -> str
+        :param max_len: Maximum length of all variables in this scope.
+        """
+        spaces = max_len - len(self.name) if max_len > 0 else 0
         return '%(name)s = ... %(space)s # type: %(type)s\n' % {
             'name': self.name,
             'space': spaces * ' ',
@@ -205,7 +210,11 @@ class FunctionNode(StubNode):
         parameters = [arg.arg for arg in self.ast_node.args.args]
         if (len(parameters) > 0) and (parameters[0] == 'self'):
             parameter_types.insert(0, '')
-        # assert len(parameter_types) == len(parameters)
+        kw_args = self.ast_node.args.kwarg
+        if kw_args is not None:
+            parameters.append('**' + kw_args.arg)
+            parameter_types.append('')
+        assert len(parameter_types) == len(parameters), self.ast_node.name
 
         parameter_locations = [(a.lineno, a.col_offset)
                                for a in self.ast_node.args.args]
