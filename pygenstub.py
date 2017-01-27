@@ -31,8 +31,8 @@ BUILTIN_TYPES = {
     'tuple', 'list', 'set', 'dict', 'None', 'object'
 }
 
-SIGNATURE_FIELD = 'sig'
-SIGNATURE_COMMENT = ' # sig: '
+SIGNATURE_FIELD = 'sig'         # sig: str
+SIGNATURE_COMMENT = ' # sig: '  # sig: str
 
 LINE_LENGTH_LIMIT = 79
 INDENT = 4 * ' '
@@ -300,12 +300,12 @@ class SignatureCollector(ast.NodeVisitor):
             self.imported_names[name.name] = node.module
 
     def visit_Assign(self, node):
-        parent = self.units[-1]
-        code_line = self.code[node.lineno - 1]
-        if SIGNATURE_COMMENT in code_line:
-            _, type_ = code_line.split(SIGNATURE_COMMENT)
+        line = self.code[node.lineno - 1].replace("'" + SIGNATURE_COMMENT, "'")
+        if SIGNATURE_COMMENT in line:
+            _, type_ = line.split(SIGNATURE_COMMENT)
             requires = set(_RE_NAMES.findall(type_)) - BUILTIN_TYPES
             self.required_types |= requires
+            parent = self.units[-1]
             for var in node.targets:
                 if isinstance(var, ast.Name):
                     stub_node = VariableNode(var.id, type_.strip())
@@ -338,7 +338,7 @@ class SignatureCollector(ast.NodeVisitor):
         self.defined_types.add(node.name)
         signature = get_signature(node)
         if signature is not None:
-            requires = set( _RE_NAMES.findall(signature)) - BUILTIN_TYPES
+            requires = set(_RE_NAMES.findall(signature)) - BUILTIN_TYPES
             self.required_types |= requires
 
         parent = self.units[-1]

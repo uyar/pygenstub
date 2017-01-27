@@ -8,7 +8,8 @@ import ast
 import docutils.nodes
 
 
-SIGNATURE_COMMENT = ...  # type: '
+SIGNATURE_FIELD = ...    # type: str
+SIGNATURE_COMMENT = ...  # type: str
 
 def get_fields(
         node: docutils.nodes.document,
