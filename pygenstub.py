@@ -124,20 +124,33 @@ def parse_signature(signature):
 
 
 class StubNode:
-    """A node in a stub tree."""
+    """A node in a stub tree.
+
+    :sig: () -> None
+    """
 
     def __init__(self):
         self.variables = []     # sig: List[VariableNode]
         self.children = []      # sig: List[Union[FunctionNode, ClassNode]]
         self.parent = None      # sig: Optional[StubNode]
 
-    def add_variable(self, variable):
-        self.variables.append(variable)
-        variable.parent = self
+    def add_variable(self, node):
+        """Add a variable child node to this node.
 
-    def add_child(self, child):
-        self.children.append(child)
-        child.parent = self
+        :sig: (VariableNode) -> None
+        :param node: Variable node to add.
+        """
+        self.variables.append(node)
+        node.parent = self
+
+    def add_child(self, node):
+        """Add a function or class child node to this node.
+
+        :sig: (Union[FunctionNode, ClassNode]) -> None
+        :param node: Variable node to add.
+        """
+        self.children.append(node)
+        node.parent = self
 
     def get_code(self, **kwargs):
         """Get the prototype code for this node.
