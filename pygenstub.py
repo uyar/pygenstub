@@ -127,13 +127,17 @@ class StubNode:
     """A node in a stub tree."""
 
     def __init__(self):
-        self.parent = None      # sig: Optional[StubNode]
         self.variables = []     # sig: List[VariableNode]
         self.children = []      # sig: List[Union[FunctionNode, ClassNode]]
+        self.parent = None      # sig: Optional[StubNode]
 
-    def set_parent(self, parent):
-        self.parent = parent
-        parent.children.append(self)
+    def add_variable(self, variable):
+        self.variables.append(variable)
+        variable.parent = self
+
+    def add_child(self, child):
+        self.children.append(child)
+        child.parent = self
 
     def get_code(self, **kwargs):
         """Get the prototype code for this node.
@@ -158,10 +162,6 @@ class VariableNode(StubNode):
         self.name = name    # sig: str
         self.type_ = type_  # sig: str
 
-    def set_parent(self, parent):
-        self.parent = parent
-        parent.variables.append(self)
-
     def get_code(self, **kwargs):
         spaces = kwargs.get('max_len', len(self.name)) - len(self.name)
         return '%(name)s = ... %(space)s # type: %(type)s\n' % {
@@ -184,6 +184,7 @@ class FunctionNode(StubNode):
         parameter_types, return_type = parse_signature(self.signature)
         _logger.debug('parameter types: %s', parameter_types)
         _logger.debug('return type: %s', return_type)
+
         parameters = [arg.arg for arg in self.ast_node.args.args]
         if (len(parameters) > 0) and (parameters[0] == 'self'):
             parameter_types.insert(0, '')
@@ -273,10 +274,10 @@ class SignatureCollector(ast.NodeVisitor):
             for var in node.targets:
                 if isinstance(var, ast.Name):
                     stub_node = VariableNode(var.id, type_.strip())
-                    stub_node.set_parent(parent)
+                    parent.add_variable(stub_node)
                 if isinstance(var, ast.Attribute) and (var.value.id == 'self'):
                     stub_node = VariableNode(var.attr, type_.strip())
-                    stub_node.set_parent(parent.parent)
+                    parent.parent.add_variable(stub_node)
 
     def visit_FunctionDef(self, node):
         signature = get_signature(node)
@@ -292,7 +293,7 @@ class SignatureCollector(ast.NodeVisitor):
 
             parent = self.units[-1]
             stub_node = FunctionNode(node.name, signature, node)
-            stub_node.set_parent(parent)
+            parent.add_child(stub_node)
 
             self.units.append(stub_node)
             self.generic_visit(node)
@@ -310,7 +311,7 @@ class SignatureCollector(ast.NodeVisitor):
                  for n in node.bases]
         self.required_types |= set(bases) - BUILTIN_TYPES
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
-        stub_node.set_parent(parent)
+        parent.add_child(stub_node)
 
         self.units.append(stub_node)
         self.generic_visit(node)
