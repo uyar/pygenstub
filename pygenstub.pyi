@@ -44,7 +44,7 @@ class SignatureCollector(ast.NodeVisitor):
     defined_types = ...   # type: Set[str]
     required_types = ...  # type: Set[str]
     units = ...           # type: List[StubNode]
-    code_lines = ...      # type: Sequence[str]
+    code = ...            # type: Sequence[str]
 
     def __init__(self, code: str) -> None: ...
 

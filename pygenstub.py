@@ -255,7 +255,7 @@ class SignatureCollector(ast.NodeVisitor):
         self.required_types = set()             # sig: Set[str]
 
         self.units = [self.stub_tree]           # sig: List[StubNode]
-        self.code_lines = code.splitlines()     # sig: Sequence[str]
+        self.code = code.splitlines()           # sig: Sequence[str]
 
     def traverse(self):
         """Recursively visit all nodes of the tree and gather signature data.
@@ -306,7 +306,7 @@ class SignatureCollector(ast.NodeVisitor):
 
     def visit_Assign(self, node):
         parent = self.units[-1]
-        code_line = self.code_lines[node.lineno - 1]
+        code_line = self.code[node.lineno - 1]
         if SIGNATURE_COMMENT in code_line:
             _, type_ = code_line.split(SIGNATURE_COMMENT)
             requires = set(_RE_NAMES.findall(type_)) - BUILTIN_TYPES
