@@ -263,9 +263,10 @@ class ClassNode(StubNode):
         else:
             sub_code = super().get_code()
             body = '\n' + indent(sub_code, INDENT)
+        bases = ', '.join(self.bases)
         return 'class %(name)s%(bases)s:%(body)s' % {
             'name': self.name,
-            'bases': '(' + ', '.join(self.bases) + ')' if len(self.bases) > 0 else '',
+            'bases': '(' + bases + ')' if bases != '' else '',
             'body': body
         }
 
@@ -368,8 +369,8 @@ class SignatureCollector(ast.NodeVisitor):
         _logger.debug('dotted types: %s', dotted_types)
 
         try:
-            typing_module = __import__('typing')
-            typing_types = {n for n in needed_types if hasattr(typing_module, n)}
+            typing_mod = __import__('typing')
+            typing_types = {n for n in needed_types if hasattr(typing_mod, n)}
             _logger.debug('types from typing module: %s', typing_types)
         except ImportError:
             _logger.debug('typing module not installed')
@@ -384,8 +385,7 @@ class SignatureCollector(ast.NodeVisitor):
         started = False
 
         if len(typing_types) > 0:
-            out.write(
-                'from typing import ' + ', '.join(sorted(typing_types)) + '\n')
+            out.write('from typing import ' + ', '.join(sorted(typing_types)) + '\n')
             started = True
 
         if len(imported_types) > 0:
