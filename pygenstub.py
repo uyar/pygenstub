@@ -191,55 +191,33 @@ class VariableNode(StubNode):
 class FunctionNode(StubNode):
     """A node representing a function in a stub tree.
 
-    :sig: (str, str, ast.AST) -> None
+    :sig: (str, Sequence[str], Sequence[str], Set[int], str) -> None
     :param name: Name of function.
-    :param signature: Signature of function.
-    :param ast_node: Node in AST tree corresponding to function.
     """
-    def __init__(self, name, signature, ast_node):
+    def __init__(self, name, parameters, parameter_types, parameter_defaults,
+                 return_type):
         super().__init__()
         self.name = name            # sig: str
-        self.signature = signature  # sig: str
-        self.ast_node = ast_node    # sig: ast.AST
+        self.parameters = parameters
+        self.parameter_types = parameter_types
+        self.parameter_defaults = parameter_defaults
+        self.return_type = return_type
 
     def get_code(self):
-        _logger.debug('parsing signature for %s', self.name)
-        parameter_types, return_type = parse_signature(self.signature)
-        _logger.debug('parameter types: %s', parameter_types)
-        _logger.debug('return type: %s', return_type)
-
-        parameters = [arg.arg for arg in self.ast_node.args.args]
-        if (len(parameters) > 0) and (parameters[0] == 'self'):
-            parameter_types.insert(0, '')
-        vararg = self.ast_node.args.vararg
-        if vararg is not None:
-            parameters.append('*' + vararg.arg)
-            parameter_types.append('')
-        kw_args = self.ast_node.args.kwarg
-        if kw_args is not None:
-            parameters.append('**' + kw_args.arg)
-            parameter_types.append('')
-        assert len(parameter_types) == len(parameters), self.ast_node.name
-
-        parameter_locations = [(a.lineno, a.col_offset)
-                               for a in self.ast_node.args.args]
-        parameter_defaults = {bisect(parameter_locations, (d.lineno, d.col_offset)) - 1
-                              for d in self.ast_node.args.defaults}
-
         parameter_stubs = [
-            n + (': ' + t if t != '' else '') + (' = ...' if i in parameter_defaults else '')
-            for i, (n, t) in enumerate(zip(parameters, parameter_types))]
+            n + (': ' + t if t != '' else '') + (' = ...' if i in self.parameter_defaults else '')
+            for i, (n, t) in enumerate(zip(self.parameters, self.parameter_types))]
         prototype = 'def %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
-            'name': self.ast_node.name,
+            'name': self.name,
             'params': ', '.join(parameter_stubs),
-            'rtype': return_type
+            'rtype': self.return_type
         }
         if len(prototype) > LINE_LENGTH_LIMIT:
             prototype = 'def %(name)s(\n%(indent)s%(params)s\n) -> %(rtype)s: ...\n' % {
-                'name': self.ast_node.name,
+                'name': self.name,
                 'indent': MULTILINE_INDENT,
                 'params': (',\n' + MULTILINE_INDENT).join(parameter_stubs),
-                'rtype': return_type
+                'rtype': self.return_type
             }
         return prototype
 
@@ -250,7 +228,7 @@ class ClassNode(StubNode):
     :sig: (str, Sequence[str], Optional[str]) -> None
     :param name: Name of class.
     :param bases: Base classes of class.
-    :param signature: Signature of class to be used in __init__ method.
+    :param signature: Signature of class, to be used in __init__ method.
     """
     def __init__(self, name, bases, signature=None):
         super().__init__()
@@ -331,8 +309,36 @@ class SignatureCollector(ast.NodeVisitor):
             requires = set(_RE_NAMES.findall(signature))
             self.required_types |= requires
 
+            _logger.debug('parsing signature for %s', node.name)
+            parameter_types, return_type = parse_signature(signature)
+            _logger.debug('parameter types: %s', parameter_types)
+            _logger.debug('return type: %s', return_type)
+
+            parameters = [arg.arg for arg in node.args.args]
+            if (len(parameters) > 0) and (parameters[0] == 'self'):
+                parameter_types.insert(0, '')
+            assert len(parameter_types) == len(parameters), node.name
+
+            vararg = node.args.vararg
+            if vararg is not None:
+                parameters.append('*' + vararg.arg)
+                parameter_types.append('')
+
+            kw_args = node.args.kwarg
+            if kw_args is not None:
+                parameters.append('**' + kw_args.arg)
+                parameter_types.append('')
+
+            parameter_locations = [(a.lineno, a.col_offset)
+                                   for a in node.args.args]
+            parameter_defaults = {
+                bisect(parameter_locations, (d.lineno, d.col_offset)) - 1
+                for d in node.args.defaults
+                }
+
             parent = self.parents[-1]
-            stub_node = FunctionNode(node.name, signature=signature, ast_node=node)
+            stub_node = FunctionNode(node.name, parameters, parameter_types,
+                                     parameter_defaults, return_type)
             parent.add_child(stub_node)
 
             self.parents.append(stub_node)
