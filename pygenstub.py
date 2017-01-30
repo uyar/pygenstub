@@ -289,7 +289,7 @@ class SignatureCollector(ast.NodeVisitor):
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
 
-        self.units = [self.stub_tree]           # sig: List[StubNode]
+        self.parents = [self.stub_tree]         # sig: List[StubNode]
         self.code = code.splitlines()           # sig: Sequence[str]
 
     def traverse(self):
@@ -310,7 +310,7 @@ class SignatureCollector(ast.NodeVisitor):
             requires = set(_RE_NAMES.findall(type_)) - BUILTIN_TYPES
             self.required_types |= requires
 
-            parent = self.units[-1]
+            parent = self.parents[-1]
             for var in node.targets:
                 if isinstance(var, ast.Name):
                     stub_node = VariableNode(var.id, type_.strip())
@@ -323,7 +323,7 @@ class SignatureCollector(ast.NodeVisitor):
         signature = get_signature(node)
 
         if signature is None:
-            parent = self.units[-1]
+            parent = self.parents[-1]
             if isinstance(parent, ClassNode) and (node.name == '__init__'):
                 signature = parent.signature
 
@@ -331,13 +331,13 @@ class SignatureCollector(ast.NodeVisitor):
             requires = set(_RE_NAMES.findall(signature)) - BUILTIN_TYPES
             self.required_types |= requires
 
-            parent = self.units[-1]
+            parent = self.parents[-1]
             stub_node = FunctionNode(node.name, signature=signature, ast_node=node)
             parent.add_child(stub_node)
 
-            self.units.append(stub_node)
+            self.parents.append(stub_node)
             self.generic_visit(node)
-            del self.units[-1]
+            del self.parents[-1]
 
     def visit_ClassDef(self, node):
         self.defined_types.add(node.name)
@@ -351,13 +351,13 @@ class SignatureCollector(ast.NodeVisitor):
                  for n in node.bases]
         self.required_types |= set(bases) - BUILTIN_TYPES
 
-        parent = self.units[-1]
+        parent = self.parents[-1]
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
         parent.add_child(stub_node)
 
-        self.units.append(stub_node)
+        self.parents.append(stub_node)
         self.generic_visit(node)
-        del self.units[-1]
+        del self.parents[-1]
 
     def get_stub(self):
         needed_types = self.required_types

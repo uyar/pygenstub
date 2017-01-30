@@ -72,7 +72,7 @@ class SignatureCollector(ast.NodeVisitor):
     imported_names = ...  # type: OrderedDict
     defined_types = ...   # type: Set[str]
     required_types = ...  # type: Set[str]
-    units = ...           # type: List[StubNode]
+    parents = ...         # type: List[StubNode]
     code = ...            # type: Sequence[str]
 
     def __init__(self, code: str) -> None: ...
