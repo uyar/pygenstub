@@ -361,6 +361,10 @@ class SignatureCollector(ast.NodeVisitor):
         del self.parents[-1]
 
     def get_stub(self):
+        """Get the stub code for this source.
+
+        :sig: () -> str
+        """
         needed_types = self.required_types - BUILTIN_TYPES
 
         needed_types -= self.defined_types
@@ -368,7 +372,6 @@ class SignatureCollector(ast.NodeVisitor):
 
         imported_types = set(self.imported_names) & needed_types
         needed_types -= imported_types
-        _logger.debug('imported names: %s', self.imported_names)
         _logger.debug('used imported types: %s', imported_types)
 
         dotted_types = {n for n in needed_types if '.' in n}
@@ -378,11 +381,11 @@ class SignatureCollector(ast.NodeVisitor):
         try:
             typing_mod = __import__('typing')
             typing_types = {n for n in needed_types if hasattr(typing_mod, n)}
+            needed_types -= typing_types
             _logger.debug('types from typing module: %s', typing_types)
         except ImportError:
-            _logger.debug('typing module not installed')
             typing_types = set()
-        needed_types -= typing_types
+            _logger.warn('typing module not installed')
 
         if len(needed_types) > 0:
             print('Unknown types: ' + ', '.join(needed_types), file=sys.stderr)
@@ -392,7 +395,8 @@ class SignatureCollector(ast.NodeVisitor):
         started = False
 
         if len(typing_types) > 0:
-            out.write('from typing import ' + ', '.join(sorted(typing_types)) + '\n')
+            line = 'from typing import ' + ', '.join(sorted(typing_types))
+            out.write(line + '\n')
             started = True
 
         if len(imported_types) > 0:
@@ -401,20 +405,18 @@ class SignatureCollector(ast.NodeVisitor):
             # preserve the import order in the source file
             for name in self.imported_names:
                 if name in imported_types:
-                    out.write(
-                        'from %(module)s import %(name)s\n' % {
-                            'module': self.imported_names[name],
-                            'name': name
-                        }
-                    )
+                    line = 'from %(module)s import %(name)s' % {
+                        'module': self.imported_names[name],
+                        'name': name
+                    }
+                    out.write(line + '\n')
             started = True
 
         if len(dotted_types) > 0:
             if started:
                 out.write('\n')
-            imported_modules = {'.'.join(n.split('.')[:-1]) for n in
-                                dotted_types}
-            for module in sorted(imported_modules):
+            modules = {'.'.join(n.split('.')[:-1]) for n in dotted_types}
+            for module in sorted(modules):
                 out.write('import ' + module + '\n')
             started = True
 
