@@ -113,14 +113,15 @@ def split_parameter_types(parameters_def):
 def parse_signature(signature):
     """Parse a signature to get its input and output parameter types.
 
-    :sig: (str) -> Tuple[List[str], str]
+    :sig: (str) -> Tuple[List[str], str, Set[str]]
     :param signature: Signature to parse.
-    :return: Input parameter types and return type.
+    :return: Input parameter types, return type, and all required types.
     """
     lhs, return_type = [s.strip() for s in signature.split(' -> ')]
     parameters_def = lhs[1:-1].strip()  # remove the () around parameter list
     parameter_types = split_parameter_types(parameters_def)
-    return parameter_types, return_type
+    requires = set(_RE_NAMES.findall(signature))
+    return parameter_types, return_type, requires
 
 
 class StubNode:
@@ -306,13 +307,12 @@ class SignatureCollector(ast.NodeVisitor):
                 signature = parent.signature
 
         if signature is not None:
-            requires = set(_RE_NAMES.findall(signature))
-            self.required_types |= requires
-
             _logger.debug('parsing signature for %s', node.name)
-            parameter_types, return_type = parse_signature(signature)
+            parameter_types, return_type, requires = parse_signature(signature)
             _logger.debug('parameter types: %s', parameter_types)
             _logger.debug('return type: %s', return_type)
+
+            self.required_types |= requires
 
             parameters = [arg.arg for arg in node.args.args]
             if (len(parameters) > 0) and (parameters[0] == 'self'):
@@ -347,12 +347,7 @@ class SignatureCollector(ast.NodeVisitor):
 
     def visit_ClassDef(self, node):
         self.defined_types.add(node.name)
-
         signature = get_signature(node)
-        if signature is not None:
-            requires = set(_RE_NAMES.findall(signature))
-            self.required_types |= requires
-
         bases = [n.value.id + '.' + n.attr if isinstance(n, ast.Attribute) else n.id
                  for n in node.bases]
         self.required_types |= set(bases)
