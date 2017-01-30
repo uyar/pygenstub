@@ -434,7 +434,7 @@ def get_stub(code):
 
     :sig: (str) -> str
     :param code: Source code to generate the stub for.
-    :return: Stub code for the source.
+    :return: Generated stub code.
     """
     collector = SignatureCollector(code)
     collector.traverse()
@@ -448,7 +448,8 @@ def main():
     """
     parser = ArgumentParser()
     parser.add_argument('source', help='source file')
-    parser.add_argument('--debug', action='store_true', help='enable debug messages')
+    parser.add_argument('--debug', action='store_true',
+                        help='enable debug messages')
     arguments = parser.parse_args()
 
     log_level = logging.DEBUG if arguments.debug else logging.INFO
@@ -456,11 +457,9 @@ def main():
 
     with open(arguments.source, mode='r', encoding='utf-8') as f_in:
         code = f_in.read()
-
     stub = get_stub(code)
-
-    destination = arguments.source + 'i'
     if stub != '':
+        destination = arguments.source + 'i'
         with open(destination, mode='w', encoding='utf-8') as f_out:
             f_out.write('# ' + EDIT_WARNING + '\n\n')
             f_out.write(stub)
