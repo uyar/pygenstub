@@ -307,7 +307,7 @@ class SignatureCollector(ast.NodeVisitor):
         line = self.code[node.lineno - 1].replace("'" + SIGNATURE_COMMENT, "'")
         if SIGNATURE_COMMENT in line:
             _, type_ = line.split(SIGNATURE_COMMENT)
-            requires = set(_RE_NAMES.findall(type_)) - BUILTIN_TYPES
+            requires = set(_RE_NAMES.findall(type_))
             self.required_types |= requires
 
             parent = self.parents[-1]
@@ -328,7 +328,7 @@ class SignatureCollector(ast.NodeVisitor):
                 signature = parent.signature
 
         if signature is not None:
-            requires = set(_RE_NAMES.findall(signature)) - BUILTIN_TYPES
+            requires = set(_RE_NAMES.findall(signature))
             self.required_types |= requires
 
             parent = self.parents[-1]
@@ -344,12 +344,12 @@ class SignatureCollector(ast.NodeVisitor):
 
         signature = get_signature(node)
         if signature is not None:
-            requires = set(_RE_NAMES.findall(signature)) - BUILTIN_TYPES
+            requires = set(_RE_NAMES.findall(signature))
             self.required_types |= requires
 
         bases = [n.value.id + '.' + n.attr if isinstance(n, ast.Attribute) else n.id
                  for n in node.bases]
-        self.required_types |= set(bases) - BUILTIN_TYPES
+        self.required_types |= set(bases)
 
         parent = self.parents[-1]
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
@@ -360,7 +360,7 @@ class SignatureCollector(ast.NodeVisitor):
         del self.parents[-1]
 
     def get_stub(self):
-        needed_types = self.required_types
+        needed_types = self.required_types - BUILTIN_TYPES
 
         needed_types -= self.defined_types
         _logger.debug('defined types: %s', self.defined_types)
