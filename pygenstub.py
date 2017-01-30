@@ -264,13 +264,14 @@ class StubGenerator(ast.NodeVisitor):
     :param code: Source code to generate the stub for.
     """
     def __init__(self, code):
+        self.root = StubNode()                  # sig: StubNode
+
         self.imported_names = OrderedDict()     # sig: OrderedDict
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
 
-        self._root = StubNode()
-        self._parents = [self._root]
-        self._code = code.splitlines()
+        self._parents = [self.root]
+        self._code_lines = code.splitlines()
 
         ast_tree = ast.parse(code)
         self.visit(ast_tree)
@@ -280,7 +281,7 @@ class StubGenerator(ast.NodeVisitor):
             self.imported_names[name.name] = node.module
 
     def visit_Assign(self, node):
-        line = self._code[node.lineno - 1]
+        line = self._code_lines[node.lineno - 1]
         if SIGNATURE_COMMENT in line:
             line = line.replace("'" + SIGNATURE_COMMENT, "'")
         if SIGNATURE_COMMENT in line:
@@ -422,7 +423,7 @@ class StubGenerator(ast.NodeVisitor):
 
         if started:
             out.write('\n\n')
-        out.write(self._root.get_code())
+        out.write(self.root.get_code())
         return out.getvalue()
 
 
