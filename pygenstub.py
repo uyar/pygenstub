@@ -117,9 +117,12 @@ def parse_signature(signature):
     :param signature: Signature to parse.
     :return: Input parameter types, return type, and all required types.
     """
-    lhs, return_type = [s.strip() for s in signature.split(' -> ')]
-    parameters_def = lhs[1:-1].strip()  # remove the () around parameter list
-    parameter_types = split_parameter_types(parameters_def)
+    if ' -> ' not in signature:
+        parameter_types, return_type = None, signature.strip()
+    else:
+        lhs, return_type = [s.strip() for s in signature.split(' -> ')]
+        parameters_def = lhs[1:-1].strip()  # remove the () around parameter list
+        parameter_types = split_parameter_types(parameters_def)
     requires = set(_RE_NAMES.findall(signature))
     return parameter_types, return_type, requires
 
@@ -281,8 +284,8 @@ class StubGenerator(ast.NodeVisitor):
         if SIGNATURE_COMMENT in line:
             line = line.replace("'" + SIGNATURE_COMMENT, "'")
         if SIGNATURE_COMMENT in line:
-            _, type_ = line.split(SIGNATURE_COMMENT)
-            requires = set(_RE_NAMES.findall(type_))
+            _, signature = line.split(SIGNATURE_COMMENT)
+            _, return_type, requires = parse_signature(signature)
             self.required_types |= requires
 
             parent = self._parents[-1]
@@ -294,7 +297,7 @@ class StubGenerator(ast.NodeVisitor):
                     name = var.attr
                     parent = parent.parent
                 if (name is not None) and (name[0] != '_'):
-                    stub_node = VariableNode(name, type_.strip())
+                    stub_node = VariableNode(name, return_type)
                     parent.add_variable(stub_node)
 
     def visit_FunctionDef(self, node):
