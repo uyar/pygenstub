@@ -254,11 +254,11 @@ class ClassNode(StubNode):
         }
 
 
-class SignatureCollector(ast.NodeVisitor):
-    """A collector that scans a source code and gathers signature data.
+class StubGenerator(ast.NodeVisitor):
+    """A class that generates stub declarations from a source code.
 
     :sig: (str) -> None
-    :param code: Source code to scan.
+    :param code: Source code to generate the stub for.
     """
     def __init__(self, code):
         self.tree = ast.parse(code)             # sig: ast.AST
@@ -360,8 +360,8 @@ class SignatureCollector(ast.NodeVisitor):
         self.generic_visit(node)
         del self.parents[-1]
 
-    def get_stub(self):
-        """Get the stub code for this source.
+    def generate_stub(self):
+        """Generate the stub code for this source.
 
         :sig: () -> str
         """
@@ -433,9 +433,9 @@ def get_stub(code):
     :param code: Source code to generate the stub for.
     :return: Generated stub code.
     """
-    collector = SignatureCollector(code)
-    collector.traverse()
-    return collector.get_stub()
+    generator = StubGenerator(code)
+    generator.traverse()
+    return generator.generate_stub()
 
 
 def main():

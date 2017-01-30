@@ -71,7 +71,7 @@ class ClassNode(StubNode):
 
     def get_code(self) -> str: ...
 
-class SignatureCollector(ast.NodeVisitor):
+class StubGenerator(ast.NodeVisitor):
     tree = ...            # type: ast.AST
     stub_tree = ...       # type: StubNode
     imported_names = ...  # type: OrderedDict
@@ -84,7 +84,7 @@ class SignatureCollector(ast.NodeVisitor):
 
     def traverse(self) -> None: ...
 
-    def get_stub(self) -> str: ...
+    def generate_stub(self) -> str: ...
 
 def get_stub(code: str) -> str: ...
 
