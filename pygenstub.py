@@ -261,14 +261,13 @@ class StubGenerator(ast.NodeVisitor):
     :param code: Source code to generate the stub for.
     """
     def __init__(self, code):
-        self.code = code.splitlines()           # sig: Sequence[str]
-
         self.imported_names = OrderedDict()     # sig: OrderedDict
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
 
-        self.root = StubNode()                  # sig: StubNode
-        self.parents = [self.root]              # sig: List[StubNode]
+        self._root = StubNode()
+        self._parents = [self._root]
+        self._code = code.splitlines()
 
         ast_tree = ast.parse(code)
         self.visit(ast_tree)
@@ -278,26 +277,31 @@ class StubGenerator(ast.NodeVisitor):
             self.imported_names[name.name] = node.module
 
     def visit_Assign(self, node):
-        line = self.code[node.lineno - 1].replace("'" + SIGNATURE_COMMENT, "'")
+        line = self._code[node.lineno - 1]
+        if SIGNATURE_COMMENT in line:
+            line = line.replace("'" + SIGNATURE_COMMENT, "'")
         if SIGNATURE_COMMENT in line:
             _, type_ = line.split(SIGNATURE_COMMENT)
             requires = set(_RE_NAMES.findall(type_))
             self.required_types |= requires
 
-            parent = self.parents[-1]
+            parent = self._parents[-1]
             for var in node.targets:
+                name = None
                 if isinstance(var, ast.Name):
-                    stub_node = VariableNode(var.id, type_.strip())
-                    parent.add_variable(stub_node)
+                    name = var.id
                 if isinstance(var, ast.Attribute) and (var.value.id == 'self'):
-                    stub_node = VariableNode(var.attr, type_.strip())
-                    parent.parent.add_variable(stub_node)
+                    name = var.attr
+                    parent = parent.parent
+                if (name is not None) and (name[0] != '_'):
+                    stub_node = VariableNode(name, type_.strip())
+                    parent.add_variable(stub_node)
 
     def visit_FunctionDef(self, node):
         signature = get_signature(node)
 
         if signature is None:
-            parent = self.parents[-1]
+            parent = self._parents[-1]
             if isinstance(parent, ClassNode) and (node.name == '__init__'):
                 signature = parent.signature
 
@@ -333,11 +337,11 @@ class StubGenerator(ast.NodeVisitor):
 
             stub_node = FunctionNode(node.name, parameters, parameter_types,
                                      parameter_defaults, return_type)
-            self.parents[-1].add_child(stub_node)
+            self._parents[-1].add_child(stub_node)
 
-            self.parents.append(stub_node)
+            self._parents.append(stub_node)
             self.generic_visit(node)
-            del self.parents[-1]
+            del self._parents[-1]
 
     def visit_ClassDef(self, node):
         self.defined_types.add(node.name)
@@ -347,11 +351,11 @@ class StubGenerator(ast.NodeVisitor):
         self.required_types |= set(bases)
 
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
-        self.parents[-1].add_child(stub_node)
+        self._parents[-1].add_child(stub_node)
 
-        self.parents.append(stub_node)
+        self._parents.append(stub_node)
         self.generic_visit(node)
-        del self.parents[-1]
+        del self._parents[-1]
 
     def generate_stub(self):
         """Generate the stub code for this source.
@@ -415,7 +419,7 @@ class StubGenerator(ast.NodeVisitor):
 
         if started:
             out.write('\n\n')
-        out.write(self.root.get_code())
+        out.write(self._root.get_code())
         return out.getvalue()
 
 
