@@ -46,14 +46,14 @@ class VariableNode(StubNode):
     def get_code(self, align: Optional[int] = ...) -> str: ...
 
 class FunctionNode(StubNode):
-    name = ...  # type: str
+    name = ...         # type: str
+    parameters = ...   # type: Sequence[Tuple[str, str, bool]]
+    return_type = ...  # type: str
 
     def __init__(
             self,
             name: str,
-            parameters: Sequence[str],
-            parameter_types: Sequence[str],
-            parameter_defaults: Set[int],
+            parameters: Sequence[Tuple[str, str, bool]],
             return_type: str
     ) -> None: ...
 
