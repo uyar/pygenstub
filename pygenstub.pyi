@@ -72,17 +72,14 @@ class ClassNode(StubNode):
     def get_code(self) -> str: ...
 
 class StubGenerator(ast.NodeVisitor):
-    tree = ...            # type: ast.AST
-    stub_tree = ...       # type: StubNode
+    code = ...            # type: Sequence[str]
     imported_names = ...  # type: OrderedDict
     defined_types = ...   # type: Set[str]
     required_types = ...  # type: Set[str]
+    root = ...            # type: StubNode
     parents = ...         # type: List[StubNode]
-    code = ...            # type: Sequence[str]
 
     def __init__(self, code: str) -> None: ...
-
-    def traverse(self) -> None: ...
 
     def generate_stub(self) -> str: ...
 

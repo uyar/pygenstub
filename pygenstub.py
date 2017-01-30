@@ -261,22 +261,17 @@ class StubGenerator(ast.NodeVisitor):
     :param code: Source code to generate the stub for.
     """
     def __init__(self, code):
-        self.tree = ast.parse(code)             # sig: ast.AST
-        self.stub_tree = StubNode()             # sig: StubNode
+        self.code = code.splitlines()           # sig: Sequence[str]
 
         self.imported_names = OrderedDict()     # sig: OrderedDict
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
 
-        self.parents = [self.stub_tree]         # sig: List[StubNode]
-        self.code = code.splitlines()           # sig: Sequence[str]
+        self.root = StubNode()                  # sig: StubNode
+        self.parents = [self.root]              # sig: List[StubNode]
 
-    def traverse(self):
-        """Recursively visit all nodes of the tree and gather signature data.
-
-        :sig: () -> None
-        """
-        self.visit(self.tree)
+        ast_tree = ast.parse(code)
+        self.visit(ast_tree)
 
     def visit_ImportFrom(self, node):
         for name in node.names:
@@ -317,7 +312,6 @@ class StubGenerator(ast.NodeVisitor):
             parameters = [arg.arg for arg in node.args.args]
             if (len(parameters) > 0) and (parameters[0] == 'self'):
                 parameter_types.insert(0, '')
-            assert len(parameter_types) == len(parameters), node.name
 
             vararg = node.args.vararg
             if vararg is not None:
@@ -328,6 +322,7 @@ class StubGenerator(ast.NodeVisitor):
             if kw_args is not None:
                 parameters.append('**' + kw_args.arg)
                 parameter_types.append('')
+            assert len(parameter_types) == len(parameters), node.name
 
             parameter_locations = [(a.lineno, a.col_offset)
                                    for a in node.args.args]
@@ -336,10 +331,9 @@ class StubGenerator(ast.NodeVisitor):
                 for d in node.args.defaults
                 }
 
-            parent = self.parents[-1]
             stub_node = FunctionNode(node.name, parameters, parameter_types,
                                      parameter_defaults, return_type)
-            parent.add_child(stub_node)
+            self.parents[-1].add_child(stub_node)
 
             self.parents.append(stub_node)
             self.generic_visit(node)
@@ -352,9 +346,8 @@ class StubGenerator(ast.NodeVisitor):
                  for n in node.bases]
         self.required_types |= set(bases)
 
-        parent = self.parents[-1]
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
-        parent.add_child(stub_node)
+        self.parents[-1].add_child(stub_node)
 
         self.parents.append(stub_node)
         self.generic_visit(node)
@@ -422,7 +415,7 @@ class StubGenerator(ast.NodeVisitor):
 
         if started:
             out.write('\n\n')
-        out.write(self.stub_tree.get_code())
+        out.write(self.root.get_code())
         return out.getvalue()
 
 
@@ -434,7 +427,6 @@ def get_stub(code):
     :return: Generated stub code.
     """
     generator = StubGenerator(code)
-    generator.traverse()
     return generator.generate_stub()
 
 
