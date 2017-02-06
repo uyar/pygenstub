@@ -206,20 +206,20 @@ class FunctionNode(StubNode):
         self.return_type = return_type  # sig: str
 
     def get_code(self):
-        parameter_stubs = [
+        parameter_decls = [
             n + (': ' + t if t != '' else '') + (' = ...' if hd else '')
             for n, t, hd in self.parameters
         ]
         prototype = 'def %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
             'name': self.name,
-            'params': ', '.join(parameter_stubs),
+            'params': ', '.join(parameter_decls),
             'rtype': self.return_type
         }
         if len(prototype) > LINE_LENGTH_LIMIT:
             prototype = 'def %(name)s(\n%(indent)s%(params)s\n) -> %(rtype)s: ...\n' % {
                 'name': self.name,
                 'indent': MULTILINE_INDENT,
-                'params': (',\n' + MULTILINE_INDENT).join(parameter_stubs),
+                'params': (',\n' + MULTILINE_INDENT).join(parameter_decls),
                 'rtype': self.return_type
             }
         return prototype
@@ -257,7 +257,7 @@ class ClassNode(StubNode):
 
 
 class StubGenerator(ast.NodeVisitor):
-    """A class that generates stub declarations from a source code.
+    """A transformer that generates stub declarations from a source code.
 
     :sig: (str) -> None
     :param code: Source code to generate the stub for.
@@ -269,8 +269,8 @@ class StubGenerator(ast.NodeVisitor):
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
 
-        self._parents = [self.root]
-        self._code_lines = code.splitlines()
+        self._parents = [self.root]             # type: list
+        self._code_lines = code.splitlines()    # type: list
 
         ast_tree = ast.parse(code)
         self.visit(ast_tree)
@@ -317,24 +317,23 @@ class StubGenerator(ast.NodeVisitor):
             if (len(arg_names) > 0) and (arg_names[0] == 'self'):
                 arg_types.insert(0, '')
 
-            vararg = node.args.vararg
-            if vararg is not None:
-                arg_names.append('*' + vararg.arg)
+            if node.args.vararg is not None:
+                arg_names.append('*' + node.args.vararg.arg)
                 arg_types.append('')
 
-            kwarg = node.args.kwarg
-            if kwarg is not None:
-                arg_names.append('**' + kwarg.arg)
+            if node.args.kwarg is not None:
+                arg_names.append('**' + node.args.kwarg.arg)
                 arg_types.append('')
 
             assert len(arg_types) == len(arg_names), node.name
             args = zip(arg_names, arg_types)
 
             arg_locs = [(a.lineno, a.col_offset) for a in node.args.args]
-            arg_defs = {bisect(arg_locs, (d.lineno, d.col_offset)) - 1
-                        for d in node.args.defaults}
+            arg_defaults = {bisect(arg_locs, (d.lineno, d.col_offset)) - 1
+                            for d in node.args.defaults}
 
-            params = [(n, t, i in arg_defs) for i, (n, t) in enumerate(args)]
+            params = [(name, type_, i in arg_defaults)
+                      for i, (name, type_) in enumerate(args)]
             stub_node = FunctionNode(node.name, parameters=params,
                                      return_type=rtype)
             self._parents[-1].add_child(stub_node)
@@ -345,9 +344,12 @@ class StubGenerator(ast.NodeVisitor):
 
     def visit_ClassDef(self, node):
         self.defined_types.add(node.name)
+
         signature = get_signature(node)
-        bases = [n.value.id + '.' + n.attr if isinstance(n, ast.Attribute) else n.id
-                 for n in node.bases]
+        bases = [
+            n.value.id + '.' + n.attr if isinstance(n, ast.Attribute) else n.id
+            for n in node.bases
+        ]
         self.required_types |= set(bases)
 
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
