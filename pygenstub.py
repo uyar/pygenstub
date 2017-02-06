@@ -80,20 +80,20 @@ def get_signature(node):
     return fields.get(SIGNATURE_FIELD)
 
 
-def split_parameter_types(parameters_def):
-    """Split a full parameter types declaration into individual types.
+def split_parameter_types(decl):
+    """Split a parameter type list declaration into individual types.
 
     :sig: (str) -> List[str]
-    :param parameters_def: Parameter types declaration in the signature.
+    :param decl: Parameter types declaration in the signature.
     :return: Types of parameters.
     """
-    if parameters_def == '':
+    if decl == '':
         return []
 
     # only consider the top level commas, ignore the ones in []
     commas = []
     bracket_depth = 0
-    for i, char in enumerate(parameters_def):
+    for i, char in enumerate(decl):
         if (char == ',') and (bracket_depth == 0):
             commas.append(i)
         elif char == '[':
@@ -104,10 +104,10 @@ def split_parameter_types(parameters_def):
     types = []
     last_i = 0
     for i in commas:
-        types.append(parameters_def[last_i:i].strip())
+        types.append(decl[last_i:i].strip())
         last_i = i + 1
     else:
-        types.append(parameters_def[last_i:].strip())
+        types.append(decl[last_i:].strip())
     return types
 
 
@@ -119,13 +119,13 @@ def parse_signature(signature):
     :return: Input parameter types, return type, and all required types.
     """
     if ' -> ' not in signature:
-        parameter_types, return_type = None, signature.strip()
+        param_types, return_type = None, signature.strip()
     else:
         lhs, return_type = [s.strip() for s in signature.split(' -> ')]
-        parameters_def = lhs[1:-1].strip()  # remove the () around parameter list
-        parameter_types = split_parameter_types(parameters_def)
+        param_decl = lhs[1:-1].strip()  # remove the () around parameter list
+        param_types = split_parameter_types(param_decl)
     requires = set(_RE_NAMES.findall(signature))
-    return parameter_types, return_type, requires
+    return param_types, return_type, requires
 
 
 class StubNode:
@@ -453,7 +453,9 @@ def main():
 
     with open(arguments.source, mode='r', encoding='utf-8') as f_in:
         code = f_in.read()
+
     stub = get_stub(code)
+
     if stub != '':
         destination = arguments.source + 'i'
         with open(destination, mode='w', encoding='utf-8') as f_out:
