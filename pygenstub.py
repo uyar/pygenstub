@@ -18,16 +18,16 @@ from bisect import bisect
 from collections import OrderedDict
 from docutils.core import publish_doctree
 from io import StringIO
-from textwrap import indent
 
 import ast
 import logging
 import re
 import sys
+import textwrap
 
 
 BUILTIN_TYPES = {
-    'int', 'float', 'bool', 'str', 'bytes',
+    'int', 'float', 'bool', 'str', 'bytes', 'unicode',
     'tuple', 'list', 'set', 'dict', 'None', 'object'
 }
 
@@ -247,7 +247,7 @@ class ClassNode(StubNode):
         if len(self.children) == 0:
             body = ' ...\n'
         else:
-            body = '\n' + indent(super().get_code(), INDENT)
+            body = '\n' + textwrap.indent(super().get_code(), INDENT)
         bases = ', '.join(self.bases)
         return 'class %(name)s%(bases)s:%(body)s' % {
             'name': self.name,
