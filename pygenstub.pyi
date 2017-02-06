@@ -2,8 +2,6 @@
 
 from typing import List, Mapping, Optional, Sequence, Set, Tuple, Union
 
-from collections import OrderedDict
-
 import ast
 import docutils.nodes
 
@@ -73,7 +71,7 @@ class ClassNode(StubNode):
 
 class StubGenerator(ast.NodeVisitor):
     root = ...            # type: StubNode
-    imported_names = ...  # type: OrderedDict
+    imported_names = ...  # type: Mapping[str, str]
     defined_types = ...   # type: Set[str]
     required_types = ...  # type: Set[str]
 

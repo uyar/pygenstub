@@ -265,7 +265,7 @@ class StubGenerator(ast.NodeVisitor):
     def __init__(self, code):
         self.root = StubNode()                  # sig: StubNode
 
-        self.imported_names = OrderedDict()     # sig: OrderedDict
+        self.imported_names = OrderedDict()     # sig: Mapping[str, str]
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
 
@@ -290,15 +290,12 @@ class StubGenerator(ast.NodeVisitor):
 
             parent = self._parents[-1]
             for var in node.targets:
-                name = None
                 if isinstance(var, ast.Name):
-                    name = var.id
-                if isinstance(var, ast.Attribute) and (var.value.id == 'self'):
-                    name = var.attr
-                    parent = parent.parent
-                if (name is not None) and (name[0] != '_'):
-                    stub_node = VariableNode(name, return_type)
+                    stub_node = VariableNode(var.id, return_type)
                     parent.add_variable(stub_node)
+                if isinstance(var, ast.Attribute) and (var.value.id == 'self'):
+                    stub_node = VariableNode(var.attr, return_type)
+                    parent.parent.add_variable(stub_node)
 
     def visit_FunctionDef(self, node):
         signature = get_signature(node)
