@@ -81,7 +81,7 @@ def get_signature(node):
 
 
 def split_parameter_types(decl):
-    """Split a parameter type list declaration into individual types.
+    """Split a parameter types declaration into individual types.
 
     :sig: (str) -> List[str]
     :param decl: Parameter types declaration in the signature.
@@ -112,7 +112,7 @@ def split_parameter_types(decl):
 
 
 def parse_signature(signature):
-    """Parse a signature into its input and output parameter types.
+    """Parse a signature into its input and return parameter types.
 
     :sig: (str) -> Tuple[List[str], str, Set[str]]
     :param signature: Signature to parse.
@@ -156,7 +156,7 @@ class StubNode:
         self.children.append(node)
         node.parent = self
 
-    def get_code(self, **kwargs):
+    def get_code(self):
         """Get the prototype code for this node.
 
         :sig: () -> str
@@ -342,11 +342,11 @@ class StubGenerator(ast.NodeVisitor):
     def visit_ClassDef(self, node):
         self.defined_types.add(node.name)
 
-        signature = get_signature(node)
         bases = [n.value.id + '.' + n.attr if isinstance(n, ast.Attribute) else n.id
                  for n in node.bases]
         self.required_types |= set(bases)
 
+        signature = get_signature(node)
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
         self._parents[-1].add_child(stub_node)
 
