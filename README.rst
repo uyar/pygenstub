@@ -135,6 +135,93 @@ Stub:
    def foo(a: Dict, b: Tuple) -> Optional[str]: ...
 
 
+**Classes**
+
+Classes are supported including the imports needed for their base classes.
+
+Code:
+
+.. code-block:: python
+
+   from x import A
+
+   class Foo(A):
+       def foo(self, a):
+           """Whatever.
+
+           :sig: (int) -> str
+           :param a: ...
+           """
+
+Stub:
+
+.. code-block:: python
+
+   from x import A
+
+   class Foo(A):
+       def foo(self, a: int) -> str: ...
+
+
+If the docstring of a class has a signature field, it will be used
+as the signature field of its ``__init__`` method if that method
+doesn't have a signature already.
+
+Code:
+
+.. code-block:: python
+
+   class Foo:
+       """Whatever.
+
+       :sig: (int) -> None
+       :param a: ...
+       """
+
+       def __init__(self, a):
+           self.a = a
+
+
+Stub:
+
+.. code-block:: python
+
+   class Foo:
+       def __init__(self, a: int) -> None: ...
+
+
+**Variables**
+
+Module and class level variables can be annotated using ``# sig:``
+comments.
+
+Code:
+
+.. code-block:: python
+
+   x = 42          # sig: int
+
+   class Foo:
+       y = 'spam'  # sig: str
+
+
+Stub:
+
+.. code-block:: python
+
+   x = ...      # type: int
+
+   class Foo:
+       y = ...  # type: str
+
+
+.. note::
+
+   You might think, "why not use ``# type:`` comments directly?".
+   That's surely fine but if you do that, you'll need to import the types
+   so that the linter or IDE can use them.
+
+
 TODO
 ----
 
