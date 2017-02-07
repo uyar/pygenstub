@@ -3,12 +3,12 @@
 History
 =======
 
-1.0a5 (unreleased)
+1.0a5 (2017-02-07)
 ------------------
 
 * Support for methods.
 * Support for instance variables.
-* Support for superclasses.
+* Support for base classes.
 * Shortened the field name from "signature" to "sig".
 * Use three dots instead of actual value for parameter defaults.
 * Dropped support for Python 2.
