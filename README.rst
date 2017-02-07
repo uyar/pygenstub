@@ -199,17 +199,18 @@ Code:
 
 .. code-block:: python
 
-   x = 42          # sig: int
+   x = 42  # sig: int
 
    class Foo:
-       y = 'spam'  # sig: str
+       def foo(self):
+           self.y = 'spam'  # sig: str
 
 
 Stub:
 
 .. code-block:: python
 
-   x = ...      # type: int
+   x = ...  # type: int
 
    class Foo:
        y = ...  # type: str
