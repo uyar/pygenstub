@@ -411,7 +411,8 @@ class StubGenerator(ast.NodeVisitor):
                 out.write('\n')
             modules = {'.'.join(n.split('.')[:-1]) for n in dotted_types}
             for module in sorted(modules):
-                out.write('import ' + module + '\n')
+                if module not in [v.name for v in self.root.variables]:
+                    out.write('import ' + module + '\n')
             started = True
 
         if started:

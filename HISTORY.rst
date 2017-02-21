@@ -3,6 +3,11 @@
 History
 =======
 
+1.0a6 (unreleased)
+------------------
+
+* Don't import dotted names if they are defined as module variables.
+
 1.0a5 (2017-02-07)
 ------------------
 
