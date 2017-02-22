@@ -364,13 +364,18 @@ class StubGenerator(ast.NodeVisitor):
         needed_types -= self.defined_types
         _logger.debug('defined types: %s', self.defined_types)
 
+        module_vars = {v.name for v in self.root.variables}
+        _logger.debug('module variables: %s', module_vars)
+
         imported_types = set(self.imported_names) & needed_types
         needed_types -= imported_types
         _logger.debug('used imported types: %s', imported_types)
 
         dotted_types = {n for n in needed_types if '.' in n}
+        dotted_names = {'.'.join(n.split('.')[:-1]) for n in dotted_types}
+        imported_dotted_types = dotted_names - module_vars
         needed_types -= dotted_types
-        _logger.debug('dotted types: %s', dotted_types)
+        _logger.debug('dotted types: %s', imported_dotted_types)
 
         try:
             typing_mod = __import__('typing')
@@ -406,13 +411,11 @@ class StubGenerator(ast.NodeVisitor):
                     out.write(line + '\n')
             started = True
 
-        if len(dotted_types) > 0:
+        if len(imported_dotted_types) > 0:
             if started:
                 out.write('\n')
-            modules = {'.'.join(n.split('.')[:-1]) for n in dotted_types}
-            for module in sorted(modules):
-                if module not in [v.name for v in self.root.variables]:
-                    out.write('import ' + module + '\n')
+            for module in sorted(imported_dotted_types):
+                out.write('import ' + module + '\n')
             started = True
 
         if started:
