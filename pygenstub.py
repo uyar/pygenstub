@@ -274,8 +274,10 @@ class StubGenerator(ast.NodeVisitor):
         self.visit(ast_tree)
 
     def visit_ImportFrom(self, node):
+        line = self._code_lines[node.lineno - 1]
+        module_name = line.split('from')[1].split('import')[0].strip()
         for name in node.names:
-            self.imported_names[name.name] = node.module
+            self.imported_names[name.name] = module_name
 
     def visit_Assign(self, node):
         line = self._code_lines[node.lineno - 1]
@@ -367,15 +369,18 @@ class StubGenerator(ast.NodeVisitor):
         module_vars = {v.name for v in self.root.variables}
         _logger.debug('module variables: %s', module_vars)
 
-        imported_types = set(self.imported_names) & needed_types
-        needed_types -= imported_types
-        _logger.debug('used imported types: %s', imported_types)
-
         dotted_types = {n for n in needed_types if '.' in n}
-        dotted_names = {'.'.join(n.split('.')[:-1]) for n in dotted_types}
-        imported_dotted_types = dotted_names - module_vars
+        dotted_namespaces = {'.'.join(n.split('.')[:-1]) for n in dotted_types}
+
+        needed_namespaces = dotted_namespaces - module_vars
         needed_types -= dotted_types
-        _logger.debug('dotted types: %s', imported_dotted_types)
+        _logger.debug('needed namespaces: %s', needed_namespaces)
+
+        imported_names = set(self.imported_names)
+        imported_types = imported_names & (needed_types | needed_namespaces)
+        needed_types -= imported_types
+        needed_namespaces -= imported_names
+        _logger.debug('used imported types: %s', imported_types)
 
         try:
             typing_mod = __import__('typing')
@@ -411,10 +416,10 @@ class StubGenerator(ast.NodeVisitor):
                     out.write(line + '\n')
             started = True
 
-        if len(imported_dotted_types) > 0:
+        if len(needed_namespaces) > 0:
             if started:
                 out.write('\n')
-            for module in sorted(imported_dotted_types):
+            for module in sorted(needed_namespaces):
                 out.write('import ' + module + '\n')
             started = True
 

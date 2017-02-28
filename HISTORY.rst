@@ -7,6 +7,7 @@ History
 ------------------
 
 * Don't import dotted names if they are defined as module variables.
+* Don't remove modules of dotted types from import list.
 
 1.0a5 (2017-02-07)
 ------------------
