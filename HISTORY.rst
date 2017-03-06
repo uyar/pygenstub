@@ -3,7 +3,7 @@
 History
 =======
 
-1.0a6 (unreleased)
+1.0a6 (2017-03-06)
 ------------------
 
 * Improvements on imported names.
