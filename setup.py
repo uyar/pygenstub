@@ -29,7 +29,7 @@ setup(
     extras_require={
         'dev': [
             'flake8',
-            'mypy-lang'
+            'mypy'
         ],
         'doc': [
             'sphinx',

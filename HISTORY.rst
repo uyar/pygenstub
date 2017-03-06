@@ -6,8 +6,7 @@ History
 1.0a6 (unreleased)
 ------------------
 
-* Don't import dotted names if they are defined as module variables.
-* Don't remove modules of dotted types from import list.
+* Improvements on imported names.
 
 1.0a5 (2017-02-07)
 ------------------
