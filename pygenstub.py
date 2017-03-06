@@ -164,7 +164,11 @@ class StubNode:
         max_len = max([len(v.name) for v in self.variables] + [0])
         sub_vars = ''.join([c.get_code(align=max_len) for c in self.variables])
         sub_codes = '\n'.join([c.get_code() for c in self.children])
-        return sub_vars + ('\n' if sub_vars != '' else '') + sub_codes
+        return '%(vars)s%(blank)s%(codes)s' % {
+            'vars': sub_vars,
+            'blank': '\n' if (sub_vars != '') and (sub_codes != '') else '',
+            'codes': sub_codes
+        }
 
 
 class VariableNode(StubNode):
