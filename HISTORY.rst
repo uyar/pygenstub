@@ -7,6 +7,7 @@ History
 ------------------
 
 * Improvements on imported names.
+* Updated documentation and tests.
 
 1.0a5 (2017-02-07)
 ------------------

@@ -2,239 +2,267 @@ pygenstub
 =========
 
 pygenstub is a utility for generating stub files from Python source files.
-It takes a source file as input and creates a stub file
-with the same base name and the ``.pyi`` extension.
+It takes a source file as input and creates a stub file with the same base name
+and the ``.pyi`` extension.
 
-When installed, a script named ``pygenstub`` gets generated which
-can be used as follows::
+pygenstub can be installed using pip::
+
+  $ pip install pygenstub
+
+Installation creates a script named ``pygenstub`` which can be used
+as follows::
 
   $ pygenstub foo.py
 
-This command will generate the file ``foo.pyi``.
+This command will generate the file ``foo.pyi`` in the same directory
+as the input file. If the output file already exists, it will be overwritten.
 
-This utility can be used with the Unix ``watch`` command or PyCharm
-file watchers to update stub files automatically from source files.
+.. tip::
+
+   This utility can be used with the Unix ``watch`` command or PyCharm file
+   watchers to update stub files automatically when source files are modified.
 
 Features
 --------
 
-If the docstring of a function or method includes a **sig** field,
-this signature is used to generate a prototype.
+If the docstring of a function includes a **sig** field, the value of that
+field will be used to generate a prototype:
 
-For example, considering the code given below:
+:code:
 
-.. code-block:: python
+   .. code-block:: python
 
-   def foo(a, b):
-       """Whatever.
+      def foo(a, b):
+          """Do foo.
 
-       :sig: (int, str) -> None
-       :param a: ...
-       """
+          :sig: (int, str) -> None
+          """
 
-The generated prototype will be:
+:stub:
 
-.. code-block:: python
+   .. code-block:: python
 
-   def foo(a: int, b: str) -> None: ...
+      def foo(a: int, b: str) -> None: ...
 
+Methods are handled the same way as functions except that there is no type hint
+for the ``self`` parameter (assuming it's the first parameter):
 
-**Default values**
+:code:
 
-The stub will contain placeholders for parameter default values.
+   .. code-block:: python
 
-Code:
+      class Foo:
+          def foo(self, a):
+              """Do foo.
 
-.. code-block:: python
+              :sig: (int) -> None
+              """
 
-   def foo(a, b=''):
-       """Whatever.
+:stub:
 
-       :sig: (int, str) -> None
-       :param a: ...
-       """
+   .. code-block:: python
 
-Stub:
-
-.. code-block:: python
-
-   def foo(a: int, b: str = ...) -> None: ...
-
+      class Foo:
+          def foo(self, a: int) -> None: ...
 
 **Imported names**
 
-Imported type names in the source will be used in the stub *if needed*:
+Imported type names in the source will be used in the stub file *if needed*:
 
-Code:
+:code:
 
-.. code-block:: python
+   .. code-block:: python
 
-   from x import A, B, C
+      from x import A, B, C
 
-   def foo(a, b):
-       """Whatever.
+      def foo(a, b):
+          """Do foo.
 
-       :sig: (A, B) -> A
-       :param a: ...
-       """
+          :sig: (A, B) -> A
+          """
 
-Stub (note that the name ``C`` is not imported):
+:stub:
 
-.. code-block:: python
+   .. code-block:: python
 
-   from x import A, B
+      from x import A, B
 
-   def foo(a: A, b: B) -> A: ...
+      def foo(a: A, b: B) -> A: ...
 
+Note that the name ``C`` is not imported in the stub file.
 
 **Dotted names**
 
-Dotted type names will generate imports in the stub file.
+Dotted type names will generate import lines in the stub file if they're
+not already imported:
 
-Code:
+:code:
 
-.. code-block:: python
+   .. code-block:: python
 
-   def foo(a, b):
-       """Whatever.
+      import x
 
-       :sig: (x.y.A, x.y.B) -> x.y.A
-       :param a: ...
-       """
+      def foo(a, b):
+          """Do foo.
 
-Stub:
+          :sig: (x.A, y.B) -> m.n.C
+          """
 
-.. code-block:: python
+:stub:
 
-   import x.y
+   .. code-block:: python
 
-   def foo(a: x.y.A, b: x.y.B) -> x.y.A: ...
+      import x
+      import y
+      import m.n
 
+      def foo(a: x.A, b: y.B) -> m.n.C: ...
 
 **Names from the typing module**
 
 Unresolved names will be looked up from the ``typing`` module.
 
-Code:
+:code:
 
-.. code-block:: python
+   .. code-block:: python
 
-   def foo(a, b):
-       """Whatever.
+      def foo(a, b):
+          """Do foo.
 
-       :sig: (Dict, Tuple) -> Optional[str]
-       :param a: ...
-       """
+          :sig: (List[int], Mapping[str, int]) -> Iterable[str]
+          """
 
-Stub:
+:stub:
 
-.. code-block:: python
+   .. code-block:: python
 
-   from typing import Dict, Optional, Tuple
+      from typing import Iterable, List, Mapping
 
-   def foo(a: Dict, b: Tuple) -> Optional[str]: ...
+      def foo(a: List[int], b: Mapping[str, int]) -> Iterable[str]: ...
+
+**Default values**
+
+If a parameter has a default value, the prototype will contain the triple dots
+placeholder for it:
+
+:code:
+
+   .. code-block:: python
+
+      def foo(a, b=''):
+          """Do foo.
+
+          :sig: (int, Optional[str]) -> None
+          """
+
+:stub:
+
+   .. code-block:: python
+
+      from typing import Optional
+
+      def foo(a: int, b: Optional[str] = ...) -> None: ...
+
+**Base classes**
+
+The imports needed for base classes will be included or generated using
+the same rules as described above (imported, dotted, etc.):
+
+:code:
+
+   .. code-block:: python
+
+      from x import A
+
+      class Foo(A, y.B):
+          def foo(self, a):
+              """Do foo.
+
+              :sig: (int) -> None
+              """
+
+:stub:
+
+   .. code-block:: python
+
+      from x import A
+      import y
+
+      class Foo(A, y.B):
+          def foo(self, a: int) -> None: ...
+
+**Class signatures**
+
+If the docstring of a class has a signature field, it will be used as
+the signature field of its ``__init__`` method unless that method already
+has a signature.
+
+:code:
+
+   .. code-block:: python
+
+      class Foo:
+          """A foo.
+
+          :sig: (int) -> None
+          """
+
+          def __init__(self, a):
+              self.a = a
+
+:stub:
+
+   .. code-block:: python
+
+      class Foo:
+          def __init__(self, a: int) -> None: ...
+
+**Type comments**
+
+Type hints for assignments can be written using ``# sig:`` comments.
+
+:code:
+
+   .. code-block:: python
+
+      n = 42  # sig: int
 
 
-**Classes**
+:stub:
 
-Classes are supported including the imports needed for their base classes.
+   .. code-block:: python
 
-Code:
+      n = ...  # type: int
 
-.. code-block:: python
-
-   from x import A
-
-   class Foo(A):
-       def foo(self, a):
-           """Whatever.
-
-           :sig: (int) -> str
-           :param a: ...
-           """
-
-Stub:
-
-.. code-block:: python
-
-   from x import A
-
-   class Foo(A):
-       def foo(self, a: int) -> str: ...
-
-
-If the docstring of a class has a signature field, it will be used
-as the signature field of its ``__init__`` method if that method
-doesn't have a signature already.
-
-Code:
-
-.. code-block:: python
-
-   class Foo:
-       """Whatever.
-
-       :sig: (int) -> None
-       :param a: ...
-       """
-
-       def __init__(self, a):
-           self.a = a
-
-
-Stub:
-
-.. code-block:: python
-
-   class Foo:
-       def __init__(self, a: int) -> None: ...
-
-
-**Variables**
-
-Module and class level variables can be annotated using ``# sig:``
-comments.
-
-Code:
-
-.. code-block:: python
-
-   x = 42  # sig: int
-
-   class Foo:
-       def foo(self):
-           self.y = 'spam'  # sig: str
-
-
-Stub:
-
-.. code-block:: python
-
-   x = ...  # type: int
-
-   class Foo:
-       y = ...  # type: str
-
+The rules for importing names as described above also apply here.
 
 .. note::
 
-   You might think, "why not use ``# type:`` comments directly?".
-   That's surely fine but if you do that, you'll need to import the types
-   so that the linter or IDE can use them.
+   The reason for using ``# sig`` comment instead of a ``# type`` comment
+   would be to avoid having to import the types.
 
+**Instance variables**
 
-TODO
-----
+Within classes, assingments to attributes of ``self`` will generate
+annotations under the class:
 
-- class variables
-- decorators
-- Sphinx extension for adjusting documentation
+:code:
 
+   .. code-block:: python
+
+      class Foo:
+          def foo(self):
+              self.y = 'spam'  # sig: str
+
+:stub:
+
+   .. code-block:: python
+
+      class Foo:
+          y = ...  # type: str
 
 Disclaimer
 ----------
 
-Some of these (or maybe even all of them) are probably
-in the "not a good idea" category. The whole thing could be pointless.
-I'm experimenting at the moment. Anyway, if you're not using ``.pyi``
-files, it should be harmless.
+Some or all of these actions are probably in the "not a good idea" category.
+Anyway, if you're not using ``.pyi`` files, it should be harmless.
