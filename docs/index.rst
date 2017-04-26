@@ -1,3 +1,6 @@
+pygenstub
+=========
+
 .. include:: ../README.rst
 
 .. toctree::
