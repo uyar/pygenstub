@@ -18,11 +18,14 @@ setup(
     author_email='uyar@tekir.org',
     license='GPL',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Programming Language :: Python :: 3.4'
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.4'
+        'Programming Language :: Python :: 3.4',
+        'Topic :: Software Development :: Documentation'
     ],
     py_modules=['pygenstub'],
     install_requires=['docutils'],

@@ -179,7 +179,7 @@ def test_get_stub_bases_dotted_imported_relative():
 
 def test_get_stub_class_sig_to_init():
     temp = '\n'.join([line for line in class_template.splitlines()
-                      if not 'sig' in line])
+                      if 'sig' not in line])
     code = temp % {'bases': '',
                    'doc': '"""Class\n\n    :sig: (str) -> None\n    """',
                    'method': '__init__',
