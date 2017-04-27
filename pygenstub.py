@@ -449,16 +449,17 @@ def get_stub(code):
     return generator.generate_stub()
 
 
-def main():
+def main(argv=None):
     """Entry point of the command-line utility.
 
-    :sig: () -> None
+    :sig: (Optional[List[str]]) -> None
+    :param argv: Command line arguments.
     """
-    parser = ArgumentParser()
+    argv = argv if argv is not None else sys.argv
+    parser = ArgumentParser(prog=argv[0])
     parser.add_argument('source', help='source file')
-    parser.add_argument('--debug', action='store_true',
-                        help='enable debug messages')
-    arguments = parser.parse_args()
+    parser.add_argument('--debug', action='store_true', help='enable debug messages')
+    arguments = parser.parse_args(argv[1:])
 
     log_level = logging.DEBUG if arguments.debug else logging.INFO
     logging.basicConfig(level=log_level)

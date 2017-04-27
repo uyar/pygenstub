@@ -1,4 +1,9 @@
-from pygenstub import get_stub
+from pytest import fixture, raises
+
+import os
+import shutil
+
+from pygenstub import get_stub, main
 
 
 def_template = '''
@@ -224,3 +229,41 @@ def test_get_stub_comment_instance_variable():
     code = class_template % {'bases': '', 'doc': '', 'method': 'm', 'comment': 'sig: str'}
     assert get_stub(code) == 'class C:\n    a = ...  # type: str\n\n' + \
         '    def m(self, a: int) -> None: ...\n'
+
+
+########################################
+# command-line interface tests
+########################################
+
+
+@fixture
+def source():
+    base_dir = os.path.dirname(__file__)
+    src = os.path.join(base_dir, '..', 'pygenstub.py')
+    dst = 'foo.py'
+    shutil.copy(src, dst)
+    yield src, dst
+    os.unlink(dst)
+    os.unlink(dst + 'i')
+
+
+def test_cli_help_should_print_usage_and_exit(capsys):
+    with raises(SystemExit):
+        main(argv=['pygenstub', '--help'])
+    out, err = capsys.readouterr()
+    assert out.startswith('usage: ')
+
+
+def test_cli_no_input_file_should_print_usage_and_exit(capsys):
+    with raises(SystemExit):
+        main(argv=['pygenstub'])
+    out, err = capsys.readouterr()
+    assert err.startswith('usage: ')
+    assert 'required: source' in err
+
+
+def test_cli_original_module_should_generate_original_stub(source):
+    main(argv=['pygenstub', source[1]])
+    src_stub = open(source[0] + 'i').read()
+    dst_stub = open(source[1] + 'i').read()
+    assert dst_stub == src_stub
