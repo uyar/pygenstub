@@ -6,13 +6,12 @@ History
 1.0a7 (unreleased)
 ------------------
 
-* Added support using type hints in Sphinx autodoc.
+* Added support for using type hints in Sphinx autodoc.
 
 1.0a6 (2017-03-06)
 ------------------
 
 * Improvements on imported names.
-* Updated documentation and tests.
 
 1.0a5 (2017-02-07)
 ------------------
