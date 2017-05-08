@@ -20,6 +20,7 @@ from docutils.core import publish_doctree
 from io import StringIO
 
 import ast
+import inspect
 import logging
 import re
 import sys
@@ -53,7 +54,7 @@ def get_fields(node, fields_tag='field_list'):
     :sig: (docutils.nodes.document, Optional[str]) -> Mapping[str, str]
     :param node: Node to get the fields from.
     :param fields_tag: Tag of child node that contains the fields.
-    :return: Field names and their values.
+    :returns: Field names and their values.
     """
     fields_nodes = [c for c in node.children if c.tagname == fields_tag]
     if len(fields_nodes) == 0:
@@ -65,19 +66,29 @@ def get_fields(node, fields_tag='field_list'):
     return {f['field_name']: f['field_body'] for f in fields}
 
 
+def get_signature_from_docstring(docstring):
+    """Get the signature from a docstring.
+    
+    :sig: (str) -> Optional[str]
+    :param docstring: Docstring to extract the signature from.
+    :returns: Extracted docstring.
+    """
+    root = publish_doctree(docstring, settings_overrides={'report_level': 5})
+    fields = get_fields(root)
+    return fields.get(SIG_FIELD)
+
+
 def get_signature(node):
     """Get the signature from the docstring of a node.
 
     :sig: (Union[ast.FunctionDef, ast.ClassDef]) -> Optional[str]
     :param node: Node to get the signature from.
-    :return: Value of signature field in node docstring.
+    :returns: Value of signature field in node docstring.
     """
     docstring = ast.get_docstring(node)
     if docstring is None:
         return None
-    root = publish_doctree(docstring, settings_overrides={'report_level': 5})
-    fields = get_fields(root)
-    return fields.get(SIG_FIELD)
+    return get_signature_from_docstring(docstring)
 
 
 def split_parameter_types(decl):
@@ -85,7 +96,7 @@ def split_parameter_types(decl):
 
     :sig: (str) -> List[str]
     :param decl: Parameter types declaration in the signature.
-    :return: Types of parameters.
+    :returns: Types of parameters.
     """
     if decl == '':
         return []
@@ -116,7 +127,7 @@ def parse_signature(signature):
 
     :sig: (str) -> Tuple[List[str], str, Set[str]]
     :param signature: Signature to parse.
-    :return: Input parameter types, return type, and all required types.
+    :returns: Input parameter types, return type, and all required types.
     """
     if ' -> ' not in signature:
         param_types, return_type = None, signature.strip()
@@ -160,6 +171,7 @@ class StubNode:
         """Get the prototype code for this node.
 
         :sig: () -> str
+        :returns: Stub code for this node.
         """
         max_len = max([len(v.name) for v in self.variables] + [0])
         sub_vars = ''.join([c.get_code(align=max_len) for c in self.variables])
@@ -342,8 +354,7 @@ class StubGenerator(ast.NodeVisitor):
 
             params = [(name, type_, i in arg_defaults)
                       for i, (name, type_) in enumerate(args)]
-            stub_node = FunctionNode(node.name, parameters=params,
-                                     return_type=rtype)
+            stub_node = FunctionNode(node.name, parameters=params, return_type=rtype)
             self._parents[-1].add_child(stub_node)
 
             self._parents.append(stub_node)
@@ -443,10 +454,65 @@ def get_stub(code):
 
     :sig: (str) -> str
     :param code: Source code to generate the stub for.
-    :return: Generated stub code.
+    :returns: Generated stub code.
     """
     generator = StubGenerator(code)
     return generator.generate_stub()
+
+
+def process_docstring(app, what, name, obj, options, lines):
+    signature = get_signature_from_docstring('\n'.join(lines))
+    if signature is None:
+        return
+
+    if what in ('class', 'exception'):
+        obj = getattr(obj, '__init__')
+
+    arg_types, rtype, _ = parse_signature(signature)
+    arg_names = [p for p in inspect.signature(obj).parameters]
+    if (len(arg_names) > 0) and (arg_names[0] == 'self'):
+        del arg_names[0]
+
+    if len(arg_names) == len(arg_types):
+        type_hints = {n: t for n, t in zip(arg_names, arg_types)}
+        type_hints['return'] = rtype
+
+        for arg_name, arg_type in type_hints.items():
+            if arg_name == 'return':
+                if what in ('class', 'exception'):
+                    continue
+
+                insert_index = len(lines)
+                for i, line in enumerate(lines):
+                    if line.startswith(':rtype:'):
+                        insert_index = None
+                        break
+                    elif line.startswith((':return:', ':returns:')):
+                        insert_index = i
+                        break
+
+                if insert_index is not None:
+                    lines.insert(insert_index, ':rtype: ' + arg_type)
+            else:
+                find = ':param %(name)s:' % {'name': arg_name}
+                for i, line in enumerate(lines):
+                    if line.startswith(find):
+                        lines.insert(i, ':type %(name)s: %(type)s' % {
+                            'name': arg_name,
+                            'type': arg_type
+                        })
+                        break
+
+    sig_marker = ':' + SIG_FIELD + ':'
+    for i, line in enumerate(lines):
+        if line.startswith(sig_marker):
+            lines.remove(line)
+
+
+def setup(app):
+    """Register the Sphinx extension."""
+    app.connect('autodoc-process-docstring', process_docstring)
+    return dict(parallel_read_safe=True)
 
 
 def main(argv=None):
