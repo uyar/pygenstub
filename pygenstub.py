@@ -19,6 +19,7 @@ from collections import OrderedDict
 from docutils.core import publish_doctree
 from io import StringIO
 
+import abc
 import ast
 import inspect
 import logging
@@ -146,15 +147,20 @@ def parse_signature(signature):
     return param_types, return_type, requires
 
 
-class StubNode:
+class StubNode(metaclass=abc.ABCMeta):
     """A node in a stub tree.
 
     :sig: () -> None
     """
     def __init__(self):
         self.variables = []     # sig: List[VariableNode]
+        """Variables under this node."""
+
         self.children = []      # sig: List[Union[FunctionNode, ClassNode]]
+        """Functions/methods and classes under this node."""
+
         self.parent = None      # sig: Optional[StubNode]
+        """Parent of this node."""
 
     def add_variable(self, node):
         """Add a variable node to this node.
@@ -166,21 +172,24 @@ class StubNode:
         node.parent = self
 
     def add_child(self, node):
-        """Add a function or class node to this node.
+        """Add a function/method or class node to this node.
 
         :sig: (Union[FunctionNode, ClassNode]) -> None
-        :param node: Variable node to add.
+        :param node: Function or class node to add.
         """
         self.children.append(node)
         node.parent = self
 
     def get_code(self):
-        """Get the prototype code for this node.
+        """Get the stub code for this node.
+
+        The stub code for a node consists of the type annotations of its variables,
+        followed by the prototypes of its functions/methods and classes.
 
         :sig: () -> str
-        :returns: Stub code for this node.
+        :return: Stub code for this node.
         """
-        max_len = max([len(v.name) for v in self.variables] + [0])
+        max_len = max([len(v.name) for v in self.variables] + [0])  # alignment
         sub_vars = ''.join([c.get_code(align=max_len) for c in self.variables])
         sub_codes = '\n'.join([c.get_code() for c in self.children])
         return '%(vars)s%(blank)s%(codes)s' % {
