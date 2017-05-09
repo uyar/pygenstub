@@ -480,7 +480,7 @@ def get_stub(source):
 
 def process_docstring(app, what, name, obj, options, lines):
     """Modify the docstring before generating documentation.
-    
+
     This will insert type declarations for parameters and return type
     into the docstring, and remove the signature field so that it will
     be excluded from the generated document.

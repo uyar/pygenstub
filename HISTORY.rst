@@ -3,7 +3,7 @@
 History
 =======
 
-1.0a7 (unreleased)
+1.0b1 (2017-05-09)
 ------------------
 
 * Added support for using type hints in Sphinx autodoc.

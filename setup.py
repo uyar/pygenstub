@@ -10,7 +10,7 @@ with open('HISTORY.rst') as history_file:
 
 setup(
     name='pygenstub',
-    version='1.0a7',
+    version='1.0b1',
     description='Python stub file generator.',
     long_description=readme + '\n\n' + history,
     url='https://bitbucket.org/uyar/pygenstub',
@@ -21,7 +21,6 @@ setup(
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Framework :: Sphinx :: Extension',
-        'Programming Language :: Python :: 3.4'
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: OS Independent',
