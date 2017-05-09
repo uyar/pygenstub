@@ -503,10 +503,20 @@ def process_docstring(app, what, name, obj, options, lines):
                         })
                         break
 
+    # remove the signature field
     sig_marker = ':' + SIG_FIELD + ':'
+    indices, started = [], False
     for i, line in enumerate(lines):
+        if started:
+            if (not line) or (line[0] != ' '):
+                break
+            indices.append(i)
         if line.startswith(sig_marker):
-            lines.remove(line)
+            indices.append(i)
+            started = True
+        i += 1
+    for i in reversed(indices):
+        del lines[i]
 
 
 def setup(app):
