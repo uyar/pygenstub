@@ -141,7 +141,7 @@ def parse_signature(signature):
         param_types, return_type = None, signature.strip()
     else:
         lhs, return_type = [s.strip() for s in signature.split(' -> ')]
-        csv = lhs[1:-1].strip()     # remove the parentheses around parameter list
+        csv = lhs[1:-1].strip()     # remove the parentheses around the parameter type list
         param_types = split_parameter_types(csv)
     requires = set(_RE_QUALIFIED_TYPES.findall(signature))
     return param_types, return_type, requires
@@ -154,13 +154,8 @@ class StubNode(metaclass=abc.ABCMeta):
     """
     def __init__(self):
         self.variables = []     # sig: List[VariableNode]
-        """Variables under this node."""
-
         self.children = []      # sig: List[Union[FunctionNode, ClassNode]]
-        """Functions/methods and classes under this node."""
-
         self.parent = None      # sig: Optional[StubNode]
-        """Parent of this node."""
 
     def add_variable(self, node):
         """Add a variable node to this node.
@@ -189,7 +184,7 @@ class StubNode(metaclass=abc.ABCMeta):
         :sig: () -> str
         :return: Stub code for this node.
         """
-        max_len = max([len(v.name) for v in self.variables] + [0])  # alignment
+        max_len = max([len(v.name) for v in self.variables]) if len(self.variables) > 0 else 0
         sub_vars = ''.join([c.get_code(align=max_len) for c in self.variables])
         sub_codes = '\n'.join([c.get_code() for c in self.children])
         return '%(vars)s%(blank)s%(codes)s' % {
@@ -212,10 +207,14 @@ class VariableNode(StubNode):
         self.type_ = type_  # sig: str
 
     def get_code(self, align=0):
-        """Get the prototype code for this variable.
+        """Get the type annotation for this variable.
+
+        To align the generated type comments, the caller can send
+        an alignment parameter to leave extra space before the comment.
 
         :sig: (Optional[int]) -> str
-        :param align: Position of hash symbol for alignment.
+        :param align: Number of extra spaces before the start of the comment.
+        :return: Type annotation for this variable.
         """
         spaces = max(align - len(self.name), 0)
         return '%(name)s = ... %(space)s # type: %(type)s\n' % {
@@ -228,14 +227,19 @@ class VariableNode(StubNode):
 class FunctionNode(StubNode):
     """A node representing a function in a stub tree.
 
+    The parameters have to given as a list of triples where each item specifies
+    the name of the parameter, its type, and whether it has a default value or not.
+
     :sig: (str, List[Tuple[str, str, bool]], str) -> None
     :param name: Name of function.
+    :param parameters: List of parameter triples (name, type, has_default).
+    :param rtype: Type of return value.
     """
-    def __init__(self, name, parameters, return_type):
+    def __init__(self, name, parameters, rtype):
         super().__init__()
         self.name = name                # sig: str
         self.parameters = parameters    # sig: List[Tuple[str, str, bool]]
-        self.return_type = return_type  # sig: str
+        self.rtype = rtype              # sig: str
 
     def get_code(self):
         parameter_decls = [
@@ -249,14 +253,14 @@ class FunctionNode(StubNode):
         prototype = 'def %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
             'name': self.name,
             'params': ', '.join(parameter_decls),
-            'rtype': self.return_type
+            'rtype': self.rtype
         }
         if len(prototype) > LINE_LENGTH_LIMIT:
             prototype = 'def %(name)s(\n%(indent)s%(params)s\n) -> %(rtype)s: ...\n' % {
                 'name': self.name,
                 'indent': MULTILINE_INDENT,
                 'params': (',\n' + MULTILINE_INDENT).join(parameter_decls),
-                'rtype': self.return_type
+                'rtype': self.rtype
             }
         return prototype
 
@@ -276,12 +280,8 @@ class ClassNode(StubNode):
         self.signature = signature  # sig: Optional[str]
 
     def get_code(self):
-        """Get the prototype code for this class.
-
-        :sig: () -> str
-        """
-        body = ' ...\n' if len(self.children) == 0 else \
-            '\n' + textwrap.indent(super().get_code(), INDENT)
+        base_code = textwrap.indent(super().get_code(), INDENT)
+        body = ' ...\n' if len(self.children) == 0 else '\n' + base_code
         bases = ', '.join(self.bases)
         return 'class %(name)s%(bases)s:%(body)s' % {
             'name': self.name,
@@ -296,7 +296,7 @@ class StubGenerator(ast.NodeVisitor):
     :sig: (str) -> None
     :param code: Source code to generate the stub for.
     """
-    def __init__(self, code):
+    def __init__(self, source):
         self.root = StubNode()                  # sig: StubNode
 
         self.imported_names = OrderedDict()     # sig: Mapping[str, str]
@@ -304,9 +304,9 @@ class StubGenerator(ast.NodeVisitor):
         self.required_types = set()             # sig: Set[str]
 
         self._parents = [self.root]             # type: list
-        self._code_lines = code.splitlines()    # type: list
+        self._code_lines = source.splitlines()    # type: list
 
-        ast_tree = ast.parse(code)
+        ast_tree = ast.parse(source)
         self.visit(ast_tree)
 
     def visit_ImportFrom(self, node):
@@ -343,34 +343,35 @@ class StubGenerator(ast.NodeVisitor):
 
         if signature is not None:
             _logger.debug('parsing signature for %s', node.name)
-            arg_types, rtype, requires = parse_signature(signature)
-            _logger.debug('parameter types: %s', arg_types)
+            param_types, rtype, requires = parse_signature(signature)
+            _logger.debug('parameter types: %s', param_types)
             _logger.debug('return type: %s', rtype)
             _logger.debug('required types: %s', requires)
             self.required_types |= requires
 
-            arg_names = [arg.arg for arg in node.args.args]
-            if (len(arg_names) > 0) and (arg_names[0] == 'self'):
-                arg_types.insert(0, '')
+            param_names = [arg.arg for arg in node.args.args]
+
+            # TODO: only in classes
+            if (len(param_names) > 0) and (param_names[0] == 'self'):
+                param_types.insert(0, '')
 
             if node.args.vararg is not None:
-                arg_names.append('*' + node.args.vararg.arg)
-                arg_types.append('')
+                param_names.append('*' + node.args.vararg.arg)
+                param_types.append('')
 
             if node.args.kwarg is not None:
-                arg_names.append('**' + node.args.kwarg.arg)
-                arg_types.append('')
+                param_names.append('**' + node.args.kwarg.arg)
+                param_types.append('')
 
-            assert len(arg_types) == len(arg_names), node.name
-            args = zip(arg_names, arg_types)
+            assert len(param_types) == len(param_names), node.name
 
-            arg_locs = [(a.lineno, a.col_offset) for a in node.args.args]
-            arg_defaults = {bisect(arg_locs, (d.lineno, d.col_offset)) - 1
-                            for d in node.args.defaults}
+            param_locs = [(a.lineno, a.col_offset) for a in node.args.args]
+            param_defaults = {bisect(param_locs, (d.lineno, d.col_offset)) - 1
+                              for d in node.args.defaults}
 
-            params = [(name, type_, i in arg_defaults)
-                      for i, (name, type_) in enumerate(args)]
-            stub_node = FunctionNode(node.name, parameters=params, return_type=rtype)
+            params = [(name, type_, i in param_defaults)
+                      for i, (name, type_) in enumerate(zip(param_names, param_types))]
+            stub_node = FunctionNode(node.name, parameters=params, rtype=rtype)
             self._parents[-1].add_child(stub_node)
 
             self._parents.append(stub_node)
@@ -396,6 +397,7 @@ class StubGenerator(ast.NodeVisitor):
         """Generate the stub code for this source.
 
         :sig: () -> str
+        :return: Generated stub code.
         """
         needed_types = self.required_types - BUILTIN_TYPES
 
@@ -465,18 +467,24 @@ class StubGenerator(ast.NodeVisitor):
         return out.getvalue()
 
 
-def get_stub(code):
-    """Get the stub declarations for a source code.
+def get_stub(source):
+    """Get the stub code for a source code.
 
     :sig: (str) -> str
-    :param code: Source code to generate the stub for.
-    :returns: Generated stub code.
+    :param source: Source code to generate the stub for.
+    :return: Generated stub code.
     """
-    generator = StubGenerator(code)
+    generator = StubGenerator(source)
     return generator.generate_stub()
 
 
 def process_docstring(app, what, name, obj, options, lines):
+    """Modify the docstring before generating documentation.
+    
+    This will insert type declarations for parameters and return type
+    into the docstring, and remove the signature field so that it will
+    be excluded from the generated document.
+    """
     signature = extract_signature('\n'.join(lines))
     if signature is None:
         return
@@ -484,54 +492,40 @@ def process_docstring(app, what, name, obj, options, lines):
     if what in ('class', 'exception'):
         obj = getattr(obj, '__init__')
 
-    arg_types, rtype, _ = parse_signature(signature)
-    arg_names = [p for p in inspect.signature(obj).parameters]
-    if (len(arg_names) > 0) and (arg_names[0] == 'self'):
-        del arg_names[0]
+    param_types, rtype, _ = parse_signature(signature)
+    param_names = [p for p in inspect.signature(obj).parameters]
 
-    if len(arg_names) == len(arg_types):
-        type_hints = {n: t for n, t in zip(arg_names, arg_types)}
-        type_hints['return'] = rtype
+    if (what in ('class', 'exception')) and (param_names[0] == 'self'):
+        del param_names[0]
 
-        for arg_name, arg_type in type_hints.items():
-            if arg_name == 'return':
-                if what in ('class', 'exception'):
-                    continue
+    # if something goes wrong, don't insert parameter types
+    if len(param_names) == len(param_types):
+        for name, type_ in zip(param_names, param_types):
+            find = ':param %(name)s:' % {'name': name}
+            for i, line in enumerate(lines):
+                if line.startswith(find):
+                    lines.insert(i, ':type %(name)s: %(type)s' % {'name': name, 'type': type_})
+                    break
 
-                insert_index = len(lines)
-                for i, line in enumerate(lines):
-                    if line.startswith(':rtype:'):
-                        insert_index = None
-                        break
-                    elif line.startswith((':return:', ':returns:')):
-                        insert_index = i
-                        break
-
-                if insert_index is not None:
-                    lines.insert(insert_index, ':rtype: ' + arg_type)
-            else:
-                find = ':param %(name)s:' % {'name': arg_name}
-                for i, line in enumerate(lines):
-                    if line.startswith(find):
-                        lines.insert(i, ':type %(name)s: %(type)s' % {
-                            'name': arg_name,
-                            'type': arg_type
-                        })
-                        break
+    if what not in ('class', 'exception'):
+        for i, line in enumerate(lines):
+            if line.startswith((':return:', ':returns:')):
+                lines.insert(i, ':rtype: ' + rtype)
+                break
 
     # remove the signature field
     sig_marker = ':' + SIG_FIELD + ':'
-    indices, started = [], False
-    for i, line in enumerate(lines):
-        if started:
-            if (not line) or (line[0] != ' '):
-                break
-            indices.append(i)
-        if line.startswith(sig_marker):
-            indices.append(i)
-            started = True
-        i += 1
-    for i in reversed(indices):
+    sig_start = 0
+    while sig_start < len(lines):
+        if lines[sig_start].startswith(sig_marker):
+            break
+        sig_start += 1
+    sig_end = sig_start + 1
+    while sig_end < len(lines):
+        if (not lines[sig_end]) or (lines[sig_end][0] != ' '):
+            break
+        sig_end += 1
+    for i in reversed(range(sig_start, sig_end)):
         del lines[i]
 
 

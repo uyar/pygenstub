@@ -46,15 +46,15 @@ class VariableNode(StubNode):
     def get_code(self, align: Optional[int] = ...) -> str: ...
 
 class FunctionNode(StubNode):
-    name = ...         # type: str
-    parameters = ...   # type: List[Tuple[str, str, bool]]
-    return_type = ...  # type: str
+    name = ...        # type: str
+    parameters = ...  # type: List[Tuple[str, str, bool]]
+    rtype = ...       # type: str
 
     def __init__(
             self,
             name: str,
             parameters: List[Tuple[str, str, bool]],
-            return_type: str
+            rtype: str
     ) -> None: ...
 
 class ClassNode(StubNode):
@@ -69,18 +69,16 @@ class ClassNode(StubNode):
             signature: Optional[str] = ...
     ) -> None: ...
 
-    def get_code(self) -> str: ...
-
 class StubGenerator(ast.NodeVisitor):
     root = ...            # type: StubNode
     imported_names = ...  # type: Mapping[str, str]
     defined_types = ...   # type: Set[str]
     required_types = ...  # type: Set[str]
 
-    def __init__(self, code: str) -> None: ...
+    def __init__(self, source: str) -> None: ...
 
     def generate_stub(self) -> str: ...
 
-def get_stub(code: str) -> str: ...
+def get_stub(source: str) -> str: ...
 
 def main(argv: Optional[List[str]] = ...) -> None: ...
