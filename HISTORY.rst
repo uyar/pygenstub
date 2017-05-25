@@ -3,6 +3,11 @@
 History
 =======
 
+1.0b2 (unreleased)
+------------------
+
+* Added support for Python 2 again.
+
 1.0b1 (2017-05-09)
 ------------------
 

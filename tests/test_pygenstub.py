@@ -259,11 +259,13 @@ def test_cli_no_input_file_should_print_usage_and_exit(capsys):
         main(argv=['pygenstub'])
     out, err = capsys.readouterr()
     assert err.startswith('usage: ')
-    assert 'required: source' in err
+    assert ('required: source' in err) or ('too few arguments' in err)
 
 
 def test_cli_original_module_should_generate_original_stub(source):
     main(argv=['pygenstub', source[1]])
-    src_stub = open(source[0] + 'i').read()
-    dst_stub = open(source[1] + 'i').read()
+    with open(source[0] + 'i') as src:
+        src_stub = src.read()
+    with open(source[1] + 'i') as dst:
+        dst_stub = dst.read()
     assert dst_stub == src_stub

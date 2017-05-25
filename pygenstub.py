@@ -13,19 +13,32 @@
 # You should have received a copy of the GNU General Public License
 # along with pygenstub.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from argparse import ArgumentParser
 from bisect import bisect
 from collections import OrderedDict
 from docutils.core import publish_doctree
 from io import StringIO
 
-import abc
 import ast
 import inspect
 import logging
 import re
 import sys
-import textwrap
+
+PY3 = sys.version_info >= (3, 0)
+
+if not PY3:
+    from codecs import open
+
+    def indent(text, lead):
+        if lead == '':
+            return text
+        return '\n'.join([lead + line if line else line
+                          for line in text.splitlines()]) + '\n'
+else:
+    from textwrap import indent
 
 
 BUILTIN_TYPES = {
@@ -147,7 +160,7 @@ def parse_signature(signature):
     return param_types, return_type, requires
 
 
-class StubNode(metaclass=abc.ABCMeta):
+class StubNode:
     """A node in a stub tree.
 
     :sig: () -> None
@@ -202,7 +215,10 @@ class VariableNode(StubNode):
     :param type_: Type of variable.
     """
     def __init__(self, name, type_):
-        super().__init__()
+        if not PY3:
+            StubNode.__init__(self)
+        else:
+            super().__init__()
         self.name = name    # sig: str
         self.type_ = type_  # sig: str
 
@@ -236,7 +252,10 @@ class FunctionNode(StubNode):
     :param rtype: Type of return value.
     """
     def __init__(self, name, parameters, rtype):
-        super().__init__()
+        if not PY3:
+            StubNode.__init__(self)
+        else:
+            super().__init__()
         self.name = name                # sig: str
         self.parameters = parameters    # sig: List[Tuple[str, str, bool]]
         self.rtype = rtype              # sig: str
@@ -274,13 +293,17 @@ class ClassNode(StubNode):
     :param signature: Signature of class, to be used in __init__ method.
     """
     def __init__(self, name, bases, signature=None):
-        super().__init__()
+        if not PY3:
+            StubNode.__init__(self)
+        else:
+            super().__init__()
         self.name = name            # sig: str
         self.bases = bases          # sig: List[str]
         self.signature = signature  # sig: Optional[str]
 
     def get_code(self):
-        base_code = textwrap.indent(super().get_code(), INDENT)
+        super_code = super().get_code() if PY3 else StubNode.get_code(self)
+        base_code = indent(super_code, INDENT)
         body = ' ...\n' if len(self.children) == 0 else '\n' + base_code
         bases = ', '.join(self.bases)
         return 'class %(name)s%(bases)s:%(body)s' % {
@@ -349,7 +372,7 @@ class StubGenerator(ast.NodeVisitor):
             _logger.debug('required types: %s', requires)
             self.required_types |= requires
 
-            param_names = [arg.arg for arg in node.args.args]
+            param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
 
             # TODO: only in classes
             if (len(param_names) > 0) and (param_names[0] == 'self'):
