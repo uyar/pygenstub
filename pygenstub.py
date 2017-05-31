@@ -379,11 +379,11 @@ class StubGenerator(ast.NodeVisitor):
                 param_types.insert(0, '')
 
             if node.args.vararg is not None:
-                param_names.append('*' + node.args.vararg.arg)
+                param_names.append('*' + (node.args.vararg.arg if PY3 else node.args.vararg))
                 param_types.append('')
 
             if node.args.kwarg is not None:
-                param_names.append('**' + node.args.kwarg.arg)
+                param_names.append('**' + (node.args.kwarg.arg if PY3 else node.args.kwarg))
                 param_types.append('')
 
             assert len(param_types) == len(param_names), node.name

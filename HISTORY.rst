@@ -3,6 +3,11 @@
 History
 =======
 
+1.0b3 (unreleased)
+------------------
+
+* Fixes for *args and **kwargs on Python 2 code.
+
 1.0b2 (2017-05-26)
 ------------------
 
