@@ -1,13 +1,13 @@
 syntax: glob
 
 *.pyc
-*.egg-info/
+*.egg-info
 
-.cache/
-.coverage/
-.tox/
+.cache
+.coverage
+.tox
 
-_build/
-dist/
+_build
+dist
 
-.idea/
+.idea
