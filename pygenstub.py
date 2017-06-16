@@ -30,6 +30,7 @@ import sys
 PY3 = sys.version_info >= (3, 0)
 
 if not PY3:
+    import __builtin__ as builtins
     from codecs import open
 
     def indent(text, lead):
@@ -38,13 +39,13 @@ if not PY3:
         return '\n'.join([lead + line if line else line
                           for line in text.splitlines()]) + '\n'
 else:
+    import builtins
     from textwrap import indent
 
 
-BUILTIN_TYPES = {
-    'int', 'float', 'bool', 'str', 'bytes', 'unicode',
-    'tuple', 'list', 'set', 'dict', 'None', 'object'
-}
+BUILTIN_TYPES = {k for k, t in builtins.__dict__.items()
+                 if isinstance(t, type)}
+BUILTIN_TYPES.add('None')
 
 SIG_FIELD = 'sig'       # sig: str
 SIG_COMMENT = '# sig:'  # sig: str

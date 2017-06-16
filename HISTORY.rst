@@ -3,6 +3,11 @@
 History
 =======
 
+1.0b4 (2017-06-16)
+------------------
+
+* Collect builtin types from the builtins module.
+
 1.0b3 (2017-06-16)
 ------------------
 
