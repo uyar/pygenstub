@@ -48,4 +48,4 @@ dist: clean
 	python setup.py bdist_wheel
 
 release: dist
-	echo twine upload dist/*
+	twine upload dist/*
