@@ -1,4 +1,4 @@
-.PHONY: help clean clean-pyc clean-build list test test-all coverage docs release sdist
+.PHONY: help clean clean-pyc clean-build list test test-all coverage docs dist release
 
 help:
 	@echo "clean-build - remove build artifacts"
@@ -10,7 +10,7 @@ help:
 	@echo "coverage - check code coverage quickly with the default Python"
 	@echo "docs - generate Sphinx HTML documentation, including API docs"
 	@echo "release - package and upload a release"
-	@echo "sdist - package"
+	@echo "dist - package"
 
 clean: clean-build clean-pyc clean-docs
 
@@ -43,11 +43,9 @@ docs:
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 
-release: clean
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
-
-sdist: clean
+dist: clean
 	python setup.py sdist
-	python setup.py bdist_wheel upload
-	ls -l dist
+	python setup.py bdist_wheel
+
+release: dist
+	echo twine upload dist/*
