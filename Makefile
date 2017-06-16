@@ -1,5 +1,7 @@
 .PHONY: help clean clean-pyc clean-build list test test-all coverage docs dist release
 
+release: RESPONSE = $(shell bash -c 'read -r -p "Do you want to upload [y/N]? " r; echo $$r')
+
 help:
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-pyc - remove Python file artifacts"
@@ -48,4 +50,4 @@ dist: clean
 	python setup.py bdist_wheel
 
 release: dist
-	twine upload dist/*
+	@if [ $(RESPONSE)'' = 'y' ]; then twine upload dist/*; fi
