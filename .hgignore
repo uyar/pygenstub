@@ -8,6 +8,7 @@ syntax: glob
 .tox
 
 _build
+build
 dist
 
 .idea
