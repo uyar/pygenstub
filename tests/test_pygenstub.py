@@ -236,7 +236,7 @@ def test_get_stub_comment_instance_variable():
 ########################################
 
 
-@fixture()
+@fixture
 def source():
     base_dir = os.path.dirname(__file__)
     src = os.path.join(base_dir, '..', 'pygenstub.py')
