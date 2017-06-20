@@ -43,8 +43,7 @@ else:
     from textwrap import indent
 
 
-BUILTIN_TYPES = {k for k, t in builtins.__dict__.items()
-                 if isinstance(t, type)}
+BUILTIN_TYPES = {k for k, t in builtins.__dict__.items() if isinstance(t, type)}
 BUILTIN_TYPES.add('None')
 
 SIG_FIELD = 'sig'       # sig: str
