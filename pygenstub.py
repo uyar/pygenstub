@@ -51,6 +51,8 @@ BUILTIN_TYPES.add('None')
 SIG_FIELD = 'sig'       # sig: str
 SIG_COMMENT = '# sig:'  # sig: str
 
+DECORATORS = {'property', 'staticmethod', 'classmethod'}    # sig: Set[str]
+
 LINE_LENGTH_LIMIT = 79
 INDENT = 4 * ' '
 MULTILINE_INDENT = 2 * INDENT
@@ -248,12 +250,13 @@ class FunctionNode(StubNode):
     The parameters have to given as a list of triples where each item specifies
     the name of the parameter, its type, and whether it has a default value or not.
 
-    :sig: (str, List[Tuple[str, str, bool]], str) -> None
+    :sig: (str, List[Tuple[str, str, bool]], str, Optional[List[str]]) -> None
     :param name: Name of function.
     :param parameters: List of parameter triples (name, type, has_default).
     :param rtype: Type of return value.
+    :param decorators: Decorators of function.
     """
-    def __init__(self, name, parameters, rtype):
+    def __init__(self, name, parameters, rtype, decorators=None):
         if not PY3:
             StubNode.__init__(self)
         else:
@@ -261,8 +264,10 @@ class FunctionNode(StubNode):
         self.name = name                # sig: str
         self.parameters = parameters    # sig: List[Tuple[str, str, bool]]
         self.rtype = rtype              # sig: str
+        self.decorators = decorators if decorators is not None else []  # sig: List[str]]
 
     def get_code(self):
+        decorators = ['@' + d + '\n' for d in self.decorators if d in DECORATORS]
         parameter_decls = [
             '%(name)s%(type)s%(default)s' % {
                 'name': name,
@@ -271,13 +276,15 @@ class FunctionNode(StubNode):
             }
             for name, type_, has_default in self.parameters
         ]
-        prototype = 'def %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
+        prototype = '%(decs)sdef %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
+            'decs': ''.join(decorators),
             'name': self.name,
             'params': ', '.join(parameter_decls),
             'rtype': self.rtype
         }
         if len(prototype) > LINE_LENGTH_LIMIT:
-            prototype = 'def %(name)s(\n%(indent)s%(params)s\n) -> %(rtype)s: ...\n' % {
+            prototype = '%(decs)sdef %(name)s(\n%(indent)s%(params)s\n) -> %(rtype)s: ...\n' % {
+                'decs': ''.join(decorators),
                 'name': self.name,
                 'indent': MULTILINE_INDENT,
                 'params': (',\n' + MULTILINE_INDENT).join(parameter_decls),
@@ -396,7 +403,11 @@ class StubGenerator(ast.NodeVisitor):
 
             params = [(name, type_, i in param_defaults)
                       for i, (name, type_) in enumerate(zip(param_names, param_types))]
-            stub_node = FunctionNode(node.name, parameters=params, rtype=rtype)
+
+            decorators = [d.id for d in node.decorator_list]
+
+            stub_node = FunctionNode(node.name, parameters=params, rtype=rtype,
+                                     decorators=decorators)
             self._parents[-1].add_child(stub_node)
 
             self._parents.append(stub_node)

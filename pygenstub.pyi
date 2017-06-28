@@ -8,6 +8,7 @@ import docutils.nodes
 
 SIG_FIELD = ...    # type: str
 SIG_COMMENT = ...  # type: str
+DECORATORS = ...   # type: Set[str]
 
 def get_fields(
         node: docutils.nodes.document,
@@ -49,12 +50,14 @@ class FunctionNode(StubNode):
     name = ...        # type: str
     parameters = ...  # type: List[Tuple[str, str, bool]]
     rtype = ...       # type: str
+    decorators = ...  # type: List[str]]
 
     def __init__(
             self,
             name: str,
             parameters: List[Tuple[str, str, bool]],
-            rtype: str
+            rtype: str,
+            decorators: Optional[List[str]] = ...
     ) -> None: ...
 
 class ClassNode(StubNode):
