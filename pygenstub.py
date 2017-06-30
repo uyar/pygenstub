@@ -165,11 +165,13 @@ def parse_signature(signature):
 
 
 class StubNode:
-    """A node in a stub tree.
+    """A node in a stub tree."""
 
-    :sig: () -> None
-    """
     def __init__(self):
+        """Initialize this stub node.
+
+        :sig: () -> None
+        """
         self.variables = []     # sig: List[VariableNode]
         self.children = []      # sig: List[Union[FunctionNode, ClassNode]]
         self.parent = None      # sig: Optional[StubNode]
@@ -212,13 +214,15 @@ class StubNode:
 
 
 class VariableNode(StubNode):
-    """A node representing an assignment in a stub tree.
+    """A node representing an assignment in a stub tree."""
 
-    :sig: (str, str) -> None
-    :param name: Name of variable that is being assigned to.
-    :param type_: Type of variable.
-    """
     def __init__(self, name, type_):
+        """Initialize this variable node.
+
+        :sig: (str, str) -> None
+        :param name: Name of variable that is being assigned to.
+        :param type_: Type of variable.
+        """
         if not PY3:
             StubNode.__init__(self)
         else:
@@ -245,18 +249,20 @@ class VariableNode(StubNode):
 
 
 class FunctionNode(StubNode):
-    """A node representing a function in a stub tree.
+    """A node representing a function in a stub tree."""
 
-    The parameters have to given as a list of triples where each item specifies
-    the name of the parameter, its type, and whether it has a default value or not.
-
-    :sig: (str, List[Tuple[str, str, bool]], str, Optional[List[str]]) -> None
-    :param name: Name of function.
-    :param parameters: List of parameter triples (name, type, has_default).
-    :param rtype: Type of return value.
-    :param decorators: Decorators of function.
-    """
     def __init__(self, name, parameters, rtype, decorators=None):
+        """Initialize this function node.
+
+        The parameters have to given as a list of triples where each item specifies
+        the name of the parameter, its type, and whether it has a default value or not.
+
+        :sig: (str, List[Tuple[str, str, bool]], str, Optional[List[str]]) -> None
+        :param name: Name of function.
+        :param parameters: List of parameter triples (name, type, has_default).
+        :param rtype: Type of return value.
+        :param decorators: Decorators of function.
+        """
         if not PY3:
             StubNode.__init__(self)
         else:
@@ -294,14 +300,16 @@ class FunctionNode(StubNode):
 
 
 class ClassNode(StubNode):
-    """A node representing a class in a stub tree.
+    """A node representing a class in a stub tree."""
 
-    :sig: (str, List[str], Optional[str]) -> None
-    :param name: Name of class.
-    :param bases: Base classes of class.
-    :param signature: Signature of class, to be used in __init__ method.
-    """
     def __init__(self, name, bases, signature=None):
+        """Initialize this class node.
+
+        :sig: (str, List[str], Optional[str]) -> None
+        :param name: Name of class.
+        :param bases: Base classes of class.
+        :param signature: Signature of class, to be used in __init__ method.
+        """
         if not PY3:
             StubNode.__init__(self)
         else:
@@ -323,12 +331,14 @@ class ClassNode(StubNode):
 
 
 class StubGenerator(ast.NodeVisitor):
-    """A transformer that generates stub declarations from a source code.
+    """A transformer that generates stub declarations from a source code."""
 
-    :sig: (str) -> None
-    :param code: Source code to generate the stub for.
-    """
     def __init__(self, source):
+        """Initialize this stub generator.
+
+        :sig: (str) -> None
+        :param code: Source code to generate the stub for.
+        """
         self.root = StubNode()                  # sig: StubNode
 
         self.imported_names = OrderedDict()     # sig: Mapping[str, str]
