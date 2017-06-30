@@ -1,3 +1,5 @@
+"""The module for installing pygenstub."""
+
 from setuptools import setup
 
 
@@ -34,6 +36,8 @@ setup(
     extras_require={
         'dev': [
             'flake8',
+            'flake8-isort',
+            'flake8-docstrings',
             'wheel',
             'twine'
         ],

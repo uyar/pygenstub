@@ -30,7 +30,7 @@ clean-docs:
 	make -C docs clean
 
 lint:
-	flake8 pygenstub.py tests
+	flake8 pygenstub.py
 
 test:
 	py.test -m "not download"
