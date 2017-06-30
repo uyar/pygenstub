@@ -15,6 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with pygenstub.  If not, see <http://www.gnu.org/licenses/>.
 
+"""pygenstub is a utility for generating stub files from Python source files.
+
+It takes a source file as input and creates a stub file with the same base name
+and the ``.pyi`` extension.
+
+For documentation, please refer to: https://pygenstub.readthedocs.io/
+"""
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import ast
@@ -29,6 +37,7 @@ from io import StringIO
 
 from docutils.core import publish_doctree
 
+
 PY3 = sys.version_info >= (3, 0)
 
 if not PY3:
@@ -36,6 +45,7 @@ if not PY3:
     from codecs import open
 
     def indent(text, lead):
+        """Add some leading text to the beginning of every line in a text."""
         if lead == '':
             return text
         return '\n'.join([lead + line if line else line
