@@ -1,7 +1,7 @@
+from pytest import fixture, raises
+
 import os
 import shutil
-
-from pytest import fixture, raises
 
 from pygenstub import get_stub, main
 
