@@ -17,17 +17,17 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from argparse import ArgumentParser
-from bisect import bisect
-from collections import OrderedDict
-from docutils.core import publish_doctree
-from io import StringIO
-
 import ast
 import inspect
 import logging
 import re
 import sys
+from argparse import ArgumentParser
+from bisect import bisect
+from collections import OrderedDict
+from io import StringIO
+
+from docutils.core import publish_doctree
 
 PY3 = sys.version_info >= (3, 0)
 
