@@ -426,10 +426,17 @@ class StubGenerator(ast.NodeVisitor):
             _logger.debug('required types: %s', requires)
             self.required_types |= requires
 
+            decorators = [d.id for d in node.decorator_list]
+
             param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
 
             # TODO: only in classes
             if (len(param_names) > 0) and (param_names[0] == 'self'):
+                param_types.insert(0, '')
+
+            # TODO: only in classes
+            if (len(param_names) > 0) and (param_names[0] == 'cls') and \
+                    ('classmethod' in decorators):
                 param_types.insert(0, '')
 
             if node.args.vararg is not None:
@@ -448,8 +455,6 @@ class StubGenerator(ast.NodeVisitor):
 
             params = [(name, type_, i in param_defaults)
                       for i, (name, type_) in enumerate(zip(param_names, param_types))]
-
-            decorators = [d.id for d in node.decorator_list]
 
             stub_node = FunctionNode(node.name, parameters=params, rtype=rtype,
                                      decorators=decorators)

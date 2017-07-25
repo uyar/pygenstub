@@ -27,10 +27,11 @@ from . import m
 class C%(bases)s:
     %(doc)s
 
-    def %(method)s(self, a):
+    %(decorator)s
+    def %(method)s(%(params)s):
         """Method
 
-        :sig: (int) -> None
+        :sig: (%(ptypes)s) -> None
         """
         self.a = a  # %(comment)s
 '''
@@ -183,30 +184,70 @@ def test_get_stub_params_vararg_and_kwargs():
 
 
 def test_get_stub_method_self():
-    code = class_template % {'bases': '', 'doc': '', 'method': 'm', 'comment': ''}
+    code = class_template % {
+        'bases': '',
+        'doc': '',
+        'decorator': '',
+        'method': 'm',
+        'params': 'self, a',
+        'ptypes': 'int',
+        'comment': ''
+    }
     assert get_stub(code) == 'class C:\n    def m(self, a: int) -> None: ...\n'
 
 
 def test_get_stub_bases_imported():
-    code = class_template % {'bases': '(A)', 'doc': '', 'method': 'm', 'comment': ''}
+    code = class_template % {
+        'bases': '(A)',
+        'doc': '',
+        'decorator': '',
+        'method': 'm',
+        'params': 'self, a',
+        'ptypes': 'int',
+        'comment': ''
+    }
     assert get_stub(code) == 'from x import A\n\n\n' + \
         'class C(A):\n    def m(self, a: int) -> None: ...\n'
 
 
 def test_get_stub_bases_dotted():
-    code = class_template % {'bases': '(x.A)', 'doc': '', 'method': 'm', 'comment': ''}
+    code = class_template % {
+        'bases': '(x.A)',
+        'doc': '',
+        'decorator': '',
+        'method': 'm',
+        'params': 'self, a',
+        'ptypes': 'int',
+        'comment': ''
+    }
     assert get_stub(code) == 'import x\n\n\n' + \
         'class C(x.A):\n    def m(self, a: int) -> None: ...\n'
 
 
 def test_get_stub_bases_dotted_imported():
-    code = class_template % {'bases': '(A.X)', 'doc': '', 'method': 'm', 'comment': ''}
+    code = class_template % {
+        'bases': '(A.X)',
+        'doc': '',
+        'decorator': '',
+        'method': 'm',
+        'params': 'self, a',
+        'ptypes': 'int',
+        'comment': ''
+    }
     assert get_stub(code) == 'from x import A\n\n\n' + \
         'class C(A.X):\n    def m(self, a: int) -> None: ...\n'
 
 
 def test_get_stub_bases_dotted_imported_relative():
-    code = class_template % {'bases': '(m.X)', 'doc': '', 'method': 'm', 'comment': ''}
+    code = class_template % {
+        'bases': '(m.X)',
+        'doc': '',
+        'decorator': '',
+        'method': 'm',
+        'params': 'self, a',
+        'ptypes': 'int',
+        'comment': ''
+    }
     assert get_stub(code) == 'from . import m\n\n\n' + \
         'class C(m.X):\n    def m(self, a: int) -> None: ...\n'
 
@@ -216,7 +257,10 @@ def test_get_stub_class_sig_to_init():
                       if 'sig' not in line])
     code = temp % {'bases': '',
                    'doc': '"""Class\n\n    :sig: (str) -> None\n    """',
+                   'decorator': '',
                    'method': '__init__',
+                   'params': 'self, a',
+                   'ptypes': 'int',
                    'comment': ''}
     assert get_stub(code) == 'class C:\n    def __init__(self, a: str) -> None: ...\n'
 
@@ -224,7 +268,10 @@ def test_get_stub_class_sig_to_init():
 def test_get_stub_class_sig_init_not_overwritten():
     code = class_template % {'bases': '',
                              'doc': '"""Class\n\n    :sig: (str) -> None\n    """',
+                             'decorator': '',
                              'method': '__init__',
+                             'params': 'self, a',
+                             'ptypes': 'int',
                              'comment': ''}
     assert get_stub(code) == 'class C:\n    def __init__(self, a: int) -> None: ...\n'
 
@@ -255,9 +302,43 @@ def test_get_stub_comment_module_variable_dotted_imported_relative():
 
 
 def test_get_stub_comment_instance_variable():
-    code = class_template % {'bases': '', 'doc': '', 'method': 'm', 'comment': 'sig: str'}
+    code = class_template % {
+        'bases': '',
+        'doc': '',
+        'decorator': '',
+        'method': 'm',
+        'params': 'self, a',
+        'ptypes': 'int',
+        'comment': 'sig: str'
+    }
     assert get_stub(code) == 'class C:\n    a = ...  # type: str\n\n' + \
         '    def m(self, a: int) -> None: ...\n'
+
+
+def test_get_stub_method_decorated_staticmethod():
+    code = class_template % {
+        'bases': '',
+        'doc': '',
+        'decorator': '@staticmethod',
+        'method': 'm',
+        'params': 'a',
+        'ptypes': 'int',
+        'comment': ''
+    }
+    assert get_stub(code) == 'class C:\n    @staticmethod\n    def m(a: int) -> None: ...\n'
+
+
+def test_get_stub_method_decorated_classmethod():
+    code = class_template % {
+        'bases': '',
+        'doc': '',
+        'decorator': '@classmethod',
+        'method': 'm',
+        'params': 'cls, a',
+        'ptypes': 'int',
+        'comment': ''
+    }
+    assert get_stub(code) == 'class C:\n    @classmethod\n    def m(cls, a: int) -> None: ...\n'
 
 
 ########################################
