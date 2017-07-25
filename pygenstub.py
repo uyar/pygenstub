@@ -283,6 +283,11 @@ class FunctionNode(StubNode):
         self.decorators = decorators if decorators is not None else []  # sig: List[str]]
 
     def get_code(self):
+        """Get the stub code for this function.
+
+        :sig: () -> str
+        :return: Stub code for this function.
+        """
         decorators = ['@' + d + '\n' for d in self.decorators if d in DECORATORS]
         parameter_decls = [
             '%(name)s%(type)s%(default)s' % {
@@ -329,6 +334,11 @@ class ClassNode(StubNode):
         self.signature = signature  # sig: Optional[str]
 
     def get_code(self):
+        """Get the stub code for this class.
+
+        :sig: () -> str
+        :return: Stub code for this class.
+        """
         super_code = super().get_code() if PY3 else StubNode.get_code(self)
         base_code = indent(super_code, INDENT)
         body = ' ...\n' if len(self.children) == 0 else '\n' + base_code
@@ -362,12 +372,22 @@ class StubGenerator(ast.NodeVisitor):
         self.visit(ast_tree)
 
     def visit_ImportFrom(self, node):
+        """Process a "from x import y" node.
+
+        :sig: (ast.ImportFrom) -> None
+        :param node: Node to process.
+        """
         line = self._code_lines[node.lineno - 1]
         module_name = line.split('from')[1].split('import')[0].strip()
         for name in node.names:
             self.imported_names[name.name] = module_name
 
     def visit_Assign(self, node):
+        """Process an assignment node.
+
+        :sig: (ast.Assign) -> None
+        :param node: Node to process.
+        """
         line = self._code_lines[node.lineno - 1]
         if SIG_COMMENT in line:
             line = _RE_COMMENT_IN_STRING.sub('', line)
@@ -386,6 +406,11 @@ class StubGenerator(ast.NodeVisitor):
                     parent.parent.add_variable(stub_node)
 
     def visit_FunctionDef(self, node):
+        """Process a function node.
+
+        :sig: (ast.FunctionDef) -> None
+        :param node: Node to process.
+        """
         signature = get_signature(node)
 
         if signature is None:
@@ -435,6 +460,11 @@ class StubGenerator(ast.NodeVisitor):
             del self._parents[-1]
 
     def visit_ClassDef(self, node):
+        """Process a class node.
+
+        :sig: (ast.ClassDef) -> None
+        :param node: Node to process.
+        """
         self.defined_types.add(node.name)
 
         bases = [n.value.id + '.' + n.attr if isinstance(n, ast.Attribute) else n.id

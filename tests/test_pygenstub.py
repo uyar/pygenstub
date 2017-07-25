@@ -47,7 +47,7 @@ def test_get_stub_no_sig_in_docstring():
 
 def test_get_stub_two_functions_only_one_sig():
     code = def_template % {'params': '', 'ptypes': '', 'rtype': 'None'} + \
-           '''def g():\n    """Func\n    """\n'''
+        '''def g():\n    """Func\n    """\n'''
     assert get_stub(code) == 'def f() -> None: ...\n'
 
 
