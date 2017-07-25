@@ -2,6 +2,7 @@ from pytest import fixture, raises
 
 import os
 import shutil
+import sys
 
 from pygenstub import get_stub, main
 
@@ -268,9 +269,10 @@ def test_get_stub_comment_instance_variable():
 def source():
     base_dir = os.path.dirname(__file__)
     src = os.path.join(base_dir, '..', 'pygenstub.py')
-    dst = 'pygenstub_copy.py'
+    dst = '/dev/shm/foo.py' if sys.platform in {'linux', 'linux2'} else 'foo.py'
     shutil.copy(src, dst)
     yield src, dst
+
     os.unlink(dst)
     if os.path.exists(dst + 'i'):
         os.unlink(dst + 'i')
