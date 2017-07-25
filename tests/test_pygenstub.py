@@ -341,6 +341,32 @@ def test_get_stub_method_decorated_classmethod():
     assert get_stub(code) == 'class C:\n    @classmethod\n    def m(cls, a: int) -> None: ...\n'
 
 
+def test_get_stub_method_property():
+    code = class_template % {
+        'bases': '',
+        'doc': '',
+        'decorator': '@property',
+        'method': 'm',
+        'params': 'self',
+        'ptypes': '',
+        'comment': ''
+    }
+    assert get_stub(code) == 'class C:\n    @property\n    def m(self) -> None: ...\n'
+
+
+def test_get_stub_method_property_setter():
+    code = class_template % {
+        'bases': '',
+        'doc': '',
+        'decorator': '@x.setter',
+        'method': 'm',
+        'params': 'self',
+        'ptypes': '',
+        'comment': ''
+    }
+    assert get_stub(code) == 'class C:\n    @x.setter\n    def m(self) -> None: ...\n'
+
+
 ########################################
 # command-line interface tests
 ########################################

@@ -288,7 +288,8 @@ class FunctionNode(StubNode):
         :sig: () -> str
         :return: Stub code for this function.
         """
-        decorators = ['@' + d + '\n' for d in self.decorators if d in DECORATORS]
+        decorators = ['@' + d + '\n' for d in self.decorators
+                      if d in DECORATORS or d.endswith('.setter')]
         parameter_decls = [
             '%(name)s%(type)s%(default)s' % {
                 'name': name,
@@ -426,7 +427,8 @@ class StubGenerator(ast.NodeVisitor):
             _logger.debug('required types: %s', requires)
             self.required_types |= requires
 
-            decorators = [d.id for d in node.decorator_list]
+            decorators = [d.id if hasattr(d, 'id') else d.value.id + '.' + d.attr
+                          for d in node.decorator_list]
 
             param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
 
