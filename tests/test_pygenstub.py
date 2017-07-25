@@ -255,11 +255,12 @@ def test_get_stub_comment_instance_variable():
 def source():
     base_dir = os.path.dirname(__file__)
     src = os.path.join(base_dir, '..', 'pygenstub.py')
-    dst = 'foo.py'
+    dst = 'pygenstub_copy.py'
     shutil.copy(src, dst)
     yield src, dst
     os.unlink(dst)
-    os.unlink(dst + 'i')
+    if os.path.exists(dst + 'i'):
+        os.unlink(dst + 'i')
 
 
 def test_cli_help_should_print_usage_and_exit(capsys):
@@ -275,6 +276,20 @@ def test_cli_no_input_file_should_print_usage_and_exit(capsys):
     out, err = capsys.readouterr()
     assert err.startswith('usage: ')
     assert ('required: source' in err) or ('too few arguments' in err)
+
+
+def test_cli_unrecognized_arguments_should_print_usage_and_exit(capsys):
+    with raises(SystemExit):
+        main(argv=['pygenstub', '--foo', 'foo.py'])
+    out, err = capsys.readouterr()
+    assert err.startswith('usage: ')
+    assert 'unrecognized arguments: --foo' in err
+
+
+def test_cli_debug_mode_should_print_debug_messages_on_stderr(capsys, source):
+    main(argv=['pygenstub', '--debug', source[1]])
+    out, err = capsys.readouterr()
+    assert 'running in debug mode' in err
 
 
 def test_cli_original_module_should_generate_original_stub(source):

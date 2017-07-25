@@ -633,8 +633,10 @@ def main(argv=None):
     parser.add_argument('--debug', action='store_true', help='enable debug messages')
     arguments = parser.parse_args(argv[1:])
 
-    log_level = logging.DEBUG if arguments.debug else logging.INFO
-    logging.basicConfig(level=log_level)
+    # set debug mode
+    if arguments.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        _logger.debug('running in debug mode')
 
     with open(arguments.source, mode='r', encoding='utf-8') as f_in:
         code = f_in.read()
