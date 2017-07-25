@@ -154,6 +154,12 @@ def test_get_stub_params_typing_qualified_multiple():
         'def f(i: int, d: Dict[str, Any]) -> None: ...\n'
 
 
+def test_get_stub_params_typing_and_imported():
+    code = def_template % {'params': 'l, a', 'ptypes': 'List, A', 'rtype': 'None'}
+    assert get_stub(code) == 'from typing import List\n\nfrom x import A\n\n\n' + \
+        'def f(l: List, a: A) -> None: ...\n'
+
+
 def test_get_stub_params_default_value():
     code = def_template % {'params': 's, i=0', 'ptypes': 'str, Optional[int]', 'rtype': 'None'}
     assert get_stub(code) == 'from typing import Optional\n\n\n' + \
