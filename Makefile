@@ -33,7 +33,7 @@ lint:
 	python setup.py flake8
 
 test:
-	py.test -m "not download"
+	py.test
 
 test-all:
 	tox

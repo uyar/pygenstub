@@ -153,6 +153,21 @@ def test_get_stub_params_default_value():
         'def f(s: str, i: Optional[int] = ...) -> None: ...\n'
 
 
+def test_get_stub_params_vararg():
+    code = def_template % {'params': 'i, *args', 'ptypes': 'int', 'rtype': 'None'}
+    assert get_stub(code) == 'def f(i: int, *args) -> None: ...\n'
+
+
+def test_get_stub_params_kwargs():
+    code = def_template % {'params': 'i, **kwargs', 'ptypes': 'int', 'rtype': 'None'}
+    assert get_stub(code) == 'def f(i: int, **kwargs) -> None: ...\n'
+
+
+def test_get_stub_params_vararg_and_kwargs():
+    code = def_template % {'params': 'i, *args, **kwargs', 'ptypes': 'int', 'rtype': 'None'}
+    assert get_stub(code) == 'def f(i: int, *args, **kwargs) -> None: ...\n'
+
+
 def test_get_stub_method_self():
     code = class_template % {'bases': '', 'doc': '', 'method': 'm', 'comment': ''}
     assert get_stub(code) == 'class C:\n    def m(self, a: int) -> None: ...\n'
