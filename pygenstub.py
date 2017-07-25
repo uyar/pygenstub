@@ -516,8 +516,7 @@ class StubGenerator(ast.NodeVisitor):
             _logger.warn('typing module not installed')
 
         if len(needed_types) > 0:
-            print('Unknown types: ' + ', '.join(needed_types), file=sys.stderr)
-            sys.exit(1)
+            raise RuntimeError('Unknown types: ' + ', '.join(needed_types))
 
         out = StringIO()
         started = False
@@ -641,7 +640,11 @@ def main(argv=None):
     with open(arguments.source, mode='r', encoding='utf-8') as f_in:
         code = f_in.read()
 
-    stub = get_stub(code)
+    try:
+        stub = get_stub(code)
+    except RuntimeError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
 
     if stub != '':
         destination = arguments.source + 'i'

@@ -99,6 +99,13 @@ def test_get_stub_returns_typing_qualified_multiple():
         'def f() -> Dict[str, Any]: ...\n'
 
 
+def test_get_stub_missing_name():
+    code = def_template % {'params': 'i', 'ptypes': 'foo', 'rtype': 'Dict[str, Any]'}
+    with raises(RuntimeError) as e:
+        get_stub(code)
+    assert 'Unknown types: foo' in str(e)
+
+
 def test_get_stub_params_one_builtin():
     code = def_template % {'params': 'i', 'ptypes': 'int', 'rtype': 'None'}
     assert get_stub(code) == 'def f(i: int) -> None: ...\n'
