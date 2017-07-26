@@ -81,8 +81,8 @@ class StubGenerator(ast.NodeVisitor):
     imported_names = ...  # type: MutableMapping[str, str]
     defined_types = ...   # type: Set[str]
     required_types = ...  # type: Set[str]
-    _parents = ...        # type: list[StubNode]
-    _code_lines = ...     # type: list[str]
+    _parents = ...        # type: List[StubNode]
+    _code_lines = ...     # type: List[str]
 
     def __init__(self, source: str) -> None: ...
 

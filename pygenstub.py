@@ -366,8 +366,8 @@ class StubGenerator(ast.NodeVisitor):
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
 
-        self._parents = [self.root]             # sig: list[StubNode]
-        self._code_lines = source.splitlines()  # sig: list[str]
+        self._parents = [self.root]             # sig: List[StubNode]
+        self._code_lines = source.splitlines()  # sig: List[str]
 
         ast_tree = ast.parse(source)
         self.visit(ast_tree)
