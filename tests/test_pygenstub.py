@@ -188,7 +188,7 @@ def test_get_stub_params_vararg_and_kwargs():
 @mark.skipif(sys.version_info < (3, 0), reason='syntax introduced in py3')
 def test_get_stub_params_kwonly_args():
     code = def_template % {'params': 'i, *, j', 'ptypes': 'int, int', 'rtype': 'None'}
-    assert get_stub(code) == 'def f(i: int, j: int) -> None: ...\n'
+    assert get_stub(code) == 'def f(i: int, *, j: int) -> None: ...\n'
 
 
 def test_get_stub_params_missing_types():

@@ -431,9 +431,7 @@ class StubGenerator(ast.NodeVisitor):
             decorators = [d.id if hasattr(d, 'id') else d.value.id + '.' + d.attr
                           for d in node.decorator_list]
 
-            args = node.args.args if not hasattr(node.args, 'kwonlyargs') else \
-                node.args.args + node.args.kwonlyargs
-            param_names = [arg.arg if PY3 else arg.id for arg in args]
+            param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
 
             # TODO: only in classes
             if (len(param_names) > 0) and (param_names[0] == 'self'):
@@ -451,6 +449,11 @@ class StubGenerator(ast.NodeVisitor):
             if node.args.kwarg is not None:
                 param_names.append('**' + (node.args.kwarg.arg if PY3 else node.args.kwarg))
                 param_types.append('')
+
+            kwonly_args = getattr(node.args, 'kwonlyargs', [])
+            if len(kwonly_args) > 0:
+                param_types.insert(len(param_names), '')
+                param_names.extend(['*'] + [arg.arg for arg in kwonly_args])
 
             if len(param_types) != len(param_names):
                 raise RuntimeError('Parameter names and types don\'t match: ' + node.name)
