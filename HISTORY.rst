@@ -7,6 +7,7 @@ History
 ------------------
 
 * Added support for property, staticmethod, and classmethod decorators.
+* Added support for keyword-only arguments.
 
 1.0b4 (2017-06-16)
 ------------------

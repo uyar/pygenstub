@@ -1,4 +1,4 @@
-from pytest import fixture, raises
+from pytest import fixture, mark, raises
 
 import os
 import shutil
@@ -181,6 +181,26 @@ def test_get_stub_params_kwargs():
 def test_get_stub_params_vararg_and_kwargs():
     code = def_template % {'params': 'i, *args, **kwargs', 'ptypes': 'int', 'rtype': 'None'}
     assert get_stub(code) == 'def f(i: int, *args, **kwargs) -> None: ...\n'
+
+
+@mark.skipif(sys.version_info < (3, 0), reason='syntax introduced in py3')
+def test_get_stub_params_kwonly_args():
+    code = def_template % {'params': 'i, *, j', 'ptypes': 'int, int', 'rtype': 'None'}
+    assert get_stub(code) == 'def f(i: int, j: int) -> None: ...\n'
+
+
+def test_get_stub_params_missing_types():
+    code = def_template % {'params': 'i, j', 'ptypes': 'int', 'rtype': 'None'}
+    with raises(RuntimeError) as e:
+        get_stub(code)
+    assert 'Parameter names and types don\'t match: ' in str(e)
+
+
+def test_get_stub_params_extra_types():
+    code = def_template % {'params': 'i', 'ptypes': 'int, int', 'rtype': 'None'}
+    with raises(RuntimeError) as e:
+        get_stub(code)
+    assert 'Parameter names and types don\'t match: ' in str(e)
 
 
 def test_get_stub_method_self():
