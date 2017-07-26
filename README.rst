@@ -1,3 +1,5 @@
+Copyright (C) 2016-2017 H. Turgut Uyar <uyar@tekir.org>
+
 pygenstub is a utility for generating stub files from Python source files.
 It takes a source file as input and creates a stub file with the same base name
 and the ``.pyi`` extension.

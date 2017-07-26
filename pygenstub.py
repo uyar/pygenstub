@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2017 H. Turgut Uyar <uyar@tekir.org>
+# Copyright (C) 2016-2017 H. Turgut Uyar <uyar@tekir.org>
 #
 # This file is part of pygenstub.
 #
