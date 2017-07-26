@@ -3,6 +3,11 @@
 History
 =======
 
+1.0b6 (unreleased)
+------------------
+
+* Added --version option to command line arguments.
+
 1.0b5 (2017-07-26)
 ------------------
 

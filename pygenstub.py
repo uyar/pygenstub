@@ -36,6 +36,7 @@ from collections import OrderedDict
 from io import StringIO
 
 from docutils.core import publish_doctree
+from pkg_resources import get_distribution
 
 
 PY3 = sys.version_info >= (3, 0)
@@ -637,7 +638,11 @@ def main(argv=None):
     :param argv: Command line arguments.
     """
     argv = argv if argv is not None else sys.argv
-    parser = ArgumentParser(prog=argv[0])
+    parser = ArgumentParser(prog='pygenstub')
+
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s ' + get_distribution('pygenstub').version)
+
     parser.add_argument('source', help='source file')
     parser.add_argument('--debug', action='store_true', help='enable debug messages')
     arguments = parser.parse_args(argv[1:])

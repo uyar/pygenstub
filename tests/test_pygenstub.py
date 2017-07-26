@@ -4,6 +4,8 @@ import os
 import shutil
 import sys
 
+from pkg_resources import get_distribution
+
 from pygenstub import get_stub, main
 
 
@@ -410,6 +412,13 @@ def test_cli_help_should_print_usage_and_exit(capsys):
         main(argv=['pygenstub', '--help'])
     out, err = capsys.readouterr()
     assert out.startswith('usage: ')
+
+
+def test_cli_version_should_print_version_number_and_exit(capsys):
+    with raises(SystemExit):
+        main(argv=['pygenstub', '--version'])
+    out, err = capsys.readouterr()
+    assert 'pygenstub ' + get_distribution('pygenstub').version + '\n' in {out, err}
 
 
 def test_cli_no_input_file_should_print_usage_and_exit(capsys):
