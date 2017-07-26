@@ -6,6 +6,8 @@ History
 1.0b6 (unreleased)
 ------------------
 
+* Fixed handling of * separator for keyword-only arguments.
+* Added support for keyword-only arguments with default values.
 * Added --version option to command line arguments.
 
 1.0b5 (2017-07-26)

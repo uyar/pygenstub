@@ -191,6 +191,14 @@ def test_get_stub_params_kwonly_args():
     assert get_stub(code) == 'def f(i: int, *, j: int) -> None: ...\n'
 
 
+@mark.skipif(sys.version_info < (3, 0), reason='syntax introduced in py3')
+def test_get_stub_params_kwonly_args_with_default():
+    code = def_template % {'params': 'i, *, j=0', 'ptypes': 'int, Optional[int]',
+                           'rtype': 'None'}
+    assert get_stub(code) == 'from typing import Optional\n\n\n' + \
+        'def f(i: int, *, j: Optional[int] = ...) -> None: ...\n'
+
+
 def test_get_stub_params_missing_types():
     code = def_template % {'params': 'i, j', 'ptypes': 'int', 'rtype': 'None'}
     with raises(RuntimeError) as e:

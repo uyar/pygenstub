@@ -358,16 +358,16 @@ class StubGenerator(ast.NodeVisitor):
         """Initialize this stub generator.
 
         :sig: (str) -> None
-        :param code: Source code to generate the stub for.
+        :param source: Source code to generate the stub for.
         """
         self.root = StubNode()                  # sig: StubNode
 
-        self.imported_names = OrderedDict()     # sig: Mapping[str, str]
+        self.imported_names = OrderedDict()     # sig: MutableMapping[str, str]
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
 
-        self._parents = [self.root]             # type: list
-        self._code_lines = source.splitlines()    # type: list
+        self._parents = [self.root]             # sig: list[StubNode]
+        self._code_lines = source.splitlines()  # sig: list[str]
 
         ast_tree = ast.parse(source)
         self.visit(ast_tree)
@@ -449,20 +449,29 @@ class StubGenerator(ast.NodeVisitor):
                 param_names.append('**' + (node.args.kwarg.arg if PY3 else node.args.kwarg))
                 param_types.append('')
 
+            n_args = len(param_names)
+
             kwonly_args = getattr(node.args, 'kwonlyargs', [])
             if len(kwonly_args) > 0:
-                param_types.insert(len(param_names), '')
-                param_names.extend(['*'] + [arg.arg for arg in kwonly_args])
+                param_names.extend([arg.arg for arg in kwonly_args])
 
             if len(param_types) != len(param_names):
                 raise RuntimeError('Parameter names and types don\'t match: ' + node.name)
 
-            param_locs = [(a.lineno, a.col_offset) for a in node.args.args]
+            param_locs = [(a.lineno, a.col_offset) for a in (node.args.args + kwonly_args)]
             param_defaults = {bisect(param_locs, (d.lineno, d.col_offset)) - 1
                               for d in node.args.defaults}
 
+            kwonly_defaults = getattr(node.args, 'kw_defaults', [])
+            for i, d in enumerate(kwonly_defaults):
+                if d is not None:
+                    param_defaults.add(n_args + i)
+
             params = [(name, type_, i in param_defaults)
                       for i, (name, type_) in enumerate(zip(param_names, param_types))]
+
+            if len(kwonly_args) > 0:
+                params.insert(n_args, ('*', '', False))
 
             stub_node = FunctionNode(node.name, parameters=params, rtype=rtype,
                                      decorators=decorators)
@@ -555,8 +564,8 @@ class StubGenerator(ast.NodeVisitor):
         if len(needed_namespaces) > 0:
             if started:
                 out.write('\n')
-            for module in sorted(needed_namespaces):
-                out.write('import ' + module + '\n')
+            for module_ in sorted(needed_namespaces):
+                out.write('import ' + module_ + '\n')
             started = True
 
         if started:
