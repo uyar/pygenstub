@@ -3,7 +3,7 @@
 History
 =======
 
-1.0b5 (unreleased)
+1.0b5 (2017-07-26)
 ------------------
 
 * Added support for property, staticmethod, and classmethod decorators.
