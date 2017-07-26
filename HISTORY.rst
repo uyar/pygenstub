@@ -3,7 +3,7 @@
 History
 =======
 
-1.0b6 (unreleased)
+1.0b6 (2017-07-26)
 ------------------
 
 * Fixed handling of * separator for keyword-only arguments.

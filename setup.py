@@ -12,7 +12,7 @@ with open('HISTORY.rst') as history_file:
 
 setup(
     name='pygenstub',
-    version='1.0b5',
+    version='1.0b6',
     description='Python stub file generator.',
     long_description=readme + '\n\n' + history,
     url='https://bitbucket.org/uyar/pygenstub',
