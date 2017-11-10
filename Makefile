@@ -1,8 +1,9 @@
-.PHONY: help clean clean-pyc clean-build list test test-all coverage docs dist release
+.PHONY: help clean clean-build clean-pyc clean-docs lint test test-all coverage docs dist release
 
 release: RESPONSE = $(shell bash -c 'read -r -p "Do you want to upload [y/N]? " r; echo $$r')
 
 help:
+	@echo "clean - clean everything"
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-pyc - remove Python file artifacts"
 	@echo "clean-docs - remove Sphinx documentation artifacts"
