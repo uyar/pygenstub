@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2017 H. Turgut Uyar <uyar@tekir.org>
+# Copyright (C) 2016-2018 H. Turgut Uyar <uyar@tekir.org>
 #
 # This file is part of pygenstub.
 #
@@ -30,6 +30,7 @@ import inspect
 import logging
 import re
 import sys
+import textwrap
 from argparse import ArgumentParser
 from bisect import bisect
 from collections import OrderedDict
@@ -592,17 +593,38 @@ def process_docstring(app, what, name, obj, options, lines):
     into the docstring, and remove the signature field so that it will
     be excluded from the generated document.
     """
+    sig_marker = ':' + SIG_FIELD + ':'
+    is_class = what in ('class', 'exception')
+
     signature = extract_signature('\n'.join(lines))
     if signature is None:
-        return
+        if not is_class:
+            return
 
-    if what in ('class', 'exception'):
-        obj = getattr(obj, '__init__')
+        init_method = getattr(obj, '__init__')
+        init_doc = init_method.__doc__
+        init_lines = init_doc.splitlines()[1:]
+        if len(init_lines) > 1:
+            init_doc = textwrap.dedent('\n'.join(init_lines[1:]))
+            init_lines = init_doc.splitlines()
+        if sig_marker not in init_doc:
+            return
+
+        sig_started = False
+        for line in init_lines:
+            if line.lstrip().startswith(sig_marker):
+                sig_started = True
+            if sig_started:
+                lines.append(line)
+        signature = extract_signature('\n'.join(lines))
+
+    if is_class:
+        obj = init_method
 
     param_types, rtype, _ = parse_signature(signature)
     param_names = [p for p in inspect.signature(obj).parameters]
 
-    if (what in ('class', 'exception')) and (param_names[0] == 'self'):
+    if is_class and (param_names[0] == 'self'):
         del param_names[0]
 
     # if something goes wrong, don't insert parameter types
@@ -614,14 +636,13 @@ def process_docstring(app, what, name, obj, options, lines):
                     lines.insert(i, ':type %(name)s: %(type)s' % {'name': name, 'type': type_})
                     break
 
-    if what not in ('class', 'exception'):
+    if not is_class:
         for i, line in enumerate(lines):
             if line.startswith((':return:', ':returns:')):
                 lines.insert(i, ':rtype: ' + rtype)
                 break
 
     # remove the signature field
-    sig_marker = ':' + SIG_FIELD + ':'
     sig_start = 0
     while sig_start < len(lines):
         if lines[sig_start].startswith(sig_marker):
