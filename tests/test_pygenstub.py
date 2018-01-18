@@ -445,10 +445,9 @@ def test_cli_unrecognized_arguments_should_print_usage_and_exit(capsys):
     assert 'unrecognized arguments: --foo' in err
 
 
-def test_cli_debug_mode_should_print_debug_messages_on_stderr(capsys, source):
+def test_cli_debug_mode_should_print_debug_messages_on_stderr(caplog, source):
     main(argv=['pygenstub', '--debug', source[1]])
-    out, err = capsys.readouterr()
-    assert 'running in debug mode' in err
+    assert caplog.record_tuples[0][-1] == 'running in debug mode'
 
 
 def test_cli_original_module_should_generate_original_stub(source):
