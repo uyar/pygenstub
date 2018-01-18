@@ -672,7 +672,7 @@ def main(argv=None):
     """
     argv = argv if argv is not None else sys.argv
     parser = ArgumentParser(prog='pygenstub')
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0b6')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0b7')
 
     parser.add_argument('source', help='source file')
     parser.add_argument('--debug', action='store_true', help='enable debug messages')
