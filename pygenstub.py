@@ -15,12 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with pygenstub.  If not, see <http://www.gnu.org/licenses/>.
 
-"""pygenstub is a utility for generating stub files from Python source files.
+"""pygenstub is a utility for generating stub files from docstrings in source files.
 
 It takes a source file as input and creates a stub file with the same base name
 and the ``.pyi`` extension.
 
-For documentation, please refer to: https://pygenstub.readthedocs.io/
+For more information, please refer to the documentation:
+https://pygenstub.readthedocs.io/
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals

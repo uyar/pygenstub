@@ -50,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pygenstub'
-copyright = '2017, H. Turgut Uyar'
+copyright = '2017-2018, H. Turgut Uyar'
 author = 'H. Turgut Uyar'
 
 # The version info for the project you're documenting, acts as replacement for
