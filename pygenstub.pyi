@@ -7,6 +7,7 @@ import docutils.nodes
 
 Document = docutils.nodes.document
 
+
 SIG_FIELD = ...    # type: str
 SIG_COMMENT = ...  # type: str
 SIG_ALIAS = ...    # type: str

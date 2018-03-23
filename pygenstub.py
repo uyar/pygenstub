@@ -594,7 +594,7 @@ class StubGenerator(ast.NodeVisitor):
             if started:
                 out.write('\n')
             for alias, signature in self.aliases.items():
-                out.write('%s = %s' % (alias, signature))
+                out.write('%s = %s\n' % (alias, signature))
             started = True
 
         if started:
