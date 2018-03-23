@@ -3,6 +3,11 @@
 History
 =======
 
+1.0b9 (2018-03-23)
+------------------
+
+- Fixed bug about missing newlines after type aliases.
+
 1.0b8 (2018-03-23)
 ------------------
 
