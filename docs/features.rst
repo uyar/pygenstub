@@ -254,3 +254,29 @@ If the prototype line gets too long, it will be divided into multiple lines:
               some_long_param_name_1: some_long_type_1,
               some_long_param_name_2: some_long_type_2
       ) -> some_long_type_3: ...
+
+
+Type aliases
+------------
+
+Type aliases can be defined using a ``# sigalias`` comment:
+
+:code:
+
+   .. code-block:: python
+
+      # sigalias: A = int
+
+      def foo(a):
+          """Do foo.
+
+          :sig: (A) -> None
+          """
+
+:stub:
+
+   .. code-block:: python
+
+      A = int
+
+      def foo(a: A) -> None: ...
