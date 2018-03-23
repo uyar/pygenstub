@@ -3,7 +3,7 @@
 History
 =======
 
-1.0b6 (2018-01-18)
+1.0b7 (2018-01-18)
 ------------------
 
 - Added support for getting class signature from init method in Sphinx.
