@@ -332,6 +332,11 @@ def test_get_stub_comment_module_variable_dotted_imported_relative():
     assert get_stub(code) == 'from . import m\n\n\nn = ...  # type: m.X\n'
 
 
+def test_get_stub_alias_comment():
+    code = '# sigalias: B = int\n\nn = 42  # sig: B\n'''
+    assert get_stub(code) == 'B = int\n\nn = ...  # type: B\n'
+
+
 def test_get_stub_comment_instance_variable():
     code = class_template % {
         'bases': '',
