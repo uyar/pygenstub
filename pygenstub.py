@@ -1,7 +1,5 @@
 # Copyright (C) 2016-2018 H. Turgut Uyar <uyar@tekir.org>
 #
-# This file is part of pygenstub.
-#
 # pygenstub is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -701,7 +699,7 @@ def main(argv=None):
     """
     argv = argv if argv is not None else sys.argv
     parser = ArgumentParser(prog='pygenstub')
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0b7')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0b8')
 
     parser.add_argument('source', help='source file')
     parser.add_argument('--debug', action='store_true', help='enable debug messages')
