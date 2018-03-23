@@ -40,6 +40,9 @@ from io import StringIO
 from docutils.core import publish_doctree
 
 
+# sigalias: Document = docutils.nodes.document
+
+
 PY3 = sys.version_info >= (3, 0)
 
 if not PY3:
@@ -60,8 +63,9 @@ else:
 BUILTIN_TYPES = {k for k, t in builtins.__dict__.items() if isinstance(t, type)}
 BUILTIN_TYPES.add('None')
 
-SIG_FIELD = 'sig'       # sig: str
-SIG_COMMENT = '# sig:'  # sig: str
+SIG_FIELD = 'sig'           # sig: str
+SIG_COMMENT = '# sig:'      # sig: str
+SIG_ALIAS = '# sigalias:'   # sig: str
 
 DECORATORS = {'property', 'staticmethod', 'classmethod'}    # sig: Set[str]
 
@@ -81,7 +85,7 @@ _logger = logging.getLogger(__name__)
 def get_fields(node, fields_tag='field_list'):
     """Get the field names and their values from a node.
 
-    :sig: (docutils.nodes.document, Optional[str]) -> Mapping[str, str]
+    :sig: (Document, Optional[str]) -> Mapping[str, str]
     :param node: Node to get the fields from.
     :param fields_tag: Tag of child node that contains the fields.
     :return: Mapping of field names to values.
@@ -367,12 +371,30 @@ class StubGenerator(ast.NodeVisitor):
         self.imported_names = OrderedDict()     # sig: MutableMapping[str, str]
         self.defined_types = set()              # sig: Set[str]
         self.required_types = set()             # sig: Set[str]
+        self.aliases = OrderedDict()            # sig: Dict[str, str]
 
         self._parents = [self.root]             # sig: List[StubNode]
         self._code_lines = source.splitlines()  # sig: List[str]
 
+        self.collect_aliases()
+
         ast_tree = ast.parse(source)
         self.visit(ast_tree)
+
+    def collect_aliases(self):
+        """Collect the type aliases in the source.
+
+        :sig: () -> None
+        """
+        for line in self._code_lines:
+            line = line.strip()
+            if len(line) > 0 and line.startswith(SIG_ALIAS):
+                _, content = line.split(SIG_ALIAS)
+                alias, signature = [t.strip() for t in content.split('=')]
+                self.aliases[alias] = signature
+                _, _, requires = parse_signature(signature)
+                self.required_types |= requires
+                self.defined_types |= {alias}
 
     def visit_ImportFrom(self, node):
         """Process a "from x import y" node.
@@ -568,6 +590,13 @@ class StubGenerator(ast.NodeVisitor):
                 out.write('\n')
             for module_ in sorted(needed_namespaces):
                 out.write('import ' + module_ + '\n')
+            started = True
+
+        if len(self.aliases) > 0:
+            if started:
+                out.write('\n')
+            for alias, signature in self.aliases.items():
+                out.write('%s = %s' % (alias, signature))
             started = True
 
         if started:

@@ -3,6 +3,11 @@
 History
 =======
 
+1.0b8 (2018-03-23)
+------------------
+
+- Added simplistic support for defining type aliases.
+
 1.0b7 (2018-01-18)
 ------------------
 
