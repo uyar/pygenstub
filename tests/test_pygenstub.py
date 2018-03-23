@@ -1,5 +1,6 @@
 from pytest import fixture, mark, raises
 
+import logging
 import os
 import shutil
 import sys
@@ -446,6 +447,7 @@ def test_cli_unrecognized_arguments_should_print_usage_and_exit(capsys):
 
 
 def test_cli_debug_mode_should_print_debug_messages_on_stderr(caplog, source):
+    caplog.set_level(logging.DEBUG)
     main(argv=['pygenstub', '--debug', source[1]])
     assert caplog.record_tuples[0][-1] == 'running in debug mode'
 
