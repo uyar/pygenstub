@@ -4,7 +4,7 @@ pygenstub is a utility for generating stub files from docstrings
 in source files. It takes a source file as input and creates a stub file
 with the same base name and the ``.pyi`` extension.
 
-:PyPI: https://pypi.python.org/pypi/pygenstub/
+:PyPI: https://pypi.org/project/pygenstub/
 :Repository: https://bitbucket.org/uyar/pygenstub
 :Documentation: https://pygenstub.readthedocs.io/
 
