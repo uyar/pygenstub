@@ -3,7 +3,7 @@
 History
 =======
 
-1.0 (unreleased)
+1.0 (2018-05-25)
 ----------------
 
 - Include type alias expansion in parameter type docstring.
