@@ -355,6 +355,23 @@ class ClassNode(StubNode):
         }
 
 
+def get_aliases(lines):
+    """Get the type aliases in the source.
+
+    :sig: (List[str]) -> Mapping[str, str]
+    :param lines: Lines of the source code.
+    :return: Map of aliases to their definitions.
+    """
+    aliases = {}
+    for line in lines:
+        line = line.strip()
+        if len(line) > 0 and line.startswith(SIG_ALIAS):
+            _, content = line.split(SIG_ALIAS)
+            alias, signature = [t.strip() for t in content.split('=')]
+            aliases[alias] = signature
+    return aliases
+
+
 class StubGenerator(ast.NodeVisitor):
     """A transformer that generates stub declarations from a source code."""
 
@@ -384,15 +401,11 @@ class StubGenerator(ast.NodeVisitor):
 
         :sig: () -> None
         """
-        for line in self._code_lines:
-            line = line.strip()
-            if len(line) > 0 and line.startswith(SIG_ALIAS):
-                _, content = line.split(SIG_ALIAS)
-                alias, signature = [t.strip() for t in content.split('=')]
-                self.aliases[alias] = signature
-                _, _, requires = parse_signature(signature)
-                self.required_types |= requires
-                self.defined_types |= {alias}
+        self.aliases = get_aliases(self._code_lines)
+        for alias, signature in self.aliases.items():
+            _, _, requires = parse_signature(signature)
+            self.required_types |= requires
+            self.defined_types |= {alias}
 
     def visit_ImportFrom(self, node):
         """Process a "from x import y" node.

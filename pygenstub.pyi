@@ -79,6 +79,8 @@ class ClassNode(StubNode):
 
     def get_code(self) -> str: ...
 
+def get_aliases(lines: List[str]) -> Mapping[str, str]: ...
+
 class StubGenerator(ast.NodeVisitor):
     root = ...            # type: StubNode
     imported_names = ...  # type: MutableMapping[str, str]
