@@ -17,7 +17,7 @@ setup(
     author_email='uyar@tekir.org',
     license='GPL',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Framework :: Sphinx :: Extension',
         'Intended Audience :: Developers',
