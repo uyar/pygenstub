@@ -634,6 +634,12 @@ def process_docstring(app, what, name, obj, options, lines):
     into the docstring, and remove the signature field so that it will
     be excluded from the generated document.
     """
+    aliases = getattr(app, '_sigaliases', None)
+    if aliases is None:
+        if what == 'module':
+            aliases = get_aliases(inspect.getsource(obj).splitlines())
+            app._sigaliases = aliases
+
     sig_marker = ':' + SIG_FIELD + ':'
     is_class = what in ('class', 'exception')
 
@@ -672,6 +678,9 @@ def process_docstring(app, what, name, obj, options, lines):
     if len(param_names) == len(param_types):
         for name, type_ in zip(param_names, param_types):
             find = ':param %(name)s:' % {'name': name}
+            alias = aliases.get(type_)
+            if alias is not None:
+                type_ = '*%(type)s* :sup:`%(alias)s`' % {'type': type_, 'alias': alias}
             for i, line in enumerate(lines):
                 if line.startswith(find):
                     lines.insert(i, ':type %(name)s: %(type)s' % {'name': name, 'type': type_})
