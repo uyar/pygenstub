@@ -54,6 +54,7 @@ class FunctionNode(StubNode):
     parameters = ...  # type: List[Tuple[str, str, bool]]
     rtype = ...       # type: str
     decorators = ...  # type: List[str]]
+    _async = ...      # type: bool
 
     def __init__(
             self,
@@ -98,7 +99,11 @@ class StubGenerator(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign) -> None: ...
 
+    def get_function_node(self, node: ast.FunctionDef) -> FunctionNode: ...
+
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None: ...
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None: ...
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None: ...
 

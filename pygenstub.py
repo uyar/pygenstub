@@ -286,6 +286,8 @@ class FunctionNode(StubNode):
         self.rtype = rtype              # sig: str
         self.decorators = decorators if decorators is not None else []  # sig: List[str]]
 
+        self._async = False             # sig: bool
+
     def get_code(self):
         """Get the stub code for this function.
 
@@ -302,19 +304,21 @@ class FunctionNode(StubNode):
             }
             for name, type_, has_default in self.parameters
         ]
-        prototype = '%(decs)sdef %(name)s(%(params)s) -> %(rtype)s: ...\n' % {
-            'decs': ''.join(decorators),
-            'name': self.name,
-            'params': ', '.join(parameter_decls),
-            'rtype': self.rtype
+        prototype = '%(a)s%(d)sdef %(n)s(%(p)s) -> %(r)s: ...\n' % {
+            'a': 'async ' if self._async else '',
+            'd': ''.join(decorators),
+            'n': self.name,
+            'p': ', '.join(parameter_decls),
+            'r': self.rtype
         }
         if len(prototype) > LINE_LENGTH_LIMIT:
-            prototype = '%(decs)sdef %(name)s(\n%(indent)s%(params)s\n) -> %(rtype)s: ...\n' % {
-                'decs': ''.join(decorators),
-                'name': self.name,
+            prototype = '%(a)s%(d)sdef %(n)s(\n%(indent)s%(p)s\n) -> %(r)s: ...\n' % {
+                'a': 'async ' if self._async else '',
+                'd': ''.join(decorators),
+                'n': self.name,
                 'indent': MULTILINE_INDENT,
-                'params': (',\n' + MULTILINE_INDENT).join(parameter_decls),
-                'rtype': self.rtype
+                'p': (',\n' + MULTILINE_INDENT).join(parameter_decls),
+                'r': self.rtype
             }
         return prototype
 
@@ -441,11 +445,12 @@ class StubGenerator(ast.NodeVisitor):
                     stub_node = VariableNode(var.attr, return_type)
                     parent.parent.add_variable(stub_node)
 
-    def visit_FunctionDef(self, node):
+    def get_function_node(self, node):
         """Process a function node.
 
-        :sig: (ast.FunctionDef) -> None
+        :sig: (ast.FunctionDef) -> FunctionNode
         :param node: Node to process.
+        :return: Generated function node in stub tree.
         """
         signature = get_signature(node)
 
@@ -515,6 +520,27 @@ class StubGenerator(ast.NodeVisitor):
             self._parents.append(stub_node)
             self.generic_visit(node)
             del self._parents[-1]
+            return stub_node
+
+    def visit_FunctionDef(self, node):
+        """Process a regular function node.
+
+        :sig: (ast.FunctionDef) -> None
+        :param node: Node to process.
+        """
+        node = self.get_function_node(node)
+        if node is not None:
+            node._async = False
+
+    def visit_AsyncFunctionDef(self, node):
+        """Process an async function node.
+
+        :sig: (ast.AsyncFunctionDef) -> None
+        :param node: Node to process.
+        """
+        node = self.get_function_node(node)
+        if node is not None:
+            node._async = True
 
     def visit_ClassDef(self, node):
         """Process a class node.

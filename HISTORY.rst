@@ -1,6 +1,11 @@
 History
 =======
 
+1.1 (2018-05-25)
+----------------
+
+- Added support for generating async function stubs.
+
 1.0 (2018-05-25)
 ----------------
 
