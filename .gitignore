@@ -1,0 +1,13 @@
+*.pyc
+*.egg-info
+
+.cache
+.pytest_cache
+.coverage
+.tox
+
+_build
+build
+dist
+
+.idea
