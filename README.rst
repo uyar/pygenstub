@@ -5,7 +5,7 @@ in source files. It takes a source file as input and creates a stub file
 with the same base name and the ``.pyi`` extension.
 
 :PyPI: https://pypi.org/project/pygenstub/
-:Repository: https://bitbucket.org/uyar/pygenstub
+:Repository: https://github.com/uyar/pygenstub
 :Documentation: https://pygenstub.readthedocs.io/
 
 If the docstring of a function includes a **sig** field, the value of that
@@ -63,6 +63,6 @@ remove the signature fields to exclude them from the output:
 As an example of the output, you can see the `API documentation`_
 for pygenstub itself.
 
-.. _source code: https://bitbucket.org/uyar/pygenstub/src/tip/pygenstub.py
-.. _stub file: https://bitbucket.org/uyar/pygenstub/src/tip/pygenstub.pyi
+.. _source code: https://github.com/uyar/pygenstub/blob/master/pygenstub.py
+.. _stub file: https://github.com/uyar/pygenstub/blob/master/pygenstub.pyi
 .. _API documentation: https://pygenstub.readthedocs.io/en/latest/api.html

@@ -12,7 +12,7 @@ setup(
     version='1.1',
     description='Python stub file generator.',
     long_description=readme,
-    url='https://bitbucket.org/uyar/pygenstub',
+    url='https://github.com/uyar/pygenstub',
     author='H. Turgut Uyar',
     author_email='uyar@tekir.org',
     license='GPL',
