@@ -5,6 +5,7 @@
 .pytest_cache
 .coverage
 .tox
+.venv
 
 _build
 build
