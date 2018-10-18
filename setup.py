@@ -36,6 +36,7 @@ setup(
     install_requires=['docutils'],
     extras_require={
         'dev': [
+            'black',
             'flake8',
             'flake8-isort',
             'flake8-docstrings',
