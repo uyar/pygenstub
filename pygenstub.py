@@ -220,13 +220,14 @@ class StubNode:
         :sig: () -> str
         :return: Stub code for this node.
         """
-        sub_vars = "\n".join([c.get_code() for c in self.variables])
-        sub_codes = "\n".join([c.get_code() for c in self.children])
-        return "%(vars)s\n%(blank)s%(codes)s" % {
-            "vars": sub_vars,
-            "blank": "\n" if not isinstance(self, ClassNode) else "",
-            "codes": sub_codes,
-        }
+        prototype = ""
+        if len(self.variables) > 0:
+            prototype = "\n".join([c.get_code() for c in self.variables]) + "\n"
+        if len(self.children) > 0:
+            if (len(prototype) > 0) and (not isinstance(self, ClassNode)):
+                prototype = prototype + "\n"
+            prototype = prototype + "\n".join([c.get_code() for c in self.children])
+        return prototype
 
 
 class VariableNode(StubNode):
@@ -669,7 +670,7 @@ def get_stub(source):
     generator = StubGenerator(source)
     stub = generator.generate_stub()
     stub = stub.replace("\n\n\nclass ", "\n\nclass ")
-    if not stub.endswith("\n"):
+    if (len(stub) > 0) and (not stub.endswith("\n")):
         stub = stub + "\n"
     return stub
 
