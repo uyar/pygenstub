@@ -221,8 +221,7 @@ class StubNode:
         :sig: () -> str
         :return: Stub code for this node.
         """
-        max_len = max([len(v.name) for v in self.variables]) if len(self.variables) > 0 else 0
-        sub_vars = "".join([c.get_code(align=max_len) for c in self.variables])
+        sub_vars = "".join([c.get_code() for c in self.variables])
         sub_codes = "\n".join([c.get_code() for c in self.children])
         return "%(vars)s%(blank)s%(codes)s" % {
             "vars": sub_vars,
@@ -248,22 +247,13 @@ class VariableNode(StubNode):
         self.name = name  # sig: str
         self.type_ = type_  # sig: str
 
-    def get_code(self, align=0):
+    def get_code(self):
         """Get the type annotation for this variable.
 
-        To align the generated type comments, the caller can send
-        an alignment parameter to leave extra space before the comment.
-
-        :sig: (Optional[int]) -> str
-        :param align: Number of extra spaces before the start of the comment.
+        :sig: () -> str
         :return: Type annotation for this variable.
         """
-        spaces = max(align - len(self.name), 0)
-        return "%(name)s = ... %(space)s # type: %(type)s\n" % {
-            "name": self.name,
-            "space": spaces * " ",
-            "type": self.type_,
-        }
+        return "%(name)s = ...  # type: %(type)s\n" % {"name": self.name, "type": self.type_}
 
 
 class FunctionNode(StubNode):
