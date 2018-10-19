@@ -217,17 +217,17 @@ class StubNode:
         The stub code for a node consists of the type annotations of its variables,
         followed by the prototypes of its functions/methods and classes.
 
-        :sig: () -> str
-        :return: Stub code for this node.
+        :sig: () -> List[str]
+        :return: Lines of stub code for this node.
         """
-        out = StringIO()
+        stub = []
         for child in self.variables:
-            out.write(child.get_code())
+            stub.extend(child.get_code())
         if (len(self.variables) > 0) and (not isinstance(self, ClassNode)):
-            out.write("\n")
+            stub.append("")
         for child in self.children:
-            out.write(child.get_code())
-        return out.getvalue()
+            stub.extend(child.get_code())
+        return stub
 
 
 class VariableNode(StubNode):
@@ -250,10 +250,10 @@ class VariableNode(StubNode):
     def get_code(self):
         """Get the type annotation for this variable.
 
-        :sig: () -> str
-        :return: Type annotation for this variable.
+        :sig: () -> List[str]
+        :return: Lines of stub code for this variable.
         """
-        return "%(name)s = ...  # type: %(type)s\n" % {"name": self.name, "type": self.type_}
+        return ["%(n)s = ...  # type: %(t)s" % {"n": self.name, "t": self.type_}]
 
 
 class FunctionNode(StubNode):
@@ -285,14 +285,14 @@ class FunctionNode(StubNode):
     def get_code(self):
         """Get the stub code for this function.
 
-        :sig: () -> str
-        :return: Stub code for this function.
+        :sig: () -> List[str]
+        :return: Lines of stub code for this function.
         """
-        out = StringIO()
+        stub = []
 
         for deco in self.decorators:
             if (deco in DECORATORS) or deco.endswith(".setter"):
-                out.write("@" + deco + "\n")
+                stub.append("@" + deco)
 
         parameters = []
         for name, type_, has_default in self.parameters:
@@ -311,15 +311,19 @@ class FunctionNode(StubNode):
         }
 
         prototype = "%(a)sdef %(n)s(%(p)s) -> %(r)s: ..." % slots
-        if len(prototype) > LINE_LENGTH_LIMIT:
-            if len(INDENT + slots["p"]) <= LINE_LENGTH_LIMIT:
-                slots["p"] = INDENT + slots["p"]
-            else:
-                slots["p"] = INDENT + (",\n" + INDENT).join(parameters) + ","
-            prototype = "%(a)sdef %(n)s(\n%(p)s\n) -> %(r)s: ..." % slots
+        if len(prototype) <= LINE_LENGTH_LIMIT:
+            stub.append(prototype)
+        elif len(INDENT + slots["p"]) <= LINE_LENGTH_LIMIT:
+            stub.append("%(a)sdef %(n)s(" % slots)
+            stub.append(INDENT + slots["p"])
+            stub.append(") -> %(r)s: ..." % slots)
+        else:
+            stub.append("%(a)sdef %(n)s(" % slots)
+            for param in parameters:
+                stub.append(INDENT + param + ",")
+            stub.append(") -> %(r)s: ..." % slots)
 
-        out.write(prototype + "\n")
-        return out.getvalue()
+        return stub
 
 
 class ClassNode(StubNode):
@@ -344,18 +348,25 @@ class ClassNode(StubNode):
     def get_code(self):
         """Get the stub code for this class.
 
-        :sig: () -> str
-        :return: Stub code for this class.
+        :sig: () -> List[str]
+        :return: Lines of stub code for this class.
         """
-        super_code = super().get_code() if PY3 else StubNode.get_code(self)
-        base_code = indent(super_code, INDENT)
-        body = " ...\n" if len(self.children) == 0 else "\n" + base_code
-        bases = ", ".join(self.bases)
-        return "class %(name)s%(bases)s:%(body)s" % {
-            "name": self.name,
-            "bases": "(" + bases + ")" if len(bases) > 0 else "",
-            "body": body,
-        }
+        stub = []
+
+        if len(self.bases) > 0:
+            bases = "(" + ", ".join(self.bases) + ")"
+        else:
+            bases = ""
+
+        slots = {"n": self.name, "b": bases}
+        if len(self.children) == 0:
+            stub.append("class %(n)s%(b)s: ..." % slots)
+        else:
+            stub.append("class %(n)s%(b)s:" % slots)
+            super_code = super().get_code() if PY3 else StubNode.get_code(self)
+            for line in super_code:
+                stub.append(INDENT + line)
+        return stub
 
 
 def get_aliases(lines):
@@ -661,7 +672,13 @@ class StubGenerator(ast.NodeVisitor):
 
         if started:
             out.write("\n")
-        out.write(self.root.get_code())
+        stub_lines = self.root.get_code()
+        for i, line in enumerate(stub_lines):
+            if line.startswith("class ") and (len(stub_lines[i - 1]) > 0):
+                out.write("\n")
+            if line.startswith("def ") and stub_lines[i - 1].startswith(" "):
+                out.write("\n")
+            out.write(line + "\n")
         return out.getvalue()
 
 
