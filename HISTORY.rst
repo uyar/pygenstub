@@ -1,6 +1,12 @@
 History
 =======
 
+1.2 (unreleased)
+----------------
+
+- Generate stub files that follow the same layout as Black.
+- Fixed stub generation for async functions with decorators.
+
 1.1 (2018-05-25)
 ----------------
 

@@ -220,11 +220,11 @@ class StubNode:
         :sig: () -> str
         :return: Stub code for this node.
         """
-        sub_vars = "".join([c.get_code() for c in self.variables])
+        sub_vars = "\n".join([c.get_code() for c in self.variables])
         sub_codes = "\n".join([c.get_code() for c in self.children])
-        return "%(vars)s%(blank)s%(codes)s" % {
+        return "%(vars)s\n%(blank)s%(codes)s" % {
             "vars": sub_vars,
-            "blank": "\n" if (sub_vars != "") and (sub_codes != "") else "",
+            "blank": "\n" if not isinstance(self, ClassNode) else "",
             "codes": sub_codes,
         }
 
@@ -252,7 +252,7 @@ class VariableNode(StubNode):
         :sig: () -> str
         :return: Type annotation for this variable.
         """
-        return "%(name)s = ...  # type: %(type)s\n" % {"name": self.name, "type": self.type_}
+        return "%(name)s = ...  # type: %(type)s" % {"name": self.name, "type": self.type_}
 
 
 class FunctionNode(StubNode):
@@ -300,20 +300,19 @@ class FunctionNode(StubNode):
             "r": self.rtype,
         }
 
-        prototype = "%(a)sdef %(n)s(%(p)s) -> %(r)s: ...\n" % slots
+        prototype = "%(a)sdef %(n)s(%(p)s) -> %(r)s: ..." % slots
         if len(prototype) > LINE_LENGTH_LIMIT:
             if len(INDENT + slots["p"]) <= LINE_LENGTH_LIMIT:
                 slots["p"] = INDENT + slots["p"]
-                prototype = "%(a)sdef %(n)s(\n%(p)s\n) -> %(r)s: ...\n" % slots
             else:
                 slots["p"] = INDENT + (",\n" + INDENT).join(parameters) + ","
-                prototype = "%(a)sdef %(n)s(\n%(p)s\n) -> %(r)s: ...\n" % slots
+            prototype = "%(a)sdef %(n)s(\n%(p)s\n) -> %(r)s: ..." % slots
 
         if self.decorators:
             decos = [
                 "@" + d for d in self.decorators if d in DECORATORS or d.endswith(".setter")
             ]
-            prototype = "%(d)s\n%(p)s" % {"d": decos, "p": prototype}
+            prototype = "%(d)s\n%(p)s" % {"d": "\n".join(decos), "p": prototype}
         return prototype
 
 
@@ -346,7 +345,7 @@ class ClassNode(StubNode):
         base_code = indent(super_code, INDENT)
         body = " ...\n" if len(self.children) == 0 else "\n" + base_code
         bases = ", ".join(self.bases)
-        return "class %(name)s%(bases)s:%(body)s" % {
+        return "\nclass %(name)s%(bases)s:%(body)s\n" % {
             "name": self.name,
             "bases": "(" + bases + ")" if bases != "" else "",
             "body": body,
@@ -642,7 +641,7 @@ class StubGenerator(ast.NodeVisitor):
             started = True
 
         if started:
-            out.write("\n\n")
+            out.write("\n")
         out.write(self.root.get_code())
         return out.getvalue()
 
@@ -655,7 +654,11 @@ def get_stub(source):
     :return: Generated stub code.
     """
     generator = StubGenerator(source)
-    return generator.generate_stub()
+    stub = generator.generate_stub()
+    stub = stub.replace("\n\n\nclass ", "\n\nclass ")
+    if not stub.endswith("\n"):
+        stub = stub + "\n"
+    return stub
 
 
 def process_docstring(app, what, name, obj, options, lines):
