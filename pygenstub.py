@@ -220,14 +220,14 @@ class StubNode:
         :sig: () -> str
         :return: Stub code for this node.
         """
-        prototype = ""
-        if len(self.variables) > 0:
-            prototype = "\n".join([c.get_code() for c in self.variables]) + "\n"
-        if len(self.children) > 0:
-            if (len(prototype) > 0) and (not isinstance(self, ClassNode)):
-                prototype = prototype + "\n"
-            prototype = prototype + "\n".join([c.get_code() for c in self.children])
-        return prototype
+        out = StringIO()
+        for child in self.variables:
+            out.write(child.get_code())
+        if (len(self.variables) > 0) and (not isinstance(self, ClassNode)):
+            out.write("\n")
+        for child in self.children:
+            out.write(child.get_code())
+        return out.getvalue()
 
 
 class VariableNode(StubNode):
@@ -253,7 +253,7 @@ class VariableNode(StubNode):
         :sig: () -> str
         :return: Type annotation for this variable.
         """
-        return "%(name)s = ...  # type: %(type)s" % {"name": self.name, "type": self.type_}
+        return "%(name)s = ...  # type: %(type)s\n" % {"name": self.name, "type": self.type_}
 
 
 class FunctionNode(StubNode):
@@ -288,11 +288,20 @@ class FunctionNode(StubNode):
         :sig: () -> str
         :return: Stub code for this function.
         """
-        parameters = [
-            "%(n)s%(t)s%(d)s"
-            % {"n": name, "t": ": " + type_ if type_ else "", "d": " = ..." if default else ""}
-            for name, type_, default in self.parameters
-        ]
+        out = StringIO()
+
+        for deco in self.decorators:
+            if (deco in DECORATORS) or deco.endswith(".setter"):
+                out.write("@" + deco + "\n")
+
+        parameters = []
+        for name, type_, has_default in self.parameters:
+            decl = "%(n)s%(t)s%(d)s" % {
+                "n": name,
+                "t": ": " + type_ if type_ else "",
+                "d": " = ..." if has_default else "",
+            }
+            parameters.append(decl)
 
         slots = {
             "a": "async " if self._async else "",
@@ -309,12 +318,8 @@ class FunctionNode(StubNode):
                 slots["p"] = INDENT + (",\n" + INDENT).join(parameters) + ","
             prototype = "%(a)sdef %(n)s(\n%(p)s\n) -> %(r)s: ..." % slots
 
-        if self.decorators:
-            decos = [
-                "@" + d for d in self.decorators if d in DECORATORS or d.endswith(".setter")
-            ]
-            prototype = "%(d)s\n%(p)s" % {"d": "\n".join(decos), "p": prototype}
-        return prototype
+        out.write(prototype + "\n")
+        return out.getvalue()
 
 
 class ClassNode(StubNode):
@@ -346,9 +351,9 @@ class ClassNode(StubNode):
         base_code = indent(super_code, INDENT)
         body = " ...\n" if len(self.children) == 0 else "\n" + base_code
         bases = ", ".join(self.bases)
-        return "\nclass %(name)s%(bases)s:%(body)s\n" % {
+        return "class %(name)s%(bases)s:%(body)s" % {
             "name": self.name,
-            "bases": "(" + bases + ")" if bases != "" else "",
+            "bases": "(" + bases + ")" if len(bases) > 0 else "",
             "body": body,
         }
 
@@ -669,9 +674,6 @@ def get_stub(source):
     """
     generator = StubGenerator(source)
     stub = generator.generate_stub()
-    stub = stub.replace("\n\n\nclass ", "\n\nclass ")
-    if (len(stub) > 0) and (not stub.endswith("\n")):
-        stub = stub + "\n"
     return stub
 
 
