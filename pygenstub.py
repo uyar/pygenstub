@@ -278,7 +278,7 @@ class FunctionNode(StubNode):
         self.name = name  # sig: str
         self.parameters = parameters  # sig: List[Tuple[str, str, bool]]
         self.rtype = rtype  # sig: str
-        self.decorators = decorators if decorators is not None else []  # sig: List[str]]
+        self.decorators = decorators if decorators is not None else []  # sig: List[str]
 
         self._async = False  # sig: bool
 

@@ -37,7 +37,7 @@ class FunctionNode(StubNode):
     name = ...  # type: str
     parameters = ...  # type: List[Tuple[str, str, bool]]
     rtype = ...  # type: str
-    decorators = ...  # type: List[str]]
+    decorators = ...  # type: List[str]
     _async = ...  # type: bool
     def __init__(
         self,
