@@ -251,8 +251,8 @@ If the prototype line gets too long, it will be divided into multiple lines:
    .. code-block:: python
 
       def some_long_func_name(
-              some_long_param_name_1: some_long_type_1,
-              some_long_param_name_2: some_long_type_2
+          some_long_param_name_1: some_long_type_1,
+          some_long_param_name_2: some_long_type_2,
       ) -> some_long_type_3: ...
 
 
