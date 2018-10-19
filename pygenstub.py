@@ -288,33 +288,30 @@ class FunctionNode(StubNode):
         :return: Stub code for this function.
         """
         decorators = [
-            "@" + d + "\n" for d in self.decorators if d in DECORATORS or d.endswith(".setter")
+            "@" + d for d in self.decorators if d in DECORATORS or d.endswith(".setter")
         ]
-        parameter_decls = [
-            "%(name)s%(type)s%(default)s"
-            % {
-                "name": name,
-                "type": ": " + type_ if type_ != "" else "",
-                "default": " = ..." if has_default else "",
-            }
-            for name, type_, has_default in self.parameters
+        parameters = [
+            "%(n)s%(t)s%(d)s"
+            % {"n": name, "t": ": " + type_ if type_ else "", "d": " = ..." if default else ""}
+            for name, type_, default in self.parameters
         ]
-        prototype = "%(a)s%(d)sdef %(n)s(%(p)s) -> %(r)s: ...\n" % {
+
+        slots = {
             "a": "async " if self._async else "",
-            "d": "".join(decorators),
+            "d": "\n".join(decorators),
             "n": self.name,
-            "p": ", ".join(parameter_decls),
+            "p": ", ".join(parameters),
             "r": self.rtype,
         }
+
+        prototype = "%(a)s%(d)s\ndef %(n)s(%(p)s) -> %(r)s: ...\n" % slots
         if len(prototype) > LINE_LENGTH_LIMIT:
-            prototype = "%(a)s%(d)sdef %(n)s(\n%(indent)s%(p)s\n) -> %(r)s: ...\n" % {
-                "a": "async " if self._async else "",
-                "d": "".join(decorators),
-                "n": self.name,
-                "indent": INDENT,
-                "p": (",\n" + INDENT).join(parameter_decls),
-                "r": self.rtype,
-            }
+            if len(INDENT + slots["p"]) <= LINE_LENGTH_LIMIT:
+                slots["p"] = INDENT + slots["p"]
+                prototype = "%(a)s%(d)sdef %(n)s(\n%(p)s\n) -> %(r)s: ...\n" % slots
+            else:
+                slots["p"] = INDENT + (",\n" + INDENT).join(parameters) + ","
+                prototype = "%(a)s%(d)sdef %(n)s(\n%(p)s\n) -> %(r)s: ...\n" % slots
         return prototype
 
 
