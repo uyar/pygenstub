@@ -287,9 +287,6 @@ class FunctionNode(StubNode):
         :sig: () -> str
         :return: Stub code for this function.
         """
-        decorators = [
-            "@" + d for d in self.decorators if d in DECORATORS or d.endswith(".setter")
-        ]
         parameters = [
             "%(n)s%(t)s%(d)s"
             % {"n": name, "t": ": " + type_ if type_ else "", "d": " = ..." if default else ""}
@@ -298,20 +295,25 @@ class FunctionNode(StubNode):
 
         slots = {
             "a": "async " if self._async else "",
-            "d": "\n".join(decorators),
             "n": self.name,
             "p": ", ".join(parameters),
             "r": self.rtype,
         }
 
-        prototype = "%(a)s%(d)s\ndef %(n)s(%(p)s) -> %(r)s: ...\n" % slots
+        prototype = "%(a)sdef %(n)s(%(p)s) -> %(r)s: ...\n" % slots
         if len(prototype) > LINE_LENGTH_LIMIT:
             if len(INDENT + slots["p"]) <= LINE_LENGTH_LIMIT:
                 slots["p"] = INDENT + slots["p"]
-                prototype = "%(a)s%(d)sdef %(n)s(\n%(p)s\n) -> %(r)s: ...\n" % slots
+                prototype = "%(a)sdef %(n)s(\n%(p)s\n) -> %(r)s: ...\n" % slots
             else:
                 slots["p"] = INDENT + (",\n" + INDENT).join(parameters) + ","
-                prototype = "%(a)s%(d)sdef %(n)s(\n%(p)s\n) -> %(r)s: ...\n" % slots
+                prototype = "%(a)sdef %(n)s(\n%(p)s\n) -> %(r)s: ...\n" % slots
+
+        if self.decorators:
+            decos = [
+                "@" + d for d in self.decorators if d in DECORATORS or d.endswith(".setter")
+            ]
+            prototype = "%(d)s\n%(p)s" % {"d": decos, "p": prototype}
         return prototype
 
 
