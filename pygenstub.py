@@ -46,17 +46,8 @@ PY3 = sys.version_info >= (3, 0)
 if not PY3:
     import __builtin__ as builtins
     from codecs import open
-
-    def indent(text, lead):
-        """Add some leading text to the beginning of every line in a text."""
-        if lead == "":
-            return text
-        return "\n".join([lead + line if line else line for line in text.splitlines()]) + "\n"
-
-
 else:
     import builtins
-    from textwrap import indent
 
 
 BUILTIN_TYPES = {k for k, t in builtins.__dict__.items() if isinstance(t, type)}
