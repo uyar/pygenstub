@@ -214,7 +214,11 @@ class StubNode:
         stub = []
         for child in self.variables:
             stub.extend(child.get_code())
-        if (len(self.variables) > 0) and (not isinstance(self, ClassNode)):
+        if (
+            (len(self.variables) > 0)
+            and (len(self.children) > 0)
+            and (not isinstance(self, ClassNode))
+        ):
             stub.append("")
         for child in self.children:
             stub.extend(child.get_code())
@@ -659,12 +663,14 @@ class StubGenerator(ast.NodeVisitor):
         if started:
             out.write("\n")
         stub_lines = self.root.get_code()
-        for i, line in enumerate(stub_lines):
-            if line.startswith("class ") and (len(stub_lines[i - 1]) > 0):
+        prev_line = None
+        for line in stub_lines:
+            if line.startswith("class ") and prev_line:
                 out.write("\n")
-            if line.startswith("def ") and stub_lines[i - 1].startswith(" "):
+            if line.startswith("def ") and prev_line and prev_line.startswith(" "):
                 out.write("\n")
             out.write(line + "\n")
+            prev_line = line
         return out.getvalue()
 
 
