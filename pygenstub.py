@@ -566,6 +566,22 @@ class StubGenerator(ast.NodeVisitor):
         self.generic_visit(node)
         del self._parents[-1]
 
+    @staticmethod
+    def generate_import(module_, names):
+        """Generate an import line.
+
+        :sig: (str, Iterable[str]) -> str
+        :param module_: Name of module to import the names from.
+        :param names: Names to import.
+        :return: Import line in stub code.
+        """
+        slots = {"m": module_, "n": ", ".join(sorted(names))}
+        line = "from %(m)s import %(n)s" % slots
+        if len(line) > LINE_LENGTH_LIMIT:
+            slots["n"] = INDENT + (",\n" + INDENT).join(sorted(names)) + ","
+            line = "from %(m)s import (\n%(n)s\n)" % slots
+        return line
+
     def generate_stub(self):
         """Generate the stub code for this source.
 
@@ -609,7 +625,7 @@ class StubGenerator(ast.NodeVisitor):
         started = False
 
         if len(typing_types) > 0:
-            line = "from typing import " + ", ".join(sorted(typing_types))
+            line = self.generate_import("typing", typing_types)
             out.write(line + "\n")
             started = True
 
@@ -619,10 +635,7 @@ class StubGenerator(ast.NodeVisitor):
             # preserve the import order in the source file
             for name in self.imported_names:
                 if name in imported_types:
-                    line = "from %(module)s import %(name)s" % {
-                        "module": self.imported_names[name],
-                        "name": name,
-                    }
+                    line = self.generate_import(self.imported_names[name], name)
                     out.write(line + "\n")
             started = True
 
