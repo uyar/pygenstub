@@ -343,12 +343,7 @@ class ClassNode(StubNode):
         :return: Lines of stub code for this class.
         """
         stub = []
-
-        if len(self.bases) > 0:
-            bases = "(" + ", ".join(self.bases) + ")"
-        else:
-            bases = ""
-
+        bases = ("(" + ", ".join(self.bases) + ")") if len(self.bases) > 0 else ""
         slots = {"n": self.name, "b": bases}
         if len(self.children) == 0:
             stub.append("class %(n)s%(b)s: ..." % slots)
