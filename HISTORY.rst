@@ -1,7 +1,7 @@
 History
 =======
 
-1.2 (unreleased)
+1.2 (2018-10-19)
 ----------------
 
 - Generate stub files that follow the same layout as Black.

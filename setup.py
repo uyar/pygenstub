@@ -9,7 +9,7 @@ with open("README.rst") as readme_file:
 
 setup(
     name="pygenstub",
-    version="1.1",
+    version="1.2",
     description="Python stub file generator.",
     long_description=readme,
     url="https://github.com/uyar/pygenstub",

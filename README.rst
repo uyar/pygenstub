@@ -33,8 +33,8 @@ as an example.
 Usage
 -----
 
-pygenstub has been tested with Python 2.7, Python 3.4+, PyPy2 5.7+,
-and PyPy3 5.7+. You can install the latest version using ``pip``::
+pygenstub has been tested with Python 2.7, Python 3.4+, PyPy2, and PyPy3.
+You can install the latest version using ``pip``::
 
   pip install pygenstub
 
