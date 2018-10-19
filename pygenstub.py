@@ -83,10 +83,10 @@ _logger = logging.getLogger(__name__)
 def get_fields(node, fields_tag="field_list"):
     """Get the field names and their values from a node.
 
-    :sig: (Document, Optional[str]) -> Mapping[str, str]
+    :sig: (Document, Optional[str]) -> Dict[str, str]
     :param node: Node to get the fields from.
     :param fields_tag: Tag of child node that contains the fields.
-    :return: Mapping of field names to values.
+    :return: Names and values of fields.
     """
     fields_nodes = [c for c in node.children if c.tagname == fields_tag]
     if len(fields_nodes) == 0:
@@ -116,7 +116,7 @@ def extract_signature(docstring):
 def get_signature(node):
     """Get the signature of a function or a class.
 
-    :sig: (Union[ast.FunctionDef, ast.ClassDef]) -> Optional[str]
+    :sig: (Union[ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef]) -> Optional[str]
     :param node: Node to get the signature from.
     :return: Value of signature field in node docstring, or ``None`` if there's no signature.
     """
@@ -126,23 +126,23 @@ def get_signature(node):
     return extract_signature(docstring)
 
 
-def split_parameter_types(csv):
+def split_parameter_types(parameters):
     """Split a parameter types declaration into individual types.
 
     The input is the left hand side of a signature (the part before the arrow),
     excluding the parentheses.
 
     :sig: (str) -> List[str]
-    :param csv: Comma separated list of parameter types.
-    :return: List of parameter types.
+    :param parameters: Comma separated parameter types.
+    :return: Parameter types.
     """
-    if csv == "":
+    if parameters == "":
         return []
 
     # only consider the top level commas, ignore the ones in []
     commas = []
     bracket_depth = 0
-    for i, char in enumerate(csv):
+    for i, char in enumerate(parameters):
         if (char == ",") and (bracket_depth == 0):
             commas.append(i)
         elif char == "[":
@@ -153,10 +153,10 @@ def split_parameter_types(csv):
     types = []
     last_i = 0
     for i in commas:
-        types.append(csv[last_i:i].strip())
+        types.append(parameters[last_i:i].strip())
         last_i = i + 1
     else:
-        types.append(csv[last_i:].strip())
+        types.append(parameters[last_i:].strip())
     return types
 
 
@@ -265,7 +265,7 @@ class FunctionNode(StubNode):
         The parameters have to given as a list of triples where each item specifies
         the name of the parameter, its type, and whether it has a default value or not.
 
-        :sig: (str, List[Tuple[str, str, bool]], str, Optional[List[str]]) -> None
+        :sig: (str, Sequence[Tuple[str, str, bool]], str, Optional[Sequence[str]]) -> None
         :param name: Name of function.
         :param parameters: List of parameter triples (name, type, has_default).
         :param rtype: Type of return value.
@@ -276,9 +276,9 @@ class FunctionNode(StubNode):
         else:
             super().__init__()
         self.name = name  # sig: str
-        self.parameters = parameters  # sig: List[Tuple[str, str, bool]]
+        self.parameters = parameters  # sig: Sequence[Tuple[str, str, bool]]
         self.rtype = rtype  # sig: str
-        self.decorators = decorators if decorators is not None else []  # sig: List[str]
+        self.decorators = decorators if decorators is not None else []  # sig: Sequence[str]
 
         self._async = False  # sig: bool
 
@@ -323,7 +323,7 @@ class ClassNode(StubNode):
     def __init__(self, name, bases, signature=None):
         """Initialize this class node.
 
-        :sig: (str, List[str], Optional[str]) -> None
+        :sig: (str, Sequence[str], Optional[str]) -> None
         :param name: Name of class.
         :param bases: Base classes of class.
         :param signature: Signature of class, to be used in __init__ method.
@@ -333,7 +333,7 @@ class ClassNode(StubNode):
         else:
             super().__init__()
         self.name = name  # sig: str
-        self.bases = bases  # sig: List[str]
+        self.bases = bases  # sig: Sequence[str]
         self.signature = signature  # sig: Optional[str]
 
     def get_code(self):
@@ -356,9 +356,9 @@ class ClassNode(StubNode):
 def get_aliases(lines):
     """Get the type aliases in the source.
 
-    :sig: (List[str]) -> Mapping[str, str]
+    :sig: (Sequence[str]) -> Dict[str, str]
     :param lines: Lines of the source code.
-    :return: Map of aliases to their definitions.
+    :return: Aliases and their their definitions.
     """
     aliases = {}
     for line in lines:
@@ -381,10 +381,10 @@ class StubGenerator(ast.NodeVisitor):
         """
         self.root = StubNode()  # sig: StubNode
 
-        self.imported_names = OrderedDict()  # sig: MutableMapping[str, str]
+        self.imported_names = OrderedDict()  # sig: OrderedDict[str, str]
         self.defined_types = set()  # sig: Set[str]
         self.required_types = set()  # sig: Set[str]
-        self.aliases = OrderedDict()  # sig: Dict[str, str]
+        self.aliases = OrderedDict()  # sig: OrderedDict[str, str]
 
         self._parents = [self.root]  # sig: List[StubNode]
         self._code_lines = source.splitlines()  # sig: List[str]
@@ -442,7 +442,7 @@ class StubGenerator(ast.NodeVisitor):
     def get_function_node(self, node):
         """Process a function node.
 
-        :sig: (ast.FunctionDef) -> FunctionNode
+        :sig: (Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> FunctionNode
         :param node: Node to process.
         :return: Generated function node in stub tree.
         """
@@ -571,7 +571,7 @@ class StubGenerator(ast.NodeVisitor):
     def generate_import(module_, names):
         """Generate an import line.
 
-        :sig: (str, Iterable[str]) -> str
+        :sig: (str, Set[str]) -> str
         :param module_: Name of module to import the names from.
         :param names: Names to import.
         :return: Import line in stub code.
@@ -636,7 +636,7 @@ class StubGenerator(ast.NodeVisitor):
             # preserve the import order in the source file
             for name in self.imported_names:
                 if name in imported_types:
-                    line = self.generate_import(self.imported_names[name], name)
+                    line = self.generate_import(self.imported_names[name], {name})
                     out.write(line + "\n")
             started = True
 
