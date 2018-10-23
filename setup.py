@@ -36,15 +36,7 @@ setup(
     py_modules=["pygenstub"],
     install_requires=["docutils"],
     extras_require={
-        "dev": [
-            "black",
-            "flake8",
-            "flake8-isort",
-            "flake8-docstrings",
-            "readme_renderer",
-            "wheel",
-            "twine",
-        ],
+        "dev": ["flake8", "flake8-isort", "flake8-docstrings"],
         "doc": ["sphinx", "sphinx_rtd_theme"],
         "test": ["pytest", "pytest-cov"],
     },
