@@ -1,0 +1,78 @@
+[tool.poetry]
+name = "pygenstub"
+version = "1.2"
+description = "Python stub file generator."
+license = "GPL-3.0+"
+authors = ["H. Turgut Uyar <uyar@tekir.org>"]
+readme = "README.rst"
+url = "https://github.com/uyar/pygenstub"
+documentation = "https://pygenstub.readthedocs.io/"
+repository = "https://github.com/uyar/pygenstub"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Framework :: Sphinx :: Extension",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.4",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Documentation :: Sphinx",
+    "Topic :: Software Development :: Documentation"
+]
+
+[tool.poetry.dependencies]
+python = "^3.4|^2.7"
+docutils = "^0.14"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.4"
+flake8 = "^3.6"
+flake8-docstrings = "^1.3"
+sphinx = "^1.8"
+sphinx_rtd_theme = "^0.4.2"
+
+[tool.poetry.scripts]
+pygenstub = "pygenstub:main"
+
+[tool.black]
+line-length = 96
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py{37,36,35,34,27}, pypy{3,2}, style, docs
+skipsdist = True
+
+[testenv]
+deps =
+    pytest>=3.4
+    docutils
+    typing
+commands =
+    {posargs:pytest}
+
+[testenv:style]
+deps =
+    flake8
+    flake8-docstrings
+commands =
+    flake8 pygenstub.py
+
+[testenv:docs]
+changedir = docs/
+deps =
+    sphinx
+    sphinx_rtd_theme
+commands =
+    sphinx-build -b html ./ _build/
+"""
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
