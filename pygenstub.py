@@ -24,8 +24,6 @@ https://pygenstub.readthedocs.io/
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__version__ = "1.2"  # sig: str
-
 import ast
 import inspect
 import logging
@@ -40,7 +38,7 @@ from io import StringIO
 from docutils.core import publish_doctree
 
 
-# sigalias: Document = docutils.nodes.document
+__version__ = "1.2"  # sig: str
 
 
 PY3 = sys.version_info >= (3, 0)
@@ -50,6 +48,9 @@ if not PY3:
     from codecs import open
 else:
     import builtins
+
+
+# sigalias: Document = docutils.nodes.document
 
 
 BUILTIN_TYPES = {k for k, t in builtins.__dict__.items() if isinstance(t, type)}
