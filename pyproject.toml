@@ -76,7 +76,7 @@ skip_install = true
 changedir = docs/
 commands =
     poetry install -v
-    poetry run sphinx-build -b html source/ build/
+    poetry run sphinx-build -b html source/ build/html/
 """
 
 [build-system]
