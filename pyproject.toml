@@ -46,14 +46,16 @@ line-length = 96
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{37,36,35,34,27}, pypy{3,2}, style, docs
+envlist = py{37,36,35,34,27}, pypy3, pypy, style, docs
 skipsdist = True
 
 [testenv]
 deps =
     pytest>=3.4
     docutils
-    typing
+    py34: typing
+    py27: typing
+    pypy: typing
 commands =
     {posargs:pytest}
 

@@ -24,6 +24,8 @@ https://pygenstub.readthedocs.io/
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+__version__ = "1.2"  # sig: str
+
 import ast
 import inspect
 import logging

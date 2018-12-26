@@ -5,9 +5,7 @@ import os
 import shutil
 import sys
 
-from pkg_resources import get_distribution
-
-from pygenstub import get_stub, main
+from pygenstub import __version__, get_stub, main
 
 
 def_template = '''
@@ -38,6 +36,10 @@ class C%(bases)s:
         """
         self.a = a  # %(comment)s
 '''
+
+
+def test_version():
+    assert __version__ == "1.2"
 
 
 def test_get_stub_no_docstring():
@@ -453,7 +455,7 @@ def test_cli_version_should_print_version_number_and_exit(capsys):
     with raises(SystemExit):
         main(argv=["pygenstub", "--version"])
     out, err = capsys.readouterr()
-    assert "pygenstub " + get_distribution("pygenstub").version + "\n" in {out, err}
+    assert "pygenstub " + __version__ + "\n" in {out, err}
 
 
 def test_cli_no_input_file_should_print_usage_and_exit(capsys):
