@@ -2,12 +2,16 @@
 name = "pygenstub"
 version = "1.2"
 description = "Python stub file generator."
-license = "GPL-3.0+"
-authors = ["H. Turgut Uyar <uyar@tekir.org>"]
 readme = "README.rst"
+
+authors = ["H. Turgut Uyar <uyar@tekir.org>"]
+license = "GPL-3.0+"
+
 url = "https://github.com/uyar/pygenstub"
 documentation = "https://pygenstub.readthedocs.io/"
 repository = "https://github.com/uyar/pygenstub"
+
+keywords = ["type hints", "stub files"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
@@ -25,7 +29,8 @@ classifiers = [
     "Topic :: Documentation :: Sphinx",
     "Topic :: Software Development :: Documentation"
 ]
-include = ["HISTORY.rst", "tests/*.py", "docs/source/**/*", "docs/Makefile"]
+
+include = ["HISTORY.rst", "tests/**/*.py", "docs/source/**/*", "docs/Makefile"]
 
 [tool.poetry.dependencies]
 python = "^3.4|^2.7"
@@ -34,10 +39,10 @@ docutils = "^0.14"
 [tool.poetry.dev-dependencies]
 pytest = "^3.4"
 flake8 = "^3.6"
+flake8-isort = "^2.6"
 flake8-docstrings = "^1.3"
 sphinx = "^1.8"
 sphinx_rtd_theme = "^0.4.2"
-flake8-isort = "^2.6"
 
 [tool.poetry.scripts]
 pygenstub = "pygenstub:main"
