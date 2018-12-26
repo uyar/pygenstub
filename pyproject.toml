@@ -46,33 +46,30 @@ line-length = 96
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{37,36,35,34,27}, pypy3, pypy, style, docs
+envlist = py37, py36, py35, py34, py27, pypy3, pypy, style, docs
 skipsdist = True
 
 [testenv]
-deps =
-    pytest>=3.4
-    docutils
-    py34: typing
-    py27: typing
-    pypy: typing
+whitelist_externals = poetry
+skip_install = true
 commands =
-    {posargs:pytest}
+    poetry install -v
+    poetry run {posargs:pytest}
 
 [testenv:style]
-deps =
-    flake8
-    flake8-docstrings
+whitelist_externals = poetry
+skip_install = true
 commands =
-    flake8 pygenstub.py
+    poetry install -v
+    poetry run flake8 pygenstub.py
 
 [testenv:docs]
+whitelist_externals = poetry
+skip_install = true
 changedir = docs/
-deps =
-    sphinx
-    sphinx_rtd_theme
 commands =
-    sphinx-build -b html ./ _build/
+    poetry install -v
+    poetry run sphinx-build -b html ./ _build/
 """
 
 [build-system]
