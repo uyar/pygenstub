@@ -53,7 +53,7 @@ class C%(bases)s:
 
 
 def test_version():
-    assert __version__ == "1.2"
+    assert __version__ == "1.2.1"
 
 
 def test_get_stub_no_docstring():

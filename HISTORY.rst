@@ -1,6 +1,12 @@
 History
 =======
 
+1.2.1 (2018-12-27)
+------------------
+
+- Fix problem with function decorators that have parameters.
+- Switch to poetry for project management.
+
 1.2 (2018-10-19)
 ----------------
 
