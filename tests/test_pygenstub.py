@@ -20,6 +20,20 @@ def f(%(params)s):
     """
 '''
 
+function_template = '''
+from x import A, B
+from . import m
+
+
+%(decorator)s
+def f(%(params)s):
+    """Func
+
+    :sig: (%(ptypes)s) -> %(rtype)s
+    """
+'''
+
+
 class_template = '''
 from x import A
 from . import m
@@ -372,6 +386,16 @@ def test_get_stub_comment_instance_variable():
         get_stub(code)
         == "class C:\n    a = ...  # type: str\n    def m(self, a: int) -> None: ...\n"
     )
+
+
+def test_get_stub_function_decorated_unknown():
+    code = function_template % {
+        "decorator": "@foo",
+        "params": "",
+        "ptypes": "",
+        "rtype": "None",
+    }
+    assert get_stub(code) == "def f() -> None: ...\n"
 
 
 def test_get_stub_method_decorated_unknown():
