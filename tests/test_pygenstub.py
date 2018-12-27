@@ -374,6 +374,19 @@ def test_get_stub_comment_instance_variable():
     )
 
 
+def test_get_stub_method_decorated_unknown():
+    code = class_template % {
+        "bases": "",
+        "doc": "",
+        "decorator": "@foo",
+        "method": "m",
+        "params": "self",
+        "ptypes": "",
+        "comment": "",
+    }
+    assert get_stub(code) == "class C:\n    def m(self) -> None: ...\n"
+
+
 def test_get_stub_method_decorated_staticmethod():
     code = class_template % {
         "bases": "",
@@ -400,7 +413,7 @@ def test_get_stub_method_decorated_classmethod():
     assert get_stub(code) == "class C:\n    @classmethod\n    def m(cls, a: int) -> None: ...\n"
 
 
-def test_get_stub_method_property():
+def test_get_stub_method_decorated_property():
     code = class_template % {
         "bases": "",
         "doc": "",
@@ -413,7 +426,7 @@ def test_get_stub_method_property():
     assert get_stub(code) == "class C:\n    @property\n    def m(self) -> None: ...\n"
 
 
-def test_get_stub_method_property_setter():
+def test_get_stub_method_decorated_property_setter():
     code = class_template % {
         "bases": "",
         "doc": "",
