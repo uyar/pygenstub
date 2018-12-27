@@ -398,6 +398,16 @@ def test_get_stub_function_decorated_unknown():
     assert get_stub(code) == "def f() -> None: ...\n"
 
 
+def test_get_stub_function_decorated_unknown_with_parameters():
+    code = function_template % {
+        "decorator": "@foo()",
+        "params": "",
+        "ptypes": "",
+        "rtype": "None",
+    }
+    assert get_stub(code) == "def f() -> None: ...\n"
+
+
 def test_get_stub_method_decorated_unknown():
     code = class_template % {
         "bases": "",
