@@ -470,10 +470,14 @@ class StubGenerator(ast.NodeVisitor):
             _logger.debug("required types: %s", requires)
             self.required_types |= requires
 
-            decorators = [
-                d.id if hasattr(d, "id") else d.value.id + "." + d.attr
-                for d in node.decorator_list
-            ]
+            decorators = []
+            for d in node.decorator_list:
+                if hasattr(d, "id"):
+                    decorators.append(d.id)
+                elif hasattr(d, "func"):
+                    decorators.append(d.func.id)
+                elif hasattr(d, "value"):
+                    decorators.append(d.value.id + "." + d.attr)
 
             param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
 
