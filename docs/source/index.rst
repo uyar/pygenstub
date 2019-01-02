@@ -1,7 +1,7 @@
 pygenstub
 =========
 
-.. include:: ../README.rst
+.. include:: ../../README.rst
 
 .. tip::
 
