@@ -15,3 +15,4 @@ pygenstub
 
    features
    api
+   history

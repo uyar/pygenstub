@@ -59,7 +59,7 @@ History
 1.0b3 (2017-06-16)
 ------------------
 
-- Fixes for *args and **kwargs on Python 2 code.
+- Fixes for ``*args`` and ``**kwargs`` on Python 2 code.
 
 1.0b2 (2017-05-26)
 ------------------
