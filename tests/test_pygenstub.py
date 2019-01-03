@@ -5,6 +5,8 @@ import os
 import shutil
 import sys
 
+from pkg_resources import get_distribution
+
 from pygenstub import __version__, get_stub, main
 
 
@@ -53,7 +55,7 @@ class C%(bases)s:
 
 
 def test_version():
-    assert __version__ == "1.2.1"
+    assert get_distribution("pygenstub").version == __version__
 
 
 def test_get_stub_no_docstring():
