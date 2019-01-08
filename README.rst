@@ -1,4 +1,4 @@
-Copyright (C) 2016-2018 H. Turgut Uyar <uyar@tekir.org>
+Copyright (C) 2016-2019 H. Turgut Uyar <uyar@tekir.org>
 
 pygenstub is a utility for generating stub files from docstrings
 in source files. It takes a source file as input and creates a stub file
