@@ -42,7 +42,6 @@ pytest-cov = "^2.6"
 flake8 = "^3.6"
 flake8-isort = "^2.6"
 flake8-docstrings = "^1.3"
-flake8-mypy = "^17.8"
 sphinx = "^1.8"
 sphinx_rtd_theme = "^0.4.2"
 
