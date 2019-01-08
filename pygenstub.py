@@ -610,11 +610,11 @@ class StubGenerator(ast.NodeVisitor):
         module_vars = {v.name for v in self.root.variables}
         _logger.debug("module variables: %s", module_vars)
 
-        dotted_types = {n for n in needed_types if "." in n}
-        dotted_namespaces = {".".join(n.split(".")[:-1]) for n in dotted_types}
+        qualified_types = {n for n in needed_types if "." in n}
+        qualified_namespaces = {".".join(n.split(".")[:-1]) for n in qualified_types}
 
-        needed_namespaces = dotted_namespaces - module_vars
-        needed_types -= dotted_types
+        needed_namespaces = qualified_namespaces - module_vars
+        needed_types -= qualified_types
         _logger.debug("needed namespaces: %s", needed_namespaces)
 
         imported_names = set(self.imported_names)
