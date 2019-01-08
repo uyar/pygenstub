@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from pytest import mark, raises
 
 import sys
