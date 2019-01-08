@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2018 H. Turgut Uyar <uyar@tekir.org>
+# Copyright (C) 2016-2019 H. Turgut Uyar <uyar@tekir.org>
 #
 # pygenstub is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -566,10 +566,17 @@ class StubGenerator(ast.NodeVisitor):
         """
         self.defined_types.add(node.name)
 
-        bases = [
-            n.value.id + "." + n.attr if isinstance(n, ast.Attribute) else n.id
-            for n in node.bases
-        ]
+        bases = []
+        for n in node.bases:
+            base_parts = []
+            while True:
+                if not isinstance(n, ast.Attribute):
+                    base_parts.append(n.id)
+                    break
+                else:
+                    base_parts.append(n.attr)
+                n = n.value
+            bases.append(".".join(base_parts[::-1]))
         self.required_types |= set(bases)
 
         signature = get_signature(node)

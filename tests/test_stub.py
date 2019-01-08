@@ -317,9 +317,9 @@ def test_if_base_from_imported_qualified_then_stub_should_include_import():
     assert get_stub(code) == "from x import y\n\nclass C(y.A): ...\n"
 
 
-# def test_if_base_unimported_qualified_then_stub_should_include_import():
-#     code = get_class("C", bases=["x.y.A"])
-#     assert get_stub(code) == "import x.y\n\nclass C(x.y.A): ...\n"
+def test_if_base_unimported_qualified_then_stub_should_generate_import():
+    code = get_class("C", bases=["x.y.A"])
+    assert get_stub(code) == "import x.y\n\nclass C(x.y.A): ...\n"
 
 
 def test_if_base_relative_imported_qualified_then_stub_should_include_import():
