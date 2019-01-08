@@ -11,7 +11,9 @@ from pygenstub import get_stub
 _INDENT = " " * 4
 
 
-def get_function(name, desc="Function", params=None, ptypes=None, rtype=None, decorators=None):
+def get_function(
+    name, desc="Function", params=None, ptypes=None, rtype=None, decorators=None, body="pass"
+):
     code = StringIO()
     if decorators is not None:
         code.write("\n".join(decorators) + "\n")
@@ -23,11 +25,11 @@ def get_function(name, desc="Function", params=None, ptypes=None, rtype=None, de
         if rtype is not None:
             code.write(_INDENT + ":sig: (%(t)s) -> %(rtype)s\n" % {"t": tstr, "rtype": rtype})
         code.write(_INDENT + '"""\n')
-    code.write(_INDENT + "pass\n")
+    code.write(_INDENT + body + "\n")
     return code.getvalue()
 
 
-def get_class(name, bases=None, desc="Class", sig=None, methods=None, vars=None, vtypes=None):
+def get_class(name, bases=None, desc="Class", sig=None, methods=None):
     code = StringIO()
     bstr = ("(" + ", ".join(bases) + ")") if bases is not None else ""
     code.write("class %(name)s%(bases)s:\n" % {"name": name, "bases": bstr})
@@ -36,9 +38,6 @@ def get_class(name, bases=None, desc="Class", sig=None, methods=None, vars=None,
         if sig is not None:
             code.write("\n" + _INDENT + ":sig: %(sig)s\n" % {"sig": sig})
     code.write(_INDENT + '"""\n')
-    if vars is not None:
-        for v, vtype in zip(vars, vtypes):
-            code.write(_INDENT + "self.%(v)s  # sig: %(t)s\n" % {"v": v, "t": vtype})
     if methods is not None:
         for method in methods:
             for line in method.splitlines():
@@ -402,9 +401,12 @@ def test_module_variable_type_comment_unimported_qualified_should_include_import
     assert get_stub(code) == "import x.y\n\nn = ...  # type: x.y.A\n"
 
 
-# def test_get_stub_comment_instance_variable():
-#     code = get_class("C", vars=["a = 42"], vtypes=["int"])
-#     assert get_stub(code) == "class C:\n    a = ...  # type: int\n"
+def test_get_stub_comment_instance_variable():
+    method = get_function("m", params=["self"], rtype="None", body="self.a = 42  # sig: int")
+    code = get_class("C", methods=[method])
+    assert (
+        get_stub(code) == "class C:\n    a = ...  # type: int\n    def m(self) -> None: ...\n"
+    )
 
 
 def test_stub_should_use_alias_comment():
