@@ -12,7 +12,7 @@ _INDENT = " " * 4
 
 
 def get_function(
-    name, desc="Function", params=None, ptypes=None, rtype=None, decorators=None, body="pass"
+    name, desc="Do foo.", params=None, ptypes=None, rtype=None, decorators=None, body="pass"
 ):
     code = StringIO()
     if decorators is not None:
@@ -29,7 +29,7 @@ def get_function(
     return code.getvalue()
 
 
-def get_class(name, bases=None, desc="Class", sig=None, methods=None):
+def get_class(name, bases=None, desc="A foo.", sig=None, methods=None):
     code = StringIO()
     bstr = ("(" + ", ".join(bases) + ")") if bases is not None else ""
     code.write("class %(name)s%(bases)s:\n" % {"name": name, "bases": bstr})
