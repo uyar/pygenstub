@@ -7,7 +7,7 @@ import sys
 
 from pkg_resources import get_distribution
 
-from pygenstub import __version__, main
+import pygenstub
 
 
 @fixture
@@ -25,26 +25,26 @@ def source():
 
 
 def test_version_should_be_same_as_installed():
-    assert get_distribution("pygenstub").version == __version__
+    assert get_distribution("pygenstub").version == pygenstub.__version__
 
 
 def test_cli_help_should_print_usage_and_exit(capsys):
     with raises(SystemExit):
-        main(argv=["pygenstub", "--help"])
+        pygenstub.main(argv=["pygenstub", "--help"])
     out, err = capsys.readouterr()
     assert out.startswith("usage: ")
 
 
 def test_cli_version_should_print_version_number_and_exit(capsys):
     with raises(SystemExit):
-        main(argv=["pygenstub", "--version"])
+        pygenstub.main(argv=["pygenstub", "--version"])
     out, err = capsys.readouterr()
-    assert "pygenstub " + __version__ + "\n" in {out, err}
+    assert "pygenstub " + pygenstub.__version__ + "\n" in {out, err}
 
 
 def test_cli_no_input_file_should_print_usage_and_exit(capsys):
     with raises(SystemExit):
-        main(argv=["pygenstub"])
+        pygenstub.main(argv=["pygenstub"])
     out, err = capsys.readouterr()
     assert err.startswith("usage: ")
     assert ("required: source" in err) or ("too few arguments" in err)
@@ -52,7 +52,7 @@ def test_cli_no_input_file_should_print_usage_and_exit(capsys):
 
 def test_cli_unrecognized_arguments_should_print_usage_and_exit(capsys):
     with raises(SystemExit):
-        main(argv=["pygenstub", "--foo", "foo.py"])
+        pygenstub.main(argv=["pygenstub", "--foo", "foo.py"])
     out, err = capsys.readouterr()
     assert err.startswith("usage: ")
     assert "unrecognized arguments: --foo" in err
@@ -60,12 +60,12 @@ def test_cli_unrecognized_arguments_should_print_usage_and_exit(capsys):
 
 def test_cli_debug_mode_should_print_debug_messages_on_stderr(caplog, source):
     caplog.set_level(logging.DEBUG)
-    main(argv=["pygenstub", "--debug", source[1]])
+    pygenstub.main(argv=["pygenstub", "--debug", source[1]])
     assert caplog.record_tuples[0][-1] == "running in debug mode"
 
 
 def test_cli_original_module_should_generate_original_stub(source):
-    main(argv=["pygenstub", source[1]])
+    pygenstub.main(argv=["pygenstub", source[1]])
     with open(source[0] + "i") as src:
         src_stub = src.read()
     with open(source[1] + "i") as dst:
