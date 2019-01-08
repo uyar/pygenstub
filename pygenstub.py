@@ -508,7 +508,7 @@ class StubGenerator(ast.NodeVisitor):
                 param_names.extend([arg.arg for arg in kwonly_args])
 
             if len(param_types) != len(param_names):
-                raise RuntimeError("Parameter names and types don't match: " + node.name)
+                raise ValueError("Parameter names and types don't match: " + node.name)
 
             param_locs = [(a.lineno, a.col_offset) for a in (node.args.args + kwonly_args)]
             param_defaults = {
@@ -633,7 +633,7 @@ class StubGenerator(ast.NodeVisitor):
             _logger.warn("typing module not installed")
 
         if len(needed_types) > 0:
-            raise RuntimeError("Unknown types: " + ", ".join(needed_types))
+            raise ValueError("Unknown types: " + ", ".join(needed_types))
 
         out = StringIO()
         started = False

@@ -132,7 +132,7 @@ def test_if_returns_multiple_typing_then_stub_should_generate_multiple_import():
 
 def test_if_returns_unknown_type_should_raise_error():
     code = get_function("f", rtype="Foo")
-    with raises(RuntimeError) as e:
+    with raises(ValueError) as e:
         get_stub(code)
     assert "Unknown types: Foo" in str(e)
 
@@ -208,7 +208,7 @@ def test_if_param_type_multiple_typing_then_stub_should_include_multiple_import(
 
 def test_if_param_type_unknown_should_raise_error():
     code = get_function("f", params=["i"], ptypes=["Foo"], rtype="None")
-    with raises(RuntimeError) as e:
+    with raises(ValueError) as e:
         get_stub(code)
     assert "Unknown types: Foo" in str(e)
 
@@ -255,14 +255,14 @@ def test_stub_should_honor_kwonly_args_with_default():
 
 def test_missing_types_should_raise_error():
     code = get_function("f", params=["i", "j"], ptypes=["int"], rtype="None")
-    with raises(RuntimeError) as e:
+    with raises(ValueError) as e:
         get_stub(code)
     assert "Parameter names and types don't match: " in str(e)
 
 
 def test_extra_types_should_raise_error():
     code = get_function("f", params=["i"], ptypes=["int", "int"], rtype="None")
-    with raises(RuntimeError) as e:
+    with raises(ValueError) as e:
         get_stub(code)
     assert "Parameter names and types don't match: " in str(e)
 
