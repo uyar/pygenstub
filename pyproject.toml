@@ -30,7 +30,7 @@ classifiers = [
     "Topic :: Software Development :: Documentation"
 ]
 
-include = ["HISTORY.rst", "tests/**/*.py", "docs/source/**/*", "docs/Makefile"]
+include = ["HISTORY.rst", "*.pyi", "tests/**/*.py", "docs/source/**/*", "docs/Makefile"]
 
 [tool.poetry.dependencies]
 python = "^3.4|^2.7"
