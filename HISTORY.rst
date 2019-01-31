@@ -1,6 +1,11 @@
 History
 =======
 
+1.2.3 (2019-01-31)
+------------------
+
+- Improve layout for stub generation with one-line class stubs.
+
 1.2.2 (2019-01-08)
 ------------------
 

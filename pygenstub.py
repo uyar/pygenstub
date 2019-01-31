@@ -38,7 +38,7 @@ from io import StringIO
 from docutils.core import publish_doctree
 
 
-__version__ = "1.2.2"  # sig: str
+__version__ = "1.2.3"  # sig: str
 
 
 PY3 = sys.version_info >= (3, 0)
