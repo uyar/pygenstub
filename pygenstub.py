@@ -677,18 +677,28 @@ class StubGenerator(ast.NodeVisitor):
         if started:
             out.write("\n")
         stub_lines = self.root.get_code()
-        prev_line = None
-        for line in stub_lines:
-            if line.startswith("class ") and prev_line and (not prev_line.startswith("class ")):
+        n_lines = len(stub_lines)
+        for line_no in range(n_lines):
+            prev_line = stub_lines[line_no - 1] if line_no > 0 else None
+            line = stub_lines[line_no]
+            next_line = stub_lines[line_no + 1] if line_no < (n_lines - 1) else None
+            if (
+                line.startswith("class ")
+                and (prev_line is not None)
+                and (
+                    (not prev_line.startswith("class "))
+                    or (next_line and next_line.startswith(" "))
+                )
+            ):
                 out.write("\n")
             if (
                 line.startswith("def ")
-                and prev_line
-                and (prev_line.startswith(" ") or prev_line.startswith("class "))
+                and (prev_line is not None)
+                and (prev_line.startswith((" ", "class ")))
             ):
                 out.write("\n")
             out.write(line + "\n")
-            prev_line = line
+            line_no += 1
         return out.getvalue()
 
 
