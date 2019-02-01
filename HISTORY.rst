@@ -1,6 +1,11 @@
 History
 =======
 
+1.2.4 (2019-02-01)
+------------------
+
+- More spacing fixes for consecutive class stubs.
+
 1.2.3 (2019-01-31)
 ------------------
 
