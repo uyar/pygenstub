@@ -795,9 +795,14 @@ def process_docstring(app, what, name, obj, options, lines):
 
 
 def setup(app):
-    """Register the Sphinx extension."""
+    """Register the Sphinx extension.
+
+    :sig: (sphinx.application.Sphinx) -> Dict[str, str]
+    :param app: Sphinx application to register this extension with.
+    :return: Information about this extension.
+    """
     app.connect("autodoc-process-docstring", process_docstring)
-    return dict(parallel_read_safe=True)
+    return {"version": __version__}
 
 
 def main(argv=None):

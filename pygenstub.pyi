@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import ast
 import docutils.nodes
+import sphinx.application
 
 Document = docutils.nodes.document
 
@@ -89,4 +90,5 @@ class StubGenerator(ast.NodeVisitor):
     def generate_stub(self) -> str: ...
 
 def get_stub(source: str) -> str: ...
+def setup(app: sphinx.application.Sphinx) -> Dict[str, str]: ...
 def main(argv: Optional[List[str]] = ...) -> None: ...
