@@ -77,7 +77,7 @@ _logger = logging.getLogger(__name__)
 def get_fields(node, fields_tag="field_list"):
     """Get the field names and their values from a node.
 
-    :sig: (Document, Optional[str]) -> Dict[str, str]
+    :sig: (Document, str) -> Dict[str, str]
     :param node: Node to get the fields from.
     :param fields_tag: Tag of child node that contains the fields.
     :return: Names and values of fields.
