@@ -57,7 +57,7 @@ for pygenstub itself.
 Getting help
 ------------
 
-The documentation is available on: https://pygenstub.readthedocs.io/
+The documentation is available on: https://pygenstub.tekir.org/
 
 The source code can be obtained from: https://github.com/uyar/pygenstub
 
@@ -71,4 +71,4 @@ the included ``LICENSE.txt`` for details.
 
 .. _source code: https://github.com/uyar/pygenstub/blob/master/pygenstub.py
 .. _stub file: https://github.com/uyar/pygenstub/blob/master/pygenstub.pyi
-.. _API documentation: https://pygenstub.readthedocs.io/en/latest/api.html
+.. _API documentation: https://pygenstub.tekir.org/en/latest/api.html

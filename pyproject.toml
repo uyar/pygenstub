@@ -7,8 +7,8 @@ readme = "README.rst"
 authors = ["H. Turgut Uyar <uyar@tekir.org>"]
 license = "GPL-3.0+"
 
-homepage = "https://github.com/uyar/pygenstub"
-documentation = "https://pygenstub.readthedocs.io/"
+homepage = "https://pygenstub.tekir.org/"
+documentation = "https://pygenstub.tekir.org/"
 repository = "https://github.com/uyar/pygenstub"
 
 keywords = ["type hints", "stub files"]

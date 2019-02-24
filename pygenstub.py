@@ -19,7 +19,7 @@ It takes a source file as input and creates a stub file with the same base name
 and the ``.pyi`` extension.
 
 For more information, please refer to the documentation:
-https://pygenstub.readthedocs.io/
+https://pygenstub.tekir.org/
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
