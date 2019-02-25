@@ -71,4 +71,4 @@ the included ``LICENSE.txt`` for details.
 
 .. _source code: https://github.com/uyar/pygenstub/blob/master/pygenstub.py
 .. _stub file: https://github.com/uyar/pygenstub/blob/master/pygenstub.pyi
-.. _API documentation: https://pygenstub.tekir.org/en/latest/api.html
+.. _API documentation: https://pygenstub.tekir.org/api.html
