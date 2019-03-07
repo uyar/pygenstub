@@ -415,22 +415,12 @@ class StubGenerator(ast.NodeVisitor):
             self.defined_types |= {alias}
 
     def visit_ImportFrom(self, node):
-        """Process a "from x import y" node.
-
-        :sig: (ast.ImportFrom) -> None
-        :param node: Node to process.
-        """
         line = self._code_lines[node.lineno - 1]
         module_name = line.split("from")[1].split("import")[0].strip()
         for name in node.names:
             self.imported_names[name.name] = module_name
 
     def visit_Assign(self, node):
-        """Process an assignment node.
-
-        :sig: (ast.Assign) -> None
-        :param node: Node to process.
-        """
         line = self._code_lines[node.lineno - 1]
         if SIG_COMMENT in line:
             line = _RE_COMMENT_IN_STRING.sub("", line)
@@ -539,31 +529,16 @@ class StubGenerator(ast.NodeVisitor):
             return stub_node
 
     def visit_FunctionDef(self, node):
-        """Process a regular function node.
-
-        :sig: (ast.FunctionDef) -> None
-        :param node: Node to process.
-        """
         node = self.get_function_node(node)
         if node is not None:
             node._async = False
 
     def visit_AsyncFunctionDef(self, node):
-        """Process an async function node.
-
-        :sig: (ast.AsyncFunctionDef) -> None
-        :param node: Node to process.
-        """
         node = self.get_function_node(node)
         if node is not None:
             node._async = True
 
     def visit_ClassDef(self, node):
-        """Process a class node.
-
-        :sig: (ast.ClassDef) -> None
-        :param node: Node to process.
-        """
         self.defined_types.add(node.name)
 
         bases = []
@@ -795,25 +770,13 @@ def process_docstring(app, what, name, obj, options, lines):
 
 
 def setup(app):
-    """Register the Sphinx extension.
-
-    :sig: (sphinx.application.Sphinx) -> Dict[str, str]
-    :param app: Sphinx application to register this extension with.
-    :return: Information about this extension.
-    """
     app.connect("autodoc-process-docstring", process_docstring)
     return {"version": __version__}
 
 
 def main(argv=None):
-    """Entry point of the command-line utility.
-
-    :sig: (Optional[List[str]]) -> None
-    :param argv: Command line arguments.
-    """
     parser = ArgumentParser(prog="pygenstub")
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-
     parser.add_argument("source", help="source file")
     parser.add_argument("--debug", action="store_true", help="enable debug messages")
 
