@@ -352,7 +352,7 @@ class ClassNode(StubNode):
         stub = []
         bases = ("(" + ", ".join(self.bases) + ")") if len(self.bases) > 0 else ""
         slots = {"n": self.name, "b": bases}
-        if len(self.children) == 0:
+        if (len(self.children) == 0) and (len(self.variables) == 0):
             stub.append("class %(n)s%(b)s: ..." % slots)
         else:
             stub.append("class %(n)s%(b)s:" % slots)

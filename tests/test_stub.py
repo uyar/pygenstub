@@ -31,7 +31,7 @@ def get_function(
     return code.getvalue()
 
 
-def get_class(name, bases=None, desc="A foo.", sig=None, methods=None):
+def get_class(name, bases=None, desc="A foo.", sig=None, methods=None, classvars=None):
     code = StringIO()
     bstr = ("(" + ", ".join(bases) + ")") if bases is not None else ""
     code.write("class %(name)s%(bases)s:\n" % {"name": name, "bases": bstr})
@@ -40,6 +40,9 @@ def get_class(name, bases=None, desc="A foo.", sig=None, methods=None):
         if sig is not None:
             code.write("\n" + _INDENT + ":sig: %(sig)s\n" % {"sig": sig})
     code.write(_INDENT + '"""\n')
+    if classvars is not None:
+        for classvar in classvars:
+            code.write(_INDENT + classvar + "\n")
     if methods is not None:
         for method in methods:
             for line in method.splitlines():
@@ -406,6 +409,11 @@ def test_module_variable_type_comment_relative_qualified_should_include_import()
 def test_module_variable_type_comment_unimported_qualified_should_include_import():
     code = "n = 42  # sig: x.y.A\n" ""
     assert get_stub(code) == "import x.y\n\nn = ...  # type: x.y.A\n"
+
+
+def test_get_stub_comment_class_variable():
+    code = get_class("C", classvars=["a = 42  # sig: int"])
+    assert get_stub(code) == "class C:\n    a = ...  # type: int\n"
 
 
 def test_get_stub_comment_instance_variable():

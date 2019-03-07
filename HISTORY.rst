@@ -5,6 +5,7 @@ History
 ------------------
 
 - Support names renamed with as during import.
+- Support class variables.
 
 1.2.4 (2019-02-01)
 ------------------
