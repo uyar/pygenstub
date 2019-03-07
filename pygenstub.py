@@ -416,6 +416,7 @@ class StubGenerator(ast.NodeVisitor):
             self.defined_types |= {alias}
 
     def visit_Import(self, node):
+        """Visit an import node."""
         line = self._code_lines[node.lineno - 1]
         module_name = line.split("import")[0].strip()
         for name in node.names:
@@ -425,6 +426,7 @@ class StubGenerator(ast.NodeVisitor):
             self.imported_namespaces[imported_name] = module_name
 
     def visit_ImportFrom(self, node):
+        """Visit an from-import node."""
         line = self._code_lines[node.lineno - 1]
         module_name = line.split("from")[1].split("import")[0].strip()
         for name in node.names:
@@ -434,6 +436,7 @@ class StubGenerator(ast.NodeVisitor):
             self.imported_names[imported_name] = module_name
 
     def visit_Assign(self, node):
+        """Visit an assignment node."""
         line = self._code_lines[node.lineno - 1]
         if SIG_COMMENT in line:
             line = _RE_COMMENT_IN_STRING.sub("", line)
@@ -542,16 +545,19 @@ class StubGenerator(ast.NodeVisitor):
             return stub_node
 
     def visit_FunctionDef(self, node):
+        """Visit a function node."""
         node = self.get_function_node(node)
         if node is not None:
             node._async = False
 
     def visit_AsyncFunctionDef(self, node):
+        """Visit an async function node."""
         node = self.get_function_node(node)
         if node is not None:
             node._async = True
 
     def visit_ClassDef(self, node):
+        """Visit a class node."""
         self.defined_types.add(node.name)
 
         bases = []
@@ -799,11 +805,13 @@ def process_docstring(app, what, name, obj, options, lines):
 
 
 def setup(app):
+    """Register to Sphinx."""
     app.connect("autodoc-process-docstring", process_docstring)
     return {"version": __version__}
 
 
 def main(argv=None):
+    """Start the command line interface."""
     parser = ArgumentParser(prog="pygenstub")
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("source", help="source file")
