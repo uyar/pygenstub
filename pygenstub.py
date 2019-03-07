@@ -418,7 +418,10 @@ class StubGenerator(ast.NodeVisitor):
         line = self._code_lines[node.lineno - 1]
         module_name = line.split("from")[1].split("import")[0].strip()
         for name in node.names:
-            self.imported_names[name.name] = module_name
+            imported_name = name.name
+            if name.asname:
+                imported_name = name.asname + "::" + imported_name
+            self.imported_names[imported_name] = module_name
 
     def visit_Assign(self, node):
         line = self._code_lines[node.lineno - 1]
@@ -571,11 +574,22 @@ class StubGenerator(ast.NodeVisitor):
         :param names: Names to import.
         :return: Import line in stub code.
         """
-        slots = {"m": module_, "n": ", ".join(sorted(names))}
-        line = "from %(m)s import %(n)s" % slots
-        if len(line) > LINE_LENGTH_LIMIT:
-            slots["n"] = INDENT + (",\n" + INDENT).join(sorted(names)) + ","
-            line = "from %(m)s import (\n%(n)s\n)" % slots
+        regular_names = [n for n in names if "::" not in n]
+        as_names = [n for n in names if "::" in n]
+
+        line = ""
+        if len(regular_names) > 0:
+            slots = {"m": module_, "n": ", ".join(sorted(regular_names))}
+            line = "from %(m)s import %(n)s" % slots
+            if len(line) > LINE_LENGTH_LIMIT:
+                slots["n"] = INDENT + (",\n" + INDENT).join(sorted(regular_names)) + ","
+                line = "from %(m)s import (\n%(n)s\n)" % slots
+            if len(as_names) > 0:
+                line += "\n"
+
+        for as_name in as_names:
+            a, n = as_name.split("::")
+            line += "from %(m)s import %(n)s as %(a)s" % {"m": module_, "n": n, "a": a}
         return line
 
     def generate_stub(self):
@@ -599,7 +613,7 @@ class StubGenerator(ast.NodeVisitor):
         needed_types -= qualified_types
         _logger.debug("needed namespaces: %s", needed_namespaces)
 
-        imported_names = set(self.imported_names)
+        imported_names = {n.split("::")[0] for n in self.imported_names}
         imported_types = imported_names & (needed_types | needed_namespaces)
         needed_types -= imported_types
         needed_namespaces -= imported_names
@@ -630,7 +644,7 @@ class StubGenerator(ast.NodeVisitor):
                 out.write("\n")
             # preserve the import order in the source file
             for name in self.imported_names:
-                if name in imported_types:
+                if name.split("::")[0] in imported_types:
                     line = self.generate_import(self.imported_names[name], {name})
                     out.write(line + "\n")
             started = True

@@ -75,17 +75,16 @@ def test_if_returns_from_imported_then_stub_should_include_import():
     assert get_stub(code) == "from x import A\n\ndef f() -> A: ...\n"
 
 
+def test_if_returns_from_as_imported_then_stub_should_include_import():
+    code = "from x import A as B\n"
+    code += "\n\n" + get_function("f", rtype="B")
+    assert get_stub(code) == "from x import A as B\n\ndef f() -> B: ...\n"
+
+
 def test_stub_should_exclude_unused_import():
     code = "from x import A, B\n"
     code += "\n\n" + get_function("f", rtype="A")
     assert get_stub(code) == "from x import A\n\ndef f() -> A: ...\n"
-
-
-# def test_stub_should_include_all_used_imports():
-#     code = "from x import A, B\n"
-#     code += "\n\n" + get_function("f", rtype="A")
-#     code += "\n\n" + get_function("g", rtype="B")
-#     assert get_stub(code) == "from x import A, B\n\ndef f() -> A: ...\ndef g() -> B: ...\n"
 
 
 def test_if_returns_imported_qualified_then_stub_should_include_import():
