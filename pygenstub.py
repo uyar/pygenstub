@@ -390,6 +390,7 @@ class StubGenerator(ast.NodeVisitor):
         """
         self.root = StubNode()  # sig: StubNode
 
+        self.imported_namespaces = OrderedDict()  # sig: OrderedDict[str, str]
         self.imported_names = OrderedDict()  # sig: OrderedDict[str, str]
         self.defined_types = set()  # sig: Set[str]
         self.required_types = set()  # sig: Set[str]
@@ -413,6 +414,15 @@ class StubGenerator(ast.NodeVisitor):
             _, _, requires = parse_signature(signature)
             self.required_types |= requires
             self.defined_types |= {alias}
+
+    def visit_Import(self, node):
+        line = self._code_lines[node.lineno - 1]
+        module_name = line.split("import")[0].strip()
+        for name in node.names:
+            imported_name = name.name
+            if name.asname:
+                imported_name = name.asname + "::" + imported_name
+            self.imported_namespaces[imported_name] = module_name
 
     def visit_ImportFrom(self, node):
         line = self._code_lines[node.lineno - 1]
@@ -566,7 +576,7 @@ class StubGenerator(ast.NodeVisitor):
         del self._parents[-1]
 
     @staticmethod
-    def generate_import(module_, names):
+    def generate_import_from(module_, names):
         """Generate an import line.
 
         :sig: (str, Set[str]) -> str
@@ -635,7 +645,7 @@ class StubGenerator(ast.NodeVisitor):
         started = False
 
         if len(typing_types) > 0:
-            line = self.generate_import("typing", typing_types)
+            line = self.generate_import_from("typing", typing_types)
             out.write(line + "\n")
             started = True
 
@@ -645,15 +655,20 @@ class StubGenerator(ast.NodeVisitor):
             # preserve the import order in the source file
             for name in self.imported_names:
                 if name.split("::")[0] in imported_types:
-                    line = self.generate_import(self.imported_names[name], {name})
+                    line = self.generate_import_from(self.imported_names[name], {name})
                     out.write(line + "\n")
             started = True
 
         if len(needed_namespaces) > 0:
             if started:
                 out.write("\n")
+            as_names = {n.split("::")[0]: n for n in self.imported_namespaces if "::" in n}
             for module_ in sorted(needed_namespaces):
-                out.write("import " + module_ + "\n")
+                if module_ in as_names:
+                    a, n = as_names[module_].split("::")
+                    out.write("import " + n + " as " + a + "\n")
+                else:
+                    out.write("import " + module_ + "\n")
             started = True
 
         if len(self.aliases) > 0:

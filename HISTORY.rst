@@ -4,6 +4,8 @@ History
 1.3.0 (unreleased)
 ------------------
 
+- Support names renamed with as during import.
+
 1.2.4 (2019-02-01)
 ------------------
 

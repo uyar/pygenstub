@@ -93,6 +93,12 @@ def test_if_returns_imported_qualified_then_stub_should_include_import():
     assert get_stub(code) == "import x\n\ndef f() -> x.A: ...\n"
 
 
+def test_if_returns_as_imported_qualified_then_stub_should_include_import():
+    code = "import x as y\n"
+    code += "\n\n" + get_function("f", rtype="y.A")
+    assert get_stub(code) == "import x as y\n\ndef f() -> y.A: ...\n"
+
+
 def test_if_returns_from_imported_qualified_then_stub_should_include_import():
     code = "from x import y\n"
     code += "\n\n" + get_function("f", rtype="y.A")
