@@ -1,1 +1,3 @@
-pygenstub
+sphinx==1.8.4
+sphinx-rtd-theme==0.4.2
+pygenstub==1.3.0
