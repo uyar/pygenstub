@@ -25,10 +25,8 @@ https://pygenstub.tekir.org/
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import ast
-import fnmatch
 import inspect
 import logging
-import os
 import re
 import sys
 import textwrap
@@ -47,9 +45,10 @@ PY3 = sys.version_info >= (3, 0)
 
 if not PY3:
     import __builtin__ as builtins
-    from codecs import open
+    from pathlib2 import Path
 else:
     import builtins
+    from pathlib import Path
 
 
 # sigalias: Document = docutils.nodes.document
@@ -837,18 +836,15 @@ def main(argv=None):
 
     sources = []
     for item in arguments.files:
-        if os.path.isdir(item):
-            for root, dirnames, filenames in os.walk(item):
-                for filename in fnmatch.filter(filenames, "*.py"):
-                    sources.append(os.path.join(root, filename))
+        if Path(item).is_dir():
+            sources.extend(Path(item).glob("**/*.py"))
         else:
-            sources.append(item)
+            sources.append(Path(item))
 
+    out_dir = arguments.out_dir if arguments.out_dir is not None else ""
     for source in sources:
         _logger.info("generating stub for %s", source)
-        with open(source, mode="r", encoding="utf-8") as f_in:
-            code = f_in.read()
-
+        code = source.read_text()
         try:
             stub = get_stub(code)
         except RuntimeError as e:
@@ -856,14 +852,9 @@ def main(argv=None):
             sys.exit(1)
 
         if stub != "":
-            out_dir = arguments.out_dir if arguments.out_dir is not None else ""
-            destination = os.path.join(out_dir, source + "i")
-            dirname = os.path.dirname(destination)
-            if not os.path.exists(dirname):
-                os.makedirs(dirname, exist_ok=True)
-            with open(destination, mode="w", encoding="utf-8") as f_out:
-                f_out.write("# " + EDIT_WARNING + "\n\n")
-                f_out.write(stub)
+            destination = Path(out_dir, source.with_suffix(".pyi"))
+            destination.parent.mkdir(exist_ok=True, parents=True)
+            destination.write_text("# " + EDIT_WARNING + "\n\n" + stub)
 
 
 if __name__ == "__main__":
