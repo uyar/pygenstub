@@ -6,7 +6,8 @@ History
 
 - Generate stubs for multiple input files.
 - Generate stubs for directories.
-- Add option for storing stub files in a given directory.
+- Generate stubs for modules.
+- Add option for storing stub files in an output directory.
 
 1.3.0 (2019-03-07)
 ------------------

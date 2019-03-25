@@ -818,12 +818,15 @@ def get_mod_paths(mod_name, out_dir):
     """Get all stubs for a module recursively."""
     mod_paths = []
     try:
-        main_mod = import_module(mod_name)
-        for mod_info in walk_packages(main_mod.__path__):
-            mod_full_name = mod_name + "." + mod_info.name
-            if mod_info.ispkg:
-                mod_paths.extend(get_mod_paths(mod_full_name, out_dir))
-            mod = import_module(mod_full_name)
+        mod_parts = mod_name.split(".")
+        main_package_name = mod_parts[0]
+        main_package = import_module(main_package_name)
+        for mod_info in walk_packages(main_package.__path__, main_package.__name__ + "."):
+            if not mod_info.name.startswith(mod_name):
+                continue
+            if mod_info.ispkg and (len(mod_info.name) > len(mod_name)):
+                mod_paths.extend(get_mod_paths(mod_info.name, out_dir))
+            mod = import_module(mod_info.name)
             source = Path(mod.__file__)
             if not source.name.endswith(".py"):
                 continue
