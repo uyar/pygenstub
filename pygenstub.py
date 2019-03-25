@@ -27,6 +27,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import ast
 import inspect
 import logging
+import os
 import re
 import sys
 import textwrap
@@ -843,6 +844,9 @@ def main(argv=None):
 
     out_dir = arguments.out_dir if arguments.out_dir is not None else ""
     for source in sources:
+        if str(source).startswith(os.path.pardir):
+            source = source.absolute().resolve()
+
         _logger.info("generating stub for %s", source)
         code = source.read_text()
         try:
@@ -852,6 +856,8 @@ def main(argv=None):
             sys.exit(1)
 
         if stub != "":
+            if source.is_absolute():
+                source = source.relative_to(source.root)
             destination = Path(out_dir, source.with_suffix(".pyi"))
             destination.parent.mkdir(exist_ok=True, parents=True)
             destination.write_text("# " + EDIT_WARNING + "\n\n" + stub)
