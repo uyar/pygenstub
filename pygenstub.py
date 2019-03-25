@@ -833,7 +833,7 @@ def get_mod_paths(mod_name, out_dir):
 
 
 def get_pkg_paths(pkg_name, out_dir):
-    """Recursively get all stubs for a package."""
+    """Recursively get all source and stub paths for a package."""
     paths = []
     try:
         main_package = import_module(pkg_name)
