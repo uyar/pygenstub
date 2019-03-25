@@ -36,6 +36,7 @@ from bisect import bisect
 from collections import OrderedDict
 from importlib import import_module
 from io import StringIO
+from pkgutil import walk_packages
 
 from docutils.core import publish_doctree
 
@@ -863,13 +864,15 @@ def main(argv=None):
 
     for mod_name in arguments.modules:
         try:
-            mod = import_module(mod_name)
-            source = Path(mod.__file__)
-            if not source.name.endswith(".py"):
-                continue
-            source_rel = Path(*mod_name.split("."))
-            destination = Path(out_dir, source_rel.with_suffix(".pyi"))
-            modules.append((source, destination))
+            main_mod = import_module(mod_name)
+            for mod_info in walk_packages(main_mod.__path__):
+                mod = import_module(mod_name + "." + mod_info.name)
+                source = Path(mod.__file__)
+                if not source.name.endswith(".py"):
+                    continue
+                source_rel = Path(*mod_name.split("."), mod_info.name)
+                destination = Path(out_dir, source_rel.with_suffix(".pyi"))
+                modules.append((source, destination))
         except Exception as e:
             _logger.debug(e)
             _logger.warning("cannot handle module, skipping: %s", mod_name)
