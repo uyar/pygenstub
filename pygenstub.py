@@ -871,6 +871,8 @@ def main(argv=None):
                 if not source.name.endswith(".py"):
                     continue
                 source_rel = Path(*mod_name.split("."), mod_info.name)
+                if source.name == "__init__.py":
+                    source_rel = source_rel.joinpath("__init__.py")
                 destination = Path(out_dir, source_rel.with_suffix(".pyi"))
                 modules.append((source, destination))
         except Exception as e:
