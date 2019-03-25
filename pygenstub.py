@@ -815,30 +815,37 @@ def setup(app):
 
 
 def get_mod_paths(mod_name, out_dir):
-    """Get all stubs for a module recursively."""
-    mod_paths = []
+    """Get source and stub paths for a module."""
+    paths = []
     try:
-        mod_parts = mod_name.split(".")
-        main_package_name = mod_parts[0]
-        main_package = import_module(main_package_name)
-        for mod_info in walk_packages(main_package.__path__, main_package.__name__ + "."):
-            if not mod_info.name.startswith(mod_name):
-                continue
-            if mod_info.ispkg and (len(mod_info.name) > len(mod_name)):
-                mod_paths.extend(get_mod_paths(mod_info.name, out_dir))
-            mod = import_module(mod_info.name)
-            source = Path(mod.__file__)
-            if not source.name.endswith(".py"):
-                continue
-            source_rel = Path(*mod_name.split("."), mod_info.name)
+        mod = import_module(mod_name)
+        source = Path(mod.__file__)
+        if source.name.endswith(".py"):
+            source_rel = Path(*mod_name.split("."))
             if source.name == "__init__.py":
                 source_rel = source_rel.joinpath("__init__.py")
             destination = Path(out_dir, source_rel.with_suffix(".pyi"))
-            mod_paths.append((source, destination))
+            paths.append((source, destination))
     except Exception as e:
         _logger.debug(e)
         _logger.warning("cannot handle module, skipping: %s", mod_name)
-    return mod_paths
+    return paths
+
+
+def get_pkg_paths(pkg_name, out_dir):
+    """Recursively get all stubs for a package."""
+    paths = []
+    try:
+        main_package = import_module(pkg_name)
+        for mod_info in walk_packages(main_package.__path__, main_package.__name__ + "."):
+            mod_paths = get_mod_paths(mod_info.name, out_dir)
+            paths.extend(mod_paths)
+            if mod_info.ispkg:
+                paths.extend(get_pkg_paths(mod_info.name, out_dir))
+    except Exception as e:
+        _logger.debug(e)
+        _logger.warning("cannot handle package, skipping: %s", pkg_name)
+    return paths
 
 
 def main(argv=None):
@@ -854,6 +861,15 @@ def main(argv=None):
         dest="modules",
         default=[],
         help="generate stubs for given modules",
+    )
+    parser.add_argument(
+        "-p",
+        "--package",
+        action="append",
+        metavar="PACKAGE",
+        dest="packages",
+        default=[],
+        help="generate stubs for given packages",
     )
     parser.add_argument(
         "-o",
@@ -874,8 +890,8 @@ def main(argv=None):
         _logger.debug("running in debug mode")
 
     out_dir = arguments.out_dir if arguments.out_dir is not None else ""
-    if (out_dir == "") and (len(arguments.modules) > 0):
-        print("Output directory must be given when generating stubs for modules.")
+    if (out_dir == "") and ((len(arguments.modules) > 0) or (len(arguments.packages) > 0)):
+        print("Output directory must be given when generating stubs for modules or packages.")
         sys.exit(1)
 
     modules = []
@@ -891,6 +907,9 @@ def main(argv=None):
 
     for mod_name in arguments.modules:
         modules.extend(get_mod_paths(mod_name, out_dir))
+
+    for pkg_name in arguments.packages:
+        modules.extend(get_pkg_paths(pkg_name, out_dir))
 
     for source, destination in modules:
         _logger.info("generating stub for %s to path %s", source, destination)
