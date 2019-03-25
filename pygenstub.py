@@ -835,18 +835,20 @@ def main(argv=None):
         logging.basicConfig(level=logging.DEBUG)
         _logger.debug("running in debug mode")
 
-    sources = []
-    for item in arguments.files:
-        if Path(item).is_dir():
-            sources.extend(Path(item).glob("**/*.py"))
-        else:
-            sources.append(Path(item))
-
     out_dir = arguments.out_dir if arguments.out_dir is not None else ""
-    for source in sources:
-        if str(source).startswith(os.path.pardir):
-            source = source.absolute().resolve()
 
+    modules = []
+    for path in arguments.files:
+        paths = Path(path).glob("**/*.py") if Path(path).is_dir() else [Path(path)]
+        for source in paths:
+            if str(source).startswith(os.path.pardir):
+                source = source.absolute().resolve()
+            if (out_dir != "") and source.is_absolute():
+                source = source.relative_to(source.root)
+            destination = Path(out_dir, source.with_suffix(".pyi"))
+            modules.append((source, destination))
+
+    for source, destination in modules:
         _logger.info("generating stub for %s", source)
         code = source.read_text()
         try:
@@ -856,9 +858,6 @@ def main(argv=None):
             sys.exit(1)
 
         if stub != "":
-            if (out_dir != "") and source.is_absolute():
-                source = source.relative_to(source.root)
-            destination = Path(out_dir, source.with_suffix(".pyi"))
             destination.parent.mkdir(exist_ok=True, parents=True)
             destination.write_text("# " + EDIT_WARNING + "\n\n" + stub)
 
