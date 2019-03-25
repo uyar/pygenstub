@@ -25,8 +25,10 @@ https://pygenstub.tekir.org/
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import ast
+import fnmatch
 import inspect
 import logging
+import os
 import re
 import sys
 import textwrap
@@ -825,7 +827,16 @@ def main(argv=None):
         logging.basicConfig(level=logging.DEBUG)
         _logger.debug("running in debug mode")
 
-    for source in arguments.files:
+    sources = []
+    for item in arguments.files:
+        if os.path.isdir(item):
+            for root, dirnames, filenames in os.walk(item):
+                for filename in fnmatch.filter(filenames, "*.py"):
+                    sources.append(os.path.join(root, filename))
+        else:
+            sources.append(item)
+
+    for source in sources:
         _logger.info("generating stub for %s", source)
         with open(source, mode="r", encoding="utf-8") as f_in:
             code = f_in.read()

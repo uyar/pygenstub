@@ -5,6 +5,7 @@ History
 ------------------
 
 - Generate stubs for multiple input files.
+- Generate stubs for directories.
 
 1.3.0 (2019-03-07)
 ------------------
