@@ -865,6 +865,8 @@ def main(argv=None):
         try:
             mod = import_module(mod_name)
             source = Path(mod.__file__)
+            if not source.name.endswith(".py"):
+                continue
             source_rel = Path(*mod_name.split("."))
             destination = Path(out_dir, source_rel.with_suffix(".pyi"))
             modules.append((source, destination))
