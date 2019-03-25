@@ -6,6 +6,7 @@ History
 
 - Generate stubs for multiple input files.
 - Generate stubs for directories.
+- Add option for storing stub files in a given directory.
 
 1.3.0 (2019-03-07)
 ------------------

@@ -817,6 +817,14 @@ def main(argv=None):
     parser = ArgumentParser(prog="pygenstub")
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("files", nargs="+", help="generate stubs for given files")
+    parser.add_argument(
+        "-o",
+        "--output",
+        metavar="PATH",
+        dest="out_dir",
+        nargs="?",
+        help="change the output directory",
+    )
     parser.add_argument("--debug", action="store_true", help="enable debug messages")
 
     argv = argv if argv is not None else sys.argv
@@ -848,7 +856,11 @@ def main(argv=None):
             sys.exit(1)
 
         if stub != "":
-            destination = source + "i"
+            out_dir = arguments.out_dir if arguments.out_dir is not None else ""
+            destination = os.path.join(out_dir, source + "i")
+            dirname = os.path.dirname(destination)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname, exist_ok=True)
             with open(destination, mode="w", encoding="utf-8") as f_out:
                 f_out.write("# " + EDIT_WARNING + "\n\n")
                 f_out.write(stub)
