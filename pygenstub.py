@@ -913,7 +913,8 @@ def main(argv=None):
 
     for source, destination in modules:
         _logger.info("generating stub for %s to path %s", source, destination)
-        code = source.read_text()
+        with source.open() as f:
+            code = f.read()
         try:
             stub = get_stub(code)
         except RuntimeError as e:
@@ -921,8 +922,10 @@ def main(argv=None):
             sys.exit(1)
 
         if stub != "":
-            destination.parent.mkdir(exist_ok=True, parents=True)
-            destination.write_text("# " + EDIT_WARNING + "\n\n" + stub)
+            if not destination.parent.exists():
+                destination.parent.mkdir(parents=True)
+            with destination.open("w") as f:
+                f.write("# " + EDIT_WARNING + "\n\n" + stub)
 
 
 if __name__ == "__main__":
