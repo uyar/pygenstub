@@ -814,6 +814,30 @@ def setup(app):
     return {"version": __version__}
 
 
+def get_mod_paths(mod_name, out_dir):
+    """Get all stubs for a module recursively."""
+    mod_paths = []
+    try:
+        main_mod = import_module(mod_name)
+        for mod_info in walk_packages(main_mod.__path__):
+            mod_full_name = mod_name + "." + mod_info.name
+            if mod_info.ispkg:
+                mod_paths.extend(get_mod_paths(mod_full_name, out_dir))
+            mod = import_module(mod_full_name)
+            source = Path(mod.__file__)
+            if not source.name.endswith(".py"):
+                continue
+            source_rel = Path(*mod_name.split("."), mod_info.name)
+            if source.name == "__init__.py":
+                source_rel = source_rel.joinpath("__init__.py")
+            destination = Path(out_dir, source_rel.with_suffix(".pyi"))
+            mod_paths.append((source, destination))
+    except Exception as e:
+        _logger.debug(e)
+        _logger.warning("cannot handle module, skipping: %s", mod_name)
+    return mod_paths
+
+
 def main(argv=None):
     """Start the command line interface."""
     parser = ArgumentParser(prog="pygenstub")
@@ -863,21 +887,7 @@ def main(argv=None):
             modules.append((source, destination))
 
     for mod_name in arguments.modules:
-        try:
-            main_mod = import_module(mod_name)
-            for mod_info in walk_packages(main_mod.__path__):
-                mod = import_module(mod_name + "." + mod_info.name)
-                source = Path(mod.__file__)
-                if not source.name.endswith(".py"):
-                    continue
-                source_rel = Path(*mod_name.split("."), mod_info.name)
-                if source.name == "__init__.py":
-                    source_rel = source_rel.joinpath("__init__.py")
-                destination = Path(out_dir, source_rel.with_suffix(".pyi"))
-                modules.append((source, destination))
-        except Exception as e:
-            _logger.debug(e)
-            _logger.warning("cannot handle module, skipping: %s", mod_name)
+        modules.extend(get_mod_paths(mod_name, out_dir))
 
     for source, destination in modules:
         _logger.info("generating stub for %s to path %s", source, destination)
