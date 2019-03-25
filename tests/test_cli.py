@@ -49,7 +49,7 @@ def test_cli_no_input_file_should_print_usage_and_exit(capsys):
         pygenstub.main(argv=["pygenstub"])
     out, err = capsys.readouterr()
     assert err.startswith("usage: ")
-    assert ("required: source" in err) or ("too few arguments" in err)
+    assert ("required: files" in err) or ("too few arguments" in err)
 
 
 def test_cli_unrecognized_arguments_should_print_usage_and_exit(capsys):
