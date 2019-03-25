@@ -856,7 +856,7 @@ def main(argv=None):
             sys.exit(1)
 
         if stub != "":
-            if source.is_absolute():
+            if (out_dir != "") and source.is_absolute():
                 source = source.relative_to(source.root)
             destination = Path(out_dir, source.with_suffix(".pyi"))
             destination.parent.mkdir(exist_ok=True, parents=True)
