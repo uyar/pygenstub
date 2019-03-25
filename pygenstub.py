@@ -34,6 +34,7 @@ import textwrap
 from argparse import ArgumentParser
 from bisect import bisect
 from collections import OrderedDict
+from importlib import import_module
 from io import StringIO
 
 from docutils.core import publish_doctree
@@ -816,7 +817,16 @@ def main(argv=None):
     """Start the command line interface."""
     parser = ArgumentParser(prog="pygenstub")
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-    parser.add_argument("files", nargs="+", help="generate stubs for given files")
+    parser.add_argument("files", nargs="*", help="generate stubs for given files")
+    parser.add_argument(
+        "-m",
+        "--module",
+        action="append",
+        metavar="MODULE",
+        dest="modules",
+        default=[],
+        help="generate stubs for given modules",
+    )
     parser.add_argument(
         "-o",
         "--output",
@@ -836,6 +846,9 @@ def main(argv=None):
         _logger.debug("running in debug mode")
 
     out_dir = arguments.out_dir if arguments.out_dir is not None else ""
+    if (out_dir == "") and (len(arguments.modules) > 0):
+        print("Output directory must be given when generating stubs for modules.")
+        sys.exit(1)
 
     modules = []
     for path in arguments.files:
@@ -848,8 +861,19 @@ def main(argv=None):
             destination = Path(out_dir, source.with_suffix(".pyi"))
             modules.append((source, destination))
 
+    for mod_name in arguments.modules:
+        try:
+            mod = import_module(mod_name)
+            source = Path(mod.__file__)
+            source_rel = Path(*mod_name.split("."))
+            destination = Path(out_dir, source_rel.with_suffix(".pyi"))
+            modules.append((source, destination))
+        except Exception as e:
+            _logger.debug(e)
+            _logger.warning("cannot handle module, skipping: %s", mod_name)
+
     for source, destination in modules:
-        _logger.info("generating stub for %s", source)
+        _logger.info("generating stub for %s to path %s", source, destination)
         code = source.read_text()
         try:
             stub = get_stub(code)
