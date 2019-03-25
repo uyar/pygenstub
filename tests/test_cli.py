@@ -44,12 +44,10 @@ def test_cli_version_should_print_version_number_and_exit(capsys):
     assert "pygenstub " + pygenstub.__version__ + "\n" in {out, err}
 
 
-def test_cli_no_input_file_should_print_usage_and_exit(capsys):
-    with raises(SystemExit):
-        pygenstub.main(argv=["pygenstub"])
+def test_cli_no_input_should_do_nothing(capsys):
+    pygenstub.main(argv=["pygenstub"])
     out, err = capsys.readouterr()
-    assert err.startswith("usage: ")
-    assert ("required: files" in err) or ("too few arguments" in err)
+    assert out == ""
 
 
 def test_cli_unrecognized_arguments_should_print_usage_and_exit(capsys):
