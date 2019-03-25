@@ -814,7 +814,7 @@ def main(argv=None):
     """Start the command line interface."""
     parser = ArgumentParser(prog="pygenstub")
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-    parser.add_argument("source", help="source file")
+    parser.add_argument("files", nargs="+", help="generate stubs for given files")
     parser.add_argument("--debug", action="store_true", help="enable debug messages")
 
     argv = argv if argv is not None else sys.argv
@@ -825,20 +825,22 @@ def main(argv=None):
         logging.basicConfig(level=logging.DEBUG)
         _logger.debug("running in debug mode")
 
-    with open(arguments.source, mode="r", encoding="utf-8") as f_in:
-        code = f_in.read()
+    for source in arguments.files:
+        _logger.info("generating stub for %s", source)
+        with open(source, mode="r", encoding="utf-8") as f_in:
+            code = f_in.read()
 
-    try:
-        stub = get_stub(code)
-    except RuntimeError as e:
-        print(e, file=sys.stderr)
-        sys.exit(1)
+        try:
+            stub = get_stub(code)
+        except RuntimeError as e:
+            print(e, file=sys.stderr)
+            sys.exit(1)
 
-    if stub != "":
-        destination = arguments.source + "i"
-        with open(destination, mode="w", encoding="utf-8") as f_out:
-            f_out.write("# " + EDIT_WARNING + "\n\n")
-            f_out.write(stub)
+        if stub != "":
+            destination = source + "i"
+            with open(destination, mode="w", encoding="utf-8") as f_out:
+                f_out.write("# " + EDIT_WARNING + "\n\n")
+                f_out.write(stub)
 
 
 if __name__ == "__main__":
