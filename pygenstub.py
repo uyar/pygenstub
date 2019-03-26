@@ -781,8 +781,6 @@ def get_pkg_paths(pkg_name, out_dir):
         for mod_info in walk_packages(pkg.__path__, pkg.__name__ + "."):
             mod_paths = get_mod_paths(mod_info.name, out_dir)
             paths.extend(mod_paths)
-            if mod_info.ispkg:
-                paths.extend(get_pkg_paths(mod_info.name, out_dir))
     except Exception as e:
         _logger.debug(e)
         _logger.warning("cannot handle package, skipping: %s", pkg_name)
