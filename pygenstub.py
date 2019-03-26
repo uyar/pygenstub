@@ -486,24 +486,17 @@ class StubGenerator(ast.NodeVisitor):
 
         if signature is None:
             param_types, rtype, requires = ["Any"] * n_args, "Any", {"Any"}
-
-            # TODO: only in classes
-            if (n_args > 0) and (param_names[0] == "self"):
-                param_types[0] = ""
-
-            # TODO: only in classes
-            if (n_args > 0) and (param_names[0] == "cls") and ("classmethod" in decorators):
-                param_types[0] = ""
         else:
             _logger.debug("parsing signature for %s", node.name)
             param_types, rtype, requires = parse_signature(signature)
 
-            # TODO: only in classes
-            if (n_args > 0) and (param_names[0] == "self"):
-                param_types.insert(0, "")
-
-            # TODO: only in classes
-            if (n_args > 0) and (param_names[0] == "cls") and ("classmethod" in decorators):
+        # TODO: only in classes
+        if ((n_args > 0) and (param_names[0] == "self")) or (
+            (n_args > 0) and (param_names[0] == "cls") and ("classmethod" in decorators)
+        ):
+            if signature is None:
+                param_types[0] = ""
+            else:
                 param_types.insert(0, "")
 
         _logger.debug("parameter types: %s", param_types)
