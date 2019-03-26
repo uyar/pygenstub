@@ -36,7 +36,7 @@ from bisect import bisect
 from collections import OrderedDict
 from importlib import import_module
 from io import StringIO
-from pkgutil import walk_packages
+from pkgutil import get_loader, walk_packages
 
 from docutils.core import publish_doctree
 
@@ -818,8 +818,8 @@ def get_mod_paths(mod_name, out_dir):
     """Get source and stub paths for a module."""
     paths = []
     try:
-        mod = import_module(mod_name)
-        source = Path(mod.__file__)
+        mod = get_loader(mod_name)
+        source = Path(mod.path)
         if source.name.endswith(".py"):
             source_rel = Path(*mod_name.split("."))
             if source.name == "__init__.py":
