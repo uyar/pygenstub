@@ -386,13 +386,16 @@ def get_aliases(lines):
 class StubGenerator(ast.NodeVisitor):
     """A transformer that generates stub declarations from a source code."""
 
-    def __init__(self, source):
+    def __init__(self, source, generic=False):
         """Initialize this stub generator.
 
-        :sig: (str) -> None
+        :sig: (str, bool) -> None
         :param source: Source code to generate the stub for.
+        :param generic: Whether to produce generic stubs.
         """
         self.root = StubNode()  # sig: StubNode
+
+        self.generic = generic  # sig: bool
 
         self.imported_namespaces = OrderedDict()  # sig: OrderedDict[str, str]
         self.imported_names = OrderedDict()  # sig: OrderedDict[str, str]
@@ -475,6 +478,9 @@ class StubGenerator(ast.NodeVisitor):
                 decorators.append(d.value.id + "." + d.attr)
 
         signature = get_signature(node)
+
+        if (signature is None) and (not self.generic):
+            return None
 
         if signature is None:
             parent = self._parents[-1]
@@ -718,14 +724,15 @@ class StubGenerator(ast.NodeVisitor):
         return out.getvalue()
 
 
-def get_stub(source):
+def get_stub(source, generic=False):
     """Get the stub code for a source code.
 
-    :sig: (str) -> str
+    :sig: (str, bool) -> str
     :param source: Source code to generate the stub for.
+    :param generic: Whether to produce generic stubs.
     :return: Generated stub code.
     """
-    generator = StubGenerator(source)
+    generator = StubGenerator(source, generic=generic)
     stub = generator.generate_stub()
     return stub
 
@@ -876,6 +883,9 @@ def main(argv=None):
     parser.add_argument(
         "-o", "--output", metavar="PATH", dest="out_dir", help="change the output directory"
     )
+    parser.add_argument(
+        "--generic", action="store_true", default=False, help="generate generic stubs"
+    )
     parser.add_argument("--debug", action="store_true", help="enable debug messages")
 
     argv = argv if argv is not None else sys.argv
@@ -913,7 +923,7 @@ def main(argv=None):
         with source.open() as f:
             code = f.read()
         try:
-            stub = get_stub(code)
+            stub = get_stub(code, generic=arguments.generic)
         except RuntimeError as e:
             print(e, file=sys.stderr)
             sys.exit(1)
