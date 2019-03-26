@@ -458,21 +458,26 @@ class StubGenerator(ast.NodeVisitor):
             _, signature = line.split(SIG_COMMENT)
             _, return_type, requires = parse_signature(signature)
             self.required_types |= requires
-        elif self.generic:
-            return_type = "Any"
 
         parent = self._parents[-1]
         for var in node.targets:
             if isinstance(var, ast.Name):
+                name, p = var.id, parent
+            elif (
+                isinstance(var, ast.Attribute)
+                and isinstance(var.value, ast.Name)
+                and (var.value.id == "self")
+            ):
+                name, p = var.attr, parent.parent
+            else:
+                name, p = None, None
+
+            if name is not None:
                 if self.generic:
-                    self.required_types.add("Any")
-                stub_node = VariableNode(var.id, return_type)
-                parent.add_variable(stub_node)
-            if isinstance(var, ast.Attribute) and (var.value.id == "self"):
-                if self.generic:
-                    self.required_types.add("Any")
-                stub_node = VariableNode(var.attr, return_type)
-                parent.parent.add_variable(stub_node)
+                    return_type = "Any"
+                    self.required_types.add(return_type)
+                stub_node = VariableNode(name, return_type)
+                p.add_variable(stub_node)
 
     def get_function_node(self, node):
         """Process a function node.
