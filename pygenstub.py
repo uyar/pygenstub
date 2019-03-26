@@ -465,6 +465,15 @@ class StubGenerator(ast.NodeVisitor):
         :param node: Node to process.
         :return: Generated function node in stub tree.
         """
+        decorators = []
+        for d in node.decorator_list:
+            if hasattr(d, "id"):
+                decorators.append(d.id)
+            elif hasattr(d, "func"):
+                decorators.append(d.func.id)
+            elif hasattr(d, "value"):
+                decorators.append(d.value.id + "." + d.attr)
+
         signature = get_signature(node)
 
         if signature is None:
@@ -472,81 +481,81 @@ class StubGenerator(ast.NodeVisitor):
             if isinstance(parent, ClassNode) and (node.name == "__init__"):
                 signature = parent.signature
 
-        if signature is not None:
+        param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
+        n_args = len(param_names)
+
+        if signature is None:
+            param_types, rtype, requires = ["Any"] * n_args, "Any", {"Any"}
+
+            # TODO: only in classes
+            if (n_args > 0) and (param_names[0] == "self"):
+                param_types[0] = ""
+
+            # TODO: only in classes
+            if (n_args > 0) and (param_names[0] == "cls") and ("classmethod" in decorators):
+                param_types[0] = ""
+        else:
             _logger.debug("parsing signature for %s", node.name)
             param_types, rtype, requires = parse_signature(signature)
-            _logger.debug("parameter types: %s", param_types)
-            _logger.debug("return type: %s", rtype)
-            _logger.debug("required types: %s", requires)
-            self.required_types |= requires
-
-            decorators = []
-            for d in node.decorator_list:
-                if hasattr(d, "id"):
-                    decorators.append(d.id)
-                elif hasattr(d, "func"):
-                    decorators.append(d.func.id)
-                elif hasattr(d, "value"):
-                    decorators.append(d.value.id + "." + d.attr)
-
-            param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
 
             # TODO: only in classes
-            if (len(param_names) > 0) and (param_names[0] == "self"):
+            if (n_args > 0) and (param_names[0] == "self"):
                 param_types.insert(0, "")
 
             # TODO: only in classes
-            if (
-                (len(param_names) > 0)
-                and (param_names[0] == "cls")
-                and ("classmethod" in decorators)
-            ):
+            if (n_args > 0) and (param_names[0] == "cls") and ("classmethod" in decorators):
                 param_types.insert(0, "")
 
-            if node.args.vararg is not None:
-                param_names.append("*" + (node.args.vararg.arg if PY3 else node.args.vararg))
-                param_types.append("")
+        _logger.debug("parameter types: %s", param_types)
+        _logger.debug("return type: %s", rtype)
+        _logger.debug("required types: %s", requires)
 
-            if node.args.kwarg is not None:
-                param_names.append("**" + (node.args.kwarg.arg if PY3 else node.args.kwarg))
-                param_types.append("")
+        self.required_types |= requires
 
-            n_args = len(param_names)
+        if node.args.vararg is not None:
+            param_names.append("*" + (node.args.vararg.arg if PY3 else node.args.vararg))
+            param_types.append("")
 
-            kwonly_args = getattr(node.args, "kwonlyargs", [])
-            if len(kwonly_args) > 0:
-                param_names.extend([arg.arg for arg in kwonly_args])
+        if node.args.kwarg is not None:
+            param_names.append("**" + (node.args.kwarg.arg if PY3 else node.args.kwarg))
+            param_types.append("")
 
-            if len(param_types) != len(param_names):
-                raise ValueError("Parameter names and types don't match: " + node.name)
+        kwonly_args = getattr(node.args, "kwonlyargs", [])
+        if len(kwonly_args) > 0:
+            param_names.extend([arg.arg for arg in kwonly_args])
+            if signature is None:
+                param_types.extend(["Any"] * len(kwonly_args))
 
-            param_locs = [(a.lineno, a.col_offset) for a in (node.args.args + kwonly_args)]
-            param_defaults = {
-                bisect(param_locs, (d.lineno, d.col_offset)) - 1 for d in node.args.defaults
-            }
+        if len(param_types) != len(param_names):
+            raise ValueError("Parameter names and types don't match: " + node.name)
 
-            kwonly_defaults = getattr(node.args, "kw_defaults", [])
-            for i, d in enumerate(kwonly_defaults):
-                if d is not None:
-                    param_defaults.add(n_args + i)
+        param_locs = [(a.lineno, a.col_offset) for a in (node.args.args + kwonly_args)]
+        param_defaults = {
+            bisect(param_locs, (d.lineno, d.col_offset)) - 1 for d in node.args.defaults
+        }
 
-            params = [
-                (name, type_, i in param_defaults)
-                for i, (name, type_) in enumerate(zip(param_names, param_types))
-            ]
+        kwonly_defaults = getattr(node.args, "kw_defaults", [])
+        for i, d in enumerate(kwonly_defaults):
+            if d is not None:
+                param_defaults.add(n_args + i)
 
-            if len(kwonly_args) > 0:
-                params.insert(n_args, ("*", "", False))
+        params = [
+            (name, type_, i in param_defaults)
+            for i, (name, type_) in enumerate(zip(param_names, param_types))
+        ]
 
-            stub_node = FunctionNode(
-                node.name, parameters=params, rtype=rtype, decorators=decorators
-            )
-            self._parents[-1].add_child(stub_node)
+        if len(kwonly_args) > 0:
+            params.insert(n_args, ("*", "", False))
 
-            self._parents.append(stub_node)
-            self.generic_visit(node)
-            del self._parents[-1]
-            return stub_node
+        stub_node = FunctionNode(
+            node.name, parameters=params, rtype=rtype, decorators=decorators
+        )
+        self._parents[-1].add_child(stub_node)
+
+        self._parents.append(stub_node)
+        self.generic_visit(node)
+        del self._parents[-1]
+        return stub_node
 
     def visit_FunctionDef(self, node):
         """Visit a function node."""
