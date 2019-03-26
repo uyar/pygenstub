@@ -8,6 +8,7 @@ History
 - Generate stubs for directories.
 - Generate stubs for modules.
 - Add option for storing stub files in an output directory.
+- Add option to generate generic stubs.
 
 1.3.0 (2019-03-07)
 ------------------
