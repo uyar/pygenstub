@@ -188,6 +188,7 @@ class StubNode:
         :sig: () -> None
         """
         self.variables = []  # sig: List[VariableNode]
+        self.variable_names = set()  # sig: Set[str]
         self.children = []  # sig: List[Union[FunctionNode, ClassNode]]
         self.parent = None  # sig: Optional[StubNode]
 
@@ -197,8 +198,10 @@ class StubNode:
         :sig: (VariableNode) -> None
         :param node: Variable node to add.
         """
-        self.variables.append(node)
-        node.parent = self
+        if node.name not in self.variable_names:
+            self.variables.append(node)
+            self.variable_names.add(node.name)
+            node.parent = self
 
     def add_child(self, node):
         """Add a function/method or class node to this node.
@@ -447,19 +450,29 @@ class StubGenerator(ast.NodeVisitor):
         line = self._code_lines[node.lineno - 1]
         if SIG_COMMENT in line:
             line = _RE_COMMENT_IN_STRING.sub("", line)
+
+        if (SIG_COMMENT not in line) and (not self.generic):
+            return
+
         if SIG_COMMENT in line:
             _, signature = line.split(SIG_COMMENT)
             _, return_type, requires = parse_signature(signature)
             self.required_types |= requires
+        elif self.generic:
+            return_type = "Any"
 
-            parent = self._parents[-1]
-            for var in node.targets:
-                if isinstance(var, ast.Name):
-                    stub_node = VariableNode(var.id, return_type)
-                    parent.add_variable(stub_node)
-                if isinstance(var, ast.Attribute) and (var.value.id == "self"):
-                    stub_node = VariableNode(var.attr, return_type)
-                    parent.parent.add_variable(stub_node)
+        parent = self._parents[-1]
+        for var in node.targets:
+            if isinstance(var, ast.Name):
+                if self.generic:
+                    self.required_types.add("Any")
+                stub_node = VariableNode(var.id, return_type)
+                parent.add_variable(stub_node)
+            if isinstance(var, ast.Attribute) and (var.value.id == "self"):
+                if self.generic:
+                    self.required_types.add("Any")
+                stub_node = VariableNode(var.attr, return_type)
+                parent.parent.add_variable(stub_node)
 
     def get_function_node(self, node):
         """Process a function node.

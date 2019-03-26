@@ -25,6 +25,7 @@ def parse_signature(signature: str) -> Tuple[List[str], str, Set[str]]: ...
 
 class StubNode:
     variables = ...  # type: List[VariableNode]
+    variable_names = ...  # type: Set[str]
     children = ...  # type: List[Union[FunctionNode, ClassNode]]
     parent = ...  # type: Optional[StubNode]
     def __init__(self) -> None: ...
