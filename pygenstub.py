@@ -872,12 +872,7 @@ def main(argv=None):
         help="generate stubs for given packages",
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        metavar="PATH",
-        dest="out_dir",
-        nargs="?",
-        help="change the output directory",
+        "-o", "--output", metavar="PATH", dest="out_dir", help="change the output directory"
     )
     parser.add_argument("--debug", action="store_true", help="enable debug messages")
 
