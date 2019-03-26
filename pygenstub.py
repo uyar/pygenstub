@@ -935,8 +935,8 @@ def main(argv=None):
         try:
             stub = get_stub(code, generic=arguments.generic)
         except Exception as e:
-            print(e, file=sys.stderr)
-            sys.exit(1)
+            print(source, "-", e, file=sys.stderr)
+            continue
 
         if stub != "":
             if not destination.parent.exists():
