@@ -900,15 +900,6 @@ def main(argv=None):
         help="generate stubs for given modules",
     )
     parser.add_argument(
-        "-p",
-        "--package",
-        action="append",
-        metavar="PACKAGE",
-        dest="packages",
-        default=[],
-        help="generate stubs for given packages",
-    )
-    parser.add_argument(
         "-o", "--output", metavar="PATH", dest="out_dir", help="change the output directory"
     )
     parser.add_argument(
@@ -925,8 +916,8 @@ def main(argv=None):
         _logger.debug("running in debug mode")
 
     out_dir = arguments.out_dir if arguments.out_dir is not None else ""
-    if (out_dir == "") and ((len(arguments.modules) > 0) or (len(arguments.packages) > 0)):
-        print("Output directory must be given when generating stubs for modules or packages.")
+    if (out_dir == "") and (len(arguments.modules) > 0):
+        print("Output directory must be given when generating stubs for modules.")
         sys.exit(1)
 
     modules = []
@@ -941,10 +932,7 @@ def main(argv=None):
             modules.append((source, destination))
 
     for mod_name in arguments.modules:
-        modules.extend(get_mod_paths(mod_name, out_dir))
-
-    for pkg_name in arguments.packages:
-        modules.extend(get_pkg_paths(pkg_name, out_dir))
+        modules.extend(get_pkg_paths(mod_name, out_dir))
 
     for source, destination in modules:
         _logger.info("generating stub for %s to path %s", source, destination)
