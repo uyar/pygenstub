@@ -778,6 +778,8 @@ def get_pkg_paths(pkg_name, out_dir):
     paths = []
     try:
         pkg = import_module(pkg_name)
+        if not hasattr(pkg, "__path__"):
+            return get_mod_paths(pkg_name, out_dir)
         for mod_info in walk_packages(pkg.__path__, pkg.__name__ + "."):
             mod_paths = get_mod_paths(mod_info.name, out_dir)
             paths.extend(mod_paths)
