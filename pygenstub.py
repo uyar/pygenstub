@@ -934,7 +934,7 @@ def main(argv=None):
             code = f.read()
         try:
             stub = get_stub(code, generic=arguments.generic)
-        except RuntimeError as e:
+        except Exception as e:
             print(e, file=sys.stderr)
             sys.exit(1)
 
