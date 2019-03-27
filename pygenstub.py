@@ -497,13 +497,13 @@ class StubGenerator(ast.NodeVisitor):
 
         signature = get_signature(node)
 
-        if (signature is None) and (not self.generic):
-            return None
-
         if signature is None:
             parent = self._parents[-1]
             if isinstance(parent, ClassNode) and (node.name == "__init__"):
                 signature = parent.signature
+
+        if (signature is None) and (not self.generic):
+            return None
 
         param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
         n_args = len(param_names)
