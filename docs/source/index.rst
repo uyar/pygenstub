@@ -14,5 +14,6 @@ pygenstub
    :caption: Contents:
 
    features
+   cli
    api
    history
