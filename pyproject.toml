@@ -56,7 +56,7 @@ line-length = 96
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{37,36,35,34,27}, pypy{3,}, style, docs
+envlist = py{37,36,35,34,27}, pypy{36,35}, style, docs
 skipsdist = True
 
 [testenv]
