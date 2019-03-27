@@ -1,7 +1,7 @@
 History
 =======
 
-1.4.0 (unreleased)
+1.4.0 (2019-03-27)
 ------------------
 
 - Generate stubs for multiple input files.
