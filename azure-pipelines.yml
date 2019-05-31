@@ -1,0 +1,74 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+trigger:
+- master
+
+jobs:
+- job: tests
+  strategy:
+    matrix:
+      linux-py27:
+        imageName: 'ubuntu-latest'
+        python.version: '2.7'
+
+      linux-py35:
+        imageName: 'ubuntu-latest'
+        python.version: '3.5'
+
+      linux-py36:
+        imageName: 'ubuntu-latest'
+        python.version: '3.6'
+
+      linux-py37:
+        imageName: 'ubuntu-latest'
+        python.version: '3.7'
+
+  pool:
+    vmImage: $(imageName)
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+
+  - script: |
+      python -m pip install --upgrade poetry
+    displayName: 'Install poetry'
+
+  - script: |
+      python -m pip install --upgrade tox
+    displayName: 'Install tox'
+
+  - script: tox -e py
+    displayName: 'Run tox'
+
+- job: style
+  strategy:
+    matrix:
+      linux-py36:
+        imageName: 'ubuntu-latest'
+        python.version: '3.6'
+
+  pool:
+    vmImage: $(imageName)
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+
+  - script: |
+      python -m pip install --upgrade poetry
+    displayName: 'Install poetry'
+
+  - script: |
+      python -m pip install --upgrade tox
+    displayName: 'Install tox'
+
+  - script: tox -e style
+    displayName: 'Run flake8'
