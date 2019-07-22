@@ -63,24 +63,25 @@ isolated_build = True
 [testenv]
 whitelist_externals = poetry
 commands =
-    poetry run rm -rf pip-wheel-metadata
     poetry install -v
-    poetry run {posargs:pytest}
+    {posargs:pytest}
+
+[testenv:pypy36]
+basepython = pypy3.6
+
+[testenv:pypy35]
+basepython = pypy3.5
 
 [testenv:style]
-whitelist_externals = poetry
 commands =
-    poetry run rm -rf pip-wheel-metadata
     poetry install -v
-    poetry run {posargs:flake8} pygenstub.py
+    {posargs:flake8} pygenstub.py
 
 [testenv:docs]
-whitelist_externals = poetry
 changedir = docs/
 commands =
-    poetry run rm -rf ../pip-wheel-metadata
     poetry install -v
-    poetry run sphinx-build -b html source/ build/html/
+    sphinx-build -b html source/ build/html/
 """
 
 [build-system]
