@@ -118,16 +118,14 @@ placeholder for it:
       def foo(a, b=''):
           """Do foo.
 
-          :sig: (int, Optional[str]) -> None
+          :sig: (int, str) -> None
           """
 
 :stub:
 
    .. code-block:: python
 
-      from typing import Optional
-
-      def foo(a: int, b: Optional[str] = ...) -> None: ...
+      def foo(a: int, b: str = ...) -> None: ...
 
 Base classes
 ------------
