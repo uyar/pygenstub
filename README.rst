@@ -1,24 +1,16 @@
-|pypi| |support| |license| |pipelines| |black|
+|pypi| |license| |azure|
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pygenstub.svg?style=flat-square
     :target: https://pypi.org/project/pygenstub/
     :alt: PyPI version.
 
-.. |support| image:: https://img.shields.io/pypi/pyversions/pygenstub.svg?style=flat-square
-    :target: https://pypi.org/project/pygenstub/
-    :alt: Supported Python versions.
-
 .. |license| image:: https://img.shields.io/pypi/l/pygenstub.svg?style=flat-square
     :target: https://pypi.org/project/pygenstub/
     :alt: Project license.
 
-.. |pipelines| image:: https://dev.azure.com/tekir/pygenstub/_apis/build/status/uyar.pygenstub?branchName=master
+.. |azure| image:: https://dev.azure.com/tekir/pygenstub/_apis/build/status/uyar.pygenstub?branchName=master
     :target: https://dev.azure.com/tekir/pygenstub/_build
     :alt: Azure Pipelines build status.
-
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square
-    :target: https://github.com/python/black
-    :alt: Code formatted by Black.
 
 pygenstub is a utility for generating stub files from docstrings
 in source files. It takes a source file as input and creates a stub file
