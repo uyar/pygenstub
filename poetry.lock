@@ -422,9 +422,10 @@ description = "Python docstring style checker"
 name = "pydocstyle"
 optional = false
 python-versions = "*"
-version = "4.0.0"
+version = "3.0.0"
 
 [package.dependencies]
+six = "*"
 snowballstemmer = "*"
 
 [[package]]
@@ -666,7 +667,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "2a1610c92f6c9e5514520bb5ae574649ed2d7ef9f1cf3ca4c055ea4fabefdb18"
+content-hash = "e1ce5a4b91b838c7ca770e1c38a4bbd444ab5039f3675c8515cf50625e13f92e"
 python-versions = "^3.4|^2.7"
 
 [metadata.hashes]
@@ -706,7 +707,7 @@ pbr = ["0ca44dc9fd3b04a22297c2a91082d8df2894862e8f4c86a49dac69eae9e85ca0", "4aed
 pluggy = ["0825a152ac059776623854c1543d65a4ad408eb3d33ee114dff91e57ec6ae6fc", "b9817417e95936bf75d85d3f8767f7df6cdde751fc40aed3bb3074cbcb77757c"]
 py = ["64f65755aee5b381cea27766a3a147c3f15b9b6b9ac88676de66ba2ae36793fa", "dc639b046a6e2cff5bbe40194ad65936d6ba360b52b3c3fe1d08a82dd50b5e53"]
 pycodestyle = ["95a2219d12372f05704562a14ec30bc76b05a5b297b21a5dfe3f6fac3491ae56", "e40a936c9a450ad81df37f549d676d127b1b66000a6c500caa2b085bc0ca976c"]
-pydocstyle = ["58c421dd605eec0bce65df8b8e5371bb7ae421582cdf0ba8d9435ac5b0ffc36a"]
+pydocstyle = ["2258f9b0df68b97bf3a6c29003edc5238ff8879f1efb6f1999988d934e432bd8", "5741c85e408f9e0ddf873611085e819b809fca90b619f5fd7f34bd4959da3dd4", "ed79d4ec5e92655eccc21eb0c6cf512e69512b4a97d215ace46d17e4990f2039"]
 pyflakes = ["17dbeb2e3f4d772725c777fabc446d5634d1038f234e77343108ce445ea69ce0", "d976835886f8c5b31d47970ed689944a0262b5f3afa00a5a7b4dc81e5449f8a2"]
 pygments = ["5ffada19f6203563680669ee7f53b64dabbeb100eb51b61996085e99c03b284a", "e8218dd399a61674745138520d0d4cf2621d7e032439341bc3f647bff125818d"]
 pyparsing = ["530d8bf8cc93a34019d08142593cf4d78a05c890da8cf87ffa3120af53772238", "f78e99616b6f1a4745c0580e170251ef1bbafc0d0513e270c4bd281bf29d2800"]
