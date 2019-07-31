@@ -5,7 +5,7 @@
     :alt: PyPI version.
 
 .. |license| image:: https://img.shields.io/pypi/l/pygenstub.svg?style=flat-square
-    :target: https://pypi.org/project/pygenstub/
+    :target: https://github.com/uyar/pygenstub/blob/master/LICENSE.txt
     :alt: Project license.
 
 .. |azure| image:: https://dev.azure.com/tekir/pygenstub/_apis/build/status/uyar.pygenstub?branchName=master
