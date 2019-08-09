@@ -10,10 +10,6 @@ jobs:
 - job: tests
   strategy:
     matrix:
-      linux-py27:
-        imageName: 'ubuntu-latest'
-        python.version: '2.7'
-
       linux-py35:
         imageName: 'ubuntu-latest'
         python.version: '3.5'
