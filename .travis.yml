@@ -16,15 +16,15 @@ matrix:
 jobs:
   include:
     - stage: test
-      before_install:
+      install:
         - python -m pip install poetry tox
       script: tox -e py
     - stage: style
-      before_install:
+      install:
         - python -m pip install poetry tox
       script: tox -e style
     - stage: docs
-      before_install:
+      install:
         - python -m pip install poetry tox
       script: tox -e docs
 notifications:
