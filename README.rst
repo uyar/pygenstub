@@ -1,4 +1,4 @@
-|pypi| |license| |azure|
+|pypi| |license| |travis|
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pygenstub.svg?style=flat-square
     :target: https://pypi.org/project/pygenstub/
@@ -8,9 +8,9 @@
     :target: https://github.com/uyar/pygenstub/blob/master/LICENSE.txt
     :alt: Project license.
 
-.. |azure| image:: https://dev.azure.com/tekir/pygenstub/_apis/build/status/uyar.pygenstub?branchName=master
-    :target: https://dev.azure.com/tekir/pygenstub/_build
-    :alt: Azure Pipelines build status.
+.. |travis| image:: https://travis-ci.org/uyar/pygenstub.svg?branch=master
+    :target: https://travis-ci.org/uyar/pygenstub
+    :alt: Travis CI build status.
 
 pygenstub is a utility for generating stub files from docstrings
 in source files. It takes a source file as input and creates a stub file
