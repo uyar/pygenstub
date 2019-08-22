@@ -1,37 +1,41 @@
 language: python
 dist: xenial
+
 python:
   - "3.7"
   - "3.6"
   - "3.5"
   - "2.7"
+
 stages:
   - test
   - style
   - docs
+
 matrix:
   exclude:
     - python:
+        - 3.7
         - 3.6
         - 3.5
         - 2.7
       stages:
         - style
         - docs
+
+install:
+  - python -m pip install poetry
+  - python -m pip install tox
+
 jobs:
   include:
     - stage: test
-      install:
-        - python -m pip install poetry tox
       script: tox -e py
     - stage: style
-      install:
-        - python -m pip install poetry tox
       script: tox -e style
     - stage: docs
-      install:
-        - python -m pip install poetry tox
       script: tox -e docs
+
 notifications:
   email:
     on_success: never
