@@ -5,9 +5,28 @@ python:
   - "3.6"
   - "3.5"
   - "2.7"
-before_install:
-  - python -m pip install poetry tox tox-travis
-script: tox
+stages:
+  - test
+matrix:
+  include:
+    - python: 3.7
+      stages:
+        - style
+        - docs
+jobs:
+  include:
+    - stage: test
+      before_install:
+        - python -m pip install poetry tox
+      script: tox -e py
+    - stage: style
+      before_install:
+        - python -m pip install poetry tox
+      script: tox -e style
+    - stage: docs
+      before_install:
+        - python -m pip install poetry tox
+      script: tox -e docs
 notifications:
   email:
     on_success: never
