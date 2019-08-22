@@ -8,7 +8,7 @@ authors = ["H. Turgut Uyar <uyar@tekir.org>"]
 license = "GPL-3.0+"
 
 homepage = "https://pygenstub.tekir.org/"
-documentation = "https://pygenstub.tekir.org/"
+documentation = "https://pygenstub.readthedocs.io/"
 repository = "https://github.com/uyar/pygenstub"
 
 keywords = ["type hints", "stub files"]
@@ -31,7 +31,13 @@ classifiers = [
     "Topic :: Software Development :: Documentation"
 ]
 
-include = ["HISTORY.rst", "*.pyi", "tests/**/*.py", "docs/source/**/*", "docs/Makefile"]
+include = [
+    "HISTORY.rst",
+    "*.pyi",
+    "tests/**/*.py",
+    "docs/source/**/*",
+    "docs/Makefile"
+]
 
 [tool.poetry.dependencies]
 python = "^3.4|^2.7"
