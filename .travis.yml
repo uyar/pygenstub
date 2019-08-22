@@ -7,9 +7,14 @@ python:
   - "2.7"
 stages:
   - test
+  - style
+  - docs
 matrix:
-  include:
-    - python: 3.7
+  exclude:
+    - python:
+        - 3.6
+        - 3.5
+        - 2.7
       stages:
         - style
         - docs
