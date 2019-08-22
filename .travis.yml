@@ -7,37 +7,19 @@ python:
   - "3.5"
   - "2.7"
 
-stages:
-  - test
-  - style
-  - docs
-
-matrix:
-  exclude:
-    - python: 3.6
-      stages:
-        - style
-        - docs
-    - python: 3.5
-      stages:
-        - style
-        - docs
-    - python: 2.7
-      stages:
-        - style
-        - docs
-
 install:
   - python -m pip install poetry
   - python -m pip install tox
 
+script: tox -e py
+
 jobs:
   include:
-    - stage: test
-      script: tox -e py
     - stage: style
+      python: 3.7
       script: tox -e style
     - stage: docs
+      python: 3.7
       script: tox -e docs
 
 notifications:
