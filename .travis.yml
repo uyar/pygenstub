@@ -14,11 +14,15 @@ stages:
 
 matrix:
   exclude:
-    - python:
-        - 3.7
-        - 3.6
-        - 3.5
-        - 2.7
+    - python: 3.6
+      stages:
+        - style
+        - docs
+    - python: 3.5
+      stages:
+        - style
+        - docs
+    - python: 2.7
       stages:
         - style
         - docs
