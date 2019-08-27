@@ -8,7 +8,6 @@ python:
   - "2.7"
 
 install:
-  - python -m pip install poetry
   - python -m pip install tox
 
 script: tox -e py
