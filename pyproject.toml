@@ -64,7 +64,7 @@ line-length = 96
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{37,36,35,27}, pypy{27}, style, docs
+envlist = py{37,36,35,27}, pypy{36,35,27}, style, docs
 isolated_build = True
 
 [testenv]
@@ -76,9 +76,6 @@ commands =
 
 [testenv:pypy36]
 basepython = pypy3.6
-
-[testenv:pypy35]
-basepython = pypy3.5
 
 [testenv:style]
 basepython = python3.7
