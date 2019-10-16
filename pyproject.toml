@@ -20,6 +20,7 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.5",
@@ -64,7 +65,7 @@ line-length = 96
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{37,36,35,27}, pypy{36,35,27}, style, docs
+envlist = py{38,37,36,35,27}, pypy{36,35,27}, style, docs
 isolated_build = True
 
 [testenv]
