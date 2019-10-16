@@ -78,6 +78,14 @@ commands =
 [testenv:pypy36]
 basepython = pypy3.6
 
+[testenv:coverage]
+basepython = python3.7
+deps =
+    {[testenv]deps}
+    pytest-cov~=2.7
+commands =
+    {posargs:pytest} --cov-report term-missing --cov=pygenstub tests/
+
 [testenv:style]
 basepython = python3.7
 deps =
