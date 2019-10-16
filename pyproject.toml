@@ -70,10 +70,10 @@ isolated_build = True
 
 [testenv]
 deps =
-    pytest==3.10.1
-    py27,pypy27: typing==3.7.4
+    pytest~=3.10
+    py27,pypy27: typing~=3.7
 commands =
-    {posargs:pytest}
+    {posargs:pytest} tests/
 
 [testenv:pypy36]
 basepython = pypy3.6
@@ -81,17 +81,17 @@ basepython = pypy3.6
 [testenv:style]
 basepython = python3.7
 deps =
-    flake8==3.7.8
-    flake8-isort==2.7.0
-    flake8-docstrings==1.4.0
+    flake8~=3.7
+    flake8-isort~=2.7
+    flake8-docstrings~=1.4
 commands =
     {posargs:flake8} pygenstub.py
 
 [testenv:docs]
 basepython = python3.7
 deps =
-    sphinx==1.8.5
-    sphinx_rtd_theme==0.4.3
+    sphinx~=1.8
+    sphinx_rtd_theme~=0.4
 changedir = docs/
 commands =
     sphinx-build -b html source/ build/html/
