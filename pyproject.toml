@@ -73,7 +73,7 @@ deps =
     pytest~=3.10
     py27,pypy27: typing~=3.7
 commands =
-    {posargs:pytest} tests/
+    pytest {posargs}
 
 [testenv:pypy36]
 basepython = pypy3.6
@@ -84,7 +84,7 @@ deps =
     {[testenv]deps}
     pytest-cov~=2.7
 commands =
-    {posargs:pytest} --cov-report term-missing --cov=pygenstub tests/
+    pytest --cov-report term-missing --cov=pygenstub
 
 [testenv:style]
 basepython = python3.7
@@ -93,7 +93,7 @@ deps =
     flake8-isort~=2.7
     flake8-docstrings~=1.4
 commands =
-    {posargs:flake8} pygenstub.py
+    flake8 pygenstub.py
 
 [testenv:docs]
 basepython = python3.7
