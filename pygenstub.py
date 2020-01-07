@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2019 H. Turgut Uyar <uyar@tekir.org>
+# Copyright (C) 2016-2020 H. Turgut Uyar <uyar@tekir.org>
 #
 # pygenstub is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ For more information, please refer to the documentation:
 https://pygenstub.tekir.org/
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import ast
 import inspect
