@@ -1,5 +1,3 @@
-# flake8: noqa
-
 from pytest import fixture, raises
 
 import logging

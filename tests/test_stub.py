@@ -1,5 +1,3 @@
-# flake8: noqa
-
 from __future__ import unicode_literals
 
 from pytest import mark, raises
@@ -259,7 +257,7 @@ def test_stub_should_honor_kwonly_args_with_default():
     )
     assert (
         get_stub(code)
-        == "from typing import Optional\n\ndef f(i: int, *, j: Optional[int] = ...) -> None: ...\n"
+        == "from typing import Optional\n\ndef f(i: int, *, j: Optional[int] = ...) -> None: ...\n"  # noqa: E501
     )
 
 
