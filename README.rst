@@ -1,10 +1,11 @@
 pygenstub is a utility for generating stub files from docstrings
-in source files. It takes a source file as input and creates a stub file
-with the same base name and the ``.pyi`` extension.
+in source files.
 
-If the docstring of a function includes a **sig** field, the value of that
-field will be used to generate a stub by matching the types to the
-parameters in the same order. For example, for the code given below:
+If the docstring of a function includes a **sig** field,
+the value of that field will be used to generate a stub
+by matching the types to the parameters in the same order.
+
+For example, for the function given below:
 
 .. code-block:: python
 
@@ -27,8 +28,8 @@ as an example.
 Getting started
 ---------------
 
-pygenstub has been tested with Python 2.7, Python 3.4+, and compatible
-versions of PyPy. You can install the latest version using ``pip``::
+pygenstub runs on Python 3.4+. It also supports Python 2.7 and PyPy.
+You can install the latest version using ``pip``::
 
   pip install pygenstub
 
@@ -38,17 +39,17 @@ as follows::
   pygenstub foo.py
 
 This command will generate the file ``foo.pyi`` in the same directory
-as the input file. If the output file already exists, it will be overwritten.
+as the input file.
+If the output file already exists, it will be overwritten.
 
-If pygenstub is activated as a Sphinx extension (after autodoc), it will insert
-type comments for parameters and return values in the docstring. It will also
-remove the signature fields to exclude them from the output:
+If pygenstub is activated as a Sphinx extension (after *sphinx.ext.autodoc*),
+it will insert type comments into the docstring.
 
 .. code-block:: python
 
    extensions = [
-       'sphinx.ext.autodoc',
-       'pygenstub'
+       "sphinx.ext.autodoc",
+       "pygenstub"
    ]
 
 As an example of the output, you can see the `API documentation`_
@@ -66,9 +67,10 @@ License
 
 Copyright (C) 2016-2020 H. Turgut Uyar <uyar@tekir.org>
 
-pygenstub is released under the GPL license, version 3 or later. Read
-the included ``LICENSE.txt`` for details.
+pygenstub is released under the GPL license, version 3 or later.
+Read the included `LICENSE.txt`_ for details.
 
 .. _source code: https://github.com/uyar/pygenstub/blob/master/pygenstub.py
 .. _stub file: https://github.com/uyar/pygenstub/blob/master/pygenstub.pyi
 .. _API documentation: https://pygenstub.readthedocs.io/en/latest/api.html
+.. _LICENSE.txt: https://github.com/uyar/pygenstub/blob/master/LICENSE.txt
