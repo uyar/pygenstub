@@ -51,7 +51,7 @@ without installing::
   python pygenstub.py foo.py
 
 If pygenstub is activated as a Sphinx extension (after *sphinx.ext.autodoc*),
-it will insert type comments into the docstring.
+it will insert type comments into the docstring:
 
 .. code-block:: python
 
