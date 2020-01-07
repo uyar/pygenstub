@@ -1,23 +1,23 @@
 |pypi| |license| |travis|
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pygenstub.svg?style=flat-square
-    :target: https://pypi.org/project/pygenstub/
-    :alt: PyPI version.
+   :target: https://pypi.org/project/pygenstub/
+   :alt: PyPI version.
 
 .. |license| image:: https://img.shields.io/pypi/l/pygenstub.svg?style=flat-square
-    :target: https://github.com/uyar/pygenstub/blob/master/LICENSE.txt
-    :alt: Project license.
+   :target: https://github.com/uyar/pygenstub/blob/master/LICENSE.txt
+   :alt: Project license.
 
 .. |travis| image:: https://travis-ci.org/uyar/pygenstub.svg?branch=master
-    :target: https://travis-ci.org/uyar/pygenstub
-    :alt: Travis CI build status.
+   :target: https://travis-ci.org/uyar/pygenstub
+   :alt: Travis CI build status.
 
 pygenstub is a utility for generating stub files from docstrings
 in source files. It takes a source file as input and creates a stub file
 with the same base name and the ``.pyi`` extension.
 
 If the docstring of a function includes a **sig** field, the value of that
-field will be used to generate a prototype by matching the types to the
+field will be used to generate a stub by matching the types to the
 parameters in the same order. For example, for the code given below:
 
 .. code-block:: python
@@ -78,11 +78,11 @@ The source code can be obtained from: https://github.com/uyar/pygenstub
 License
 -------
 
-Copyright (C) 2016-2019 H. Turgut Uyar <uyar@tekir.org>
+Copyright (C) 2016-2020 H. Turgut Uyar <uyar@tekir.org>
 
 pygenstub is released under the GPL license, version 3 or later. Read
 the included ``LICENSE.txt`` for details.
 
 .. _source code: https://github.com/uyar/pygenstub/blob/master/pygenstub.py
 .. _stub file: https://github.com/uyar/pygenstub/blob/master/pygenstub.pyi
-.. _API documentation: https://pygenstub.tekir.org/api.html
+.. _API documentation: https://pygenstub.readthedocs.io/en/latest/api.html
