@@ -1,6 +1,3 @@
-pygenstub
-=========
-
 .. include:: ../../README.rst
 
 .. tip::
@@ -16,4 +13,4 @@ pygenstub
    features
    cli
    api
-   history
+   changes

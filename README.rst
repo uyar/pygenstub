@@ -1,3 +1,6 @@
+pygenstub
+=========
+
 pygenstub is a utility for generating stub files from docstrings
 in source files.
 

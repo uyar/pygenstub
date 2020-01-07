@@ -34,7 +34,7 @@ classifiers = [
 ]
 
 include = [
-    "HISTORY.rst",
+    "CHANGES.rst",
     "*.pyi",
     "tests/**/*.py",
     "docs/source/**/*",
