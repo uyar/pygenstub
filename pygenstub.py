@@ -365,11 +365,11 @@ class ClassNode(StubNode):
 def get_aliases(lines):
     """Get the type aliases in the source.
 
-    :sig: (Sequence[str]) -> Dict[str, str]
+    :sig: (Sequence[str]) -> OrderedDict[str, str]
     :param lines: Lines of the source code.
     :return: Aliases and their their definitions.
     """
-    aliases = {}
+    aliases = OrderedDict()
     for line in lines:
         line = line.strip()
         if len(line) > 0 and line.startswith(SIG_ALIAS):
