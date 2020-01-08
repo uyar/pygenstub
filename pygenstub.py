@@ -34,7 +34,7 @@ from pkgutil import get_loader, walk_packages
 from docutils.core import publish_doctree
 
 
-__version__ = "1.4.0"  # sig: str
+__version__ = "1.4.0"
 
 
 PY3 = sys.version_info >= (3, 0)
@@ -53,11 +53,11 @@ else:
 BUILTIN_TYPES = {k for k, t in builtins.__dict__.items() if isinstance(t, type)}
 BUILTIN_TYPES.add("None")
 
-SIG_FIELD = "sig"  # sig: str
-SIG_COMMENT = "# sig:"  # sig: str
-SIG_ALIAS = "# sigalias:"  # sig: str
+SIG_FIELD = "sig"
+SIG_COMMENT = "# sig:"
+SIG_ALIAS = "# sigalias:"
 
-DECORATORS = {"property", "staticmethod", "classmethod"}  # sig: Set[str]
+DECORATORS = {"property", "staticmethod", "classmethod"}
 
 LINE_LENGTH_LIMIT = 79
 INDENT = 4 * " "

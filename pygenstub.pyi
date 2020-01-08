@@ -9,12 +9,6 @@ import docutils.nodes
 
 Document = docutils.nodes.document
 
-__version__ = ...  # type: str
-SIG_FIELD = ...  # type: str
-SIG_COMMENT = ...  # type: str
-SIG_ALIAS = ...  # type: str
-DECORATORS = ...  # type: Set[str]
-
 def get_fields(node: Document, fields_tag: str = ...) -> Dict[str, str]: ...
 def extract_signature(docstring: str) -> Optional[str]: ...
 def get_signature(
