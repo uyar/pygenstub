@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pygenstub.  If not, see <http://www.gnu.org/licenses/>.
 
-"""A utility for generating stub files from docstrings in source files."""
+"""A utility for generating stub files from docstrings."""
 
 from __future__ import absolute_import, print_function, unicode_literals
 

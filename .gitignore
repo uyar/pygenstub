@@ -10,8 +10,6 @@ __pycache__
 .venv
 .buildinfo
 
-pip-wheel-metadata
-
 build
 dist
 

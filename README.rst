@@ -32,7 +32,7 @@ Getting started
 ---------------
 
 pygenstub runs on Python 3.4+. It also supports Python 2.7 and PyPy.
-You can install the latest version using ``pip``::
+You can install the latest version from `PyPI`_::
 
   pip install pygenstub
 
@@ -78,6 +78,7 @@ Copyright (C) 2016-2020 H. Turgut Uyar <uyar@tekir.org>
 pygenstub is released under the GPL license, version 3 or later.
 Read the included `LICENSE.txt`_ for details.
 
+.. _PyPI: https://pypi.org/project/pygenstub/
 .. _source file: https://github.com/uyar/pygenstub/blob/master/pygenstub.py
 .. _stub file: https://github.com/uyar/pygenstub/blob/master/pygenstub.pyi
 .. _API documentation: https://pygenstub.readthedocs.io/en/latest/api.html
