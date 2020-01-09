@@ -5,8 +5,6 @@ import os
 import shutil
 import sys
 
-from pkg_resources import get_distribution
-
 import pygenstub
 
 
@@ -22,10 +20,6 @@ def source():
     os.unlink(dst)
     if os.path.exists(dst + "i"):
         os.unlink(dst + "i")
-
-
-def test_version_should_be_same_as_installed():
-    assert get_distribution("pygenstub").version == pygenstub.__version__
 
 
 def test_cli_help_should_print_usage_and_exit(capsys):
