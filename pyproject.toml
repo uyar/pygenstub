@@ -45,7 +45,7 @@ include = [
 python = "^3.4 || ~2.7"
 docutils = "^0.15.2"
 typing = {version = "^3.7.4", python = "~3.4 || ~2.7"}
-pathlib2 = {version = "^2.3.5", python = "~2.7"}
+pathlib2 = {version = "^2.3.5", python = "~3.4 || ~2.7"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.6.9"

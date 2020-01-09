@@ -2,7 +2,11 @@ from pytest import fixture
 
 import subprocess
 import sys
-from pathlib import Path
+
+if sys.version_info < (3, 5):
+    from pathlib2 import Path
+else:
+    from pathlib import Path
 
 import pygenstub
 
