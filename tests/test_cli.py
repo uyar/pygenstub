@@ -1,6 +1,6 @@
-from pytest import fixture, raises
+from pytest import fixture
 
-import logging
+import subprocess
 import sys
 from pathlib import Path
 
@@ -21,42 +21,39 @@ def source():
     dst.with_suffix(".pyi").unlink()
 
 
-def test_cli_help_should_print_usage_and_exit(capsys):
-    with raises(SystemExit):
-        pygenstub.main(argv=["pygenstub", "--help"])
-    out, err = capsys.readouterr()
+def test_help_should_print_usage(capfd):
+    subprocess.call([sys.executable, "-m", "pygenstub", "--help"])
+    out, err = capfd.readouterr()
     assert out.startswith("usage: ")
 
 
-def test_cli_version_should_print_version_number_and_exit(capsys):
-    with raises(SystemExit):
-        pygenstub.main(argv=["pygenstub", "--version"])
-    out, err = capsys.readouterr()
+def test_version_should_print_version_number_and_exit(capfd):
+    subprocess.call([sys.executable, "-m", "pygenstub", "--version"])
+    out, err = capfd.readouterr()
     assert "pygenstub " + pygenstub.__version__ + "\n" in {out, err}
 
 
-def test_cli_no_input_should_do_nothing(capsys):
-    pygenstub.main(argv=["pygenstub"])
-    out, err = capsys.readouterr()
+def test_no_input_should_do_nothing(capfd):
+    subprocess.call([sys.executable, "-m", "pygenstub"])
+    out, err = capfd.readouterr()
     assert out == ""
 
 
-def test_cli_unrecognized_arguments_should_print_usage_and_exit(capsys):
-    with raises(SystemExit):
-        pygenstub.main(argv=["pygenstub", "--foo", "foo.py"])
-    out, err = capsys.readouterr()
+def test_unrecognized_arguments_should_print_usage_and_exit(capfd):
+    subprocess.call([sys.executable, "-m", "pygenstub", "--foo", "foo.py"])
+    out, err = capfd.readouterr()
     assert err.startswith("usage: ")
     assert "unrecognized arguments: --foo" in err
 
 
-def test_cli_debug_mode_should_print_debug_messages_on_stderr(caplog, source):
-    caplog.set_level(logging.DEBUG)
-    pygenstub.main(argv=["pygenstub", "--debug", source[1]])
-    assert caplog.record_tuples[0][-1] == "running in debug mode"
+def test_debug_mode_should_print_debug_messages_on_stderr(capfd, source):
+    subprocess.call([sys.executable, "-m", "pygenstub", "--debug", source[1]])
+    out, err = capfd.readouterr()
+    assert "running in debug mode" in err
 
 
-def test_cli_original_module_should_generate_original_stub(source):
-    pygenstub.main(argv=["pygenstub", source[1]])
+def test_original_module_should_generate_original_stub(source):
+    subprocess.call([sys.executable, "-m", "pygenstub", source[1]])
     with open(source[0] + "i") as src:
         src_stub = src.read()
     with open(source[1] + "i") as dst:

@@ -878,7 +878,7 @@ def setup(app):
 ############################################################
 
 
-def main(argv=None):
+def main():
     """Start the command line interface."""
     parser = ArgumentParser(prog="pygenstub")
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
@@ -900,8 +900,7 @@ def main(argv=None):
     )
     parser.add_argument("--debug", action="store_true", help="enable debug messages")
 
-    argv = argv if argv is not None else sys.argv
-    arguments = parser.parse_args(argv[1:])
+    arguments = parser.parse_args(sys.argv[1:])
 
     # set debug mode
     if arguments.debug:
