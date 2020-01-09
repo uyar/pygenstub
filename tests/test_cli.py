@@ -1,5 +1,3 @@
-from pytest import fixture
-
 import subprocess
 import sys
 
@@ -9,20 +7,6 @@ else:
     from pathlib import Path
 
 import pygenstub
-
-
-@fixture
-def source():
-    """Python source code for testing."""
-    src = Path(__file__).parent.parent / "pygenstub.py"
-    dst = (
-        Path("/dev", "shm", "foo.py") if sys.platform in {"linux", "linux2"} else Path("foo.py")
-    )
-    Path(dst).write_bytes(Path(src).read_bytes())
-    yield str(src), str(dst)
-
-    dst.unlink()
-    dst.with_suffix(".pyi").unlink()
 
 
 def test_help_should_print_usage(capfd):
@@ -50,16 +34,16 @@ def test_unrecognized_arguments_should_print_usage_and_exit(capfd):
     assert "unrecognized arguments: --foo" in err
 
 
-def test_debug_mode_should_print_debug_messages_on_stderr(capfd, source):
-    subprocess.call([sys.executable, "-m", "pygenstub", "--debug", source[1]])
+def test_debug_mode_should_print_debug_messages_on_stderr(capfd):
+    source = Path(__file__).with_name("example.py")
+    subprocess.call([sys.executable, "-m", "pygenstub", "--debug", str(source)])
     out, err = capfd.readouterr()
-    assert "running in debug mode" in err
+    assert "running in debug mode" in err.splitlines()[0]
 
 
-def test_original_module_should_generate_original_stub(source):
-    subprocess.call([sys.executable, "-m", "pygenstub", source[1]])
-    with open(source[0] + "i") as src:
-        src_stub = src.read()
-    with open(source[1] + "i") as dst:
-        dst_stub = dst.read()
-    assert dst_stub == src_stub
+def test_original_module_should_generate_original_stub():
+    subprocess.call([sys.executable, "-m", "pygenstub", pygenstub.__file__])
+    assert (
+        Path(pygenstub.__file__).with_suffix(".pyi").read_bytes()
+        == Path("pygenstub.pyi").read_bytes()
+    )
