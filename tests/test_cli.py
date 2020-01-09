@@ -1,9 +1,8 @@
 from pytest import fixture, raises
 
 import logging
-import os
-import shutil
 import sys
+from pathlib import Path
 
 import pygenstub
 
@@ -11,15 +10,15 @@ import pygenstub
 @fixture
 def source():
     """Python source code for testing."""
-    base_dir = os.path.dirname(__file__)
-    src = os.path.join(base_dir, "..", "pygenstub.py")
-    dst = "/dev/shm/foo.py" if sys.platform in {"linux", "linux2"} else "foo.py"
-    shutil.copy(src, dst)
-    yield src, dst
+    src = Path(__file__).parent.parent / "pygenstub.py"
+    dst = (
+        Path("/dev", "shm", "foo.py") if sys.platform in {"linux", "linux2"} else Path("foo.py")
+    )
+    Path(dst).write_bytes(Path(src).read_bytes())
+    yield str(src), str(dst)
 
-    os.unlink(dst)
-    if os.path.exists(dst + "i"):
-        os.unlink(dst + "i")
+    dst.unlink()
+    dst.with_suffix(".pyi").unlink()
 
 
 def test_cli_help_should_print_usage_and_exit(capsys):
