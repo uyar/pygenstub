@@ -38,12 +38,16 @@ __version__ = "1.4.0"  # sig: str
 
 
 PY3 = sys.version_info >= (3, 0)
+PY35 = sys.version_info >= (3, 5)
 
 if not PY3:
     import __builtin__ as builtins
-    from pathlib2 import Path
 else:
     import builtins
+
+if not PY35:
+    from pathlib2 import Path
+else:
     from pathlib import Path
 
 
@@ -878,8 +882,12 @@ def setup(app):
 ############################################################
 
 
-def main():
-    """Start the command line interface."""
+def run(argv=None):
+    """Start the command line interface.
+
+    :sig: (Optional[List[str]]) -> None
+    :param argv: Command line arguments.
+    """
     parser = ArgumentParser(prog="pygenstub")
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("files", nargs="*", help="generate stubs for given files")
@@ -900,7 +908,8 @@ def main():
     )
     parser.add_argument("--debug", action="store_true", help="enable debug messages")
 
-    arguments = parser.parse_args(sys.argv[1:])
+    argv = argv if argv is not None else sys.argv
+    arguments = parser.parse_args(argv[1:])
 
     # set debug mode
     if arguments.debug:
@@ -928,8 +937,7 @@ def main():
 
     for source, destination in modules:
         _logger.info("generating stub for %s to path %s", source, destination)
-        with source.open() as f:
-            code = f.read()
+        code = source.read_text(encoding="utf-8")
         try:
             stub = get_stub(code, generic=arguments.generic)
         except Exception as e:
@@ -939,9 +947,8 @@ def main():
         if stub != "":
             if not destination.parent.exists():
                 destination.parent.mkdir(parents=True)
-            with destination.open("w") as f:
-                f.write("# " + _EDIT_WARNING + "\n\n" + stub)
+            destination.write_text("# %s\n\n%s" % (_EDIT_WARNING, stub), encoding="utf-8")
 
 
 if __name__ == "__main__":
-    main()
+    run()
