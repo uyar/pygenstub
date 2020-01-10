@@ -1,6 +1,11 @@
 Changes
 =======
 
+1.5.0 (unreleased)
+------------------
+
+- Fix error when input path is absolute and an output directory is given.
+
 1.4.0 (2019-03-27)
 ------------------
 

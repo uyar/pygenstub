@@ -106,12 +106,34 @@ def test_output_directory_should_be_created_if_necessary():
     assert os.path.exists(os.path.join("typeshed", "example1.pyi"))
 
 
-#
-#
-# def test_input_absolute_path_should_generate_stub_file_in_given_output_directory(source_root):
-#     os.chdir(os.path.dirname(__file__))
-#     source = os.path.join(source_root, "example1.py")
-#     stub = os.path.join(source_root, "example1.pyi")
-#     assert not os.path.exists(stub)
-#     pygenstub.run(["pygenstub", os.path.abspath(source), "-o", "typeshed"])
-#     assert os.path.exists(stub)
+def test_input_absolute_path_should_generate_stub_file_in_given_output_directory(source_root):
+    os.chdir(os.path.dirname(__file__))
+    source = os.path.join(source_root, "example1.py")
+    out_dir = os.path.join(source_root, "typeshed")
+    stub = os.path.join(out_dir + source_root, "example1.pyi")
+    assert not os.path.exists(stub)
+    pygenstub.run(["pygenstub", os.path.abspath(source), "-o", out_dir])
+    assert os.path.exists(stub)
+
+
+def test_module_stub_generation_should_print_error_if_no_output_directory_given(capsys):
+    with raises(SystemExit):
+        pygenstub.run(["pygenstub", "-m", "subprocess"])
+    out, err = capsys.readouterr()
+    assert "output directory is required" in err
+
+
+def test_module_stub_generation_should_work_for_single_file_module():
+    assert not os.path.exists(os.path.join("typeshed", "subprocess.pyi"))
+    pygenstub.run(["pygenstub", "-m", "subprocess", "-o", "typeshed"])
+    assert os.path.exists(os.path.join("typeshed", "subprocess.pyi"))
+
+
+def test_module_stub_generation_should_work_for_multiple_file_module():
+    assert not (os.path.exists(os.path.join("typeshed", "logging", "config.pyi"))) and (
+        not os.path.exists(os.path.join("typeshed", "logging", "handlers.pyi"))
+    )
+    pygenstub.run(["pygenstub", "-m", "logging", "-o", "typeshed"])
+    assert os.path.exists(os.path.join("typeshed", "logging", "config.pyi")) and os.path.exists(
+        os.path.join("typeshed", "logging", "handlers.pyi")
+    )

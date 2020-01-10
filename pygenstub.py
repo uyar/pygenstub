@@ -757,12 +757,13 @@ def get_stub(source, generic=False):
 ############################################################
 
 
-def get_mod_source(mod_name):
-    """Get source file path of a module.
+def get_mod_paths(mod_name):
+    """Get source and output file paths of a module.
 
-    :sig: (str) -> Optional[Path]
-    :param mod_name: Name of module to get the source path for.
-    :return: Path of module source file, or ``None`` if it can not be found.
+    :sig: (str) -> Optional[Tuple[Path, Path]]
+    :param mod_name: Name of module to get the paths for.
+    :return: Path of source file and subpath in output directory,
+        or ``None`` if module can not be found.
     """
     mod = get_loader(mod_name)
     if mod is None:
@@ -772,18 +773,18 @@ def get_mod_source(mod_name):
     if not source.name.endswith(".py"):
         _logger.debug("failed to find python source for module: %s", mod_name)
         return None
-    # source_rel = Path(*mod_name.split("."))
-    # if source.name == "__init__.py":
-    #     source_rel = source_rel.joinpath("__init__.py")
-    return source
+    subpath = Path(*mod_name.split("."))
+    if source.name == "__init__.py":
+        subpath = subpath.joinpath("__init__.py")
+    return source, subpath
 
 
-def get_pkg_sources(pkg_name):
-    """Get all source file paths in a package.
+def get_pkg_paths(pkg_name):
+    """Get all module paths in a package.
 
-    :sig: (str) -> List[Path]
-    :param pkg_name: Name of package to get the source paths for.
-    :return: Paths of source files in package.
+    :sig: (str) -> List[Tuple[Path, Path]]
+    :param pkg_name: Name of package to get the module paths for.
+    :return: Paths of modules in package.
     """
     try:
         pkg = import_module(pkg_name)
@@ -792,12 +793,12 @@ def get_pkg_sources(pkg_name):
         return []
 
     if not hasattr(pkg, "__path__"):
-        mod_path = get_mod_source(pkg_name)
+        mod_path = get_mod_paths(pkg_name)
         return [mod_path] if mod_path is not None else []
 
     paths = []
     for mod_info in walk_packages(pkg.__path__, pkg.__name__ + "."):
-        mod_path = get_mod_source(mod_info.name)
+        mod_path = get_mod_paths(mod_info.name)
         if mod_path is not None:
             paths.append(mod_path)
     return paths
@@ -929,10 +930,10 @@ def _collect_sources(files, modules):
         for source in paths:
             if str(source).startswith(os.path.pardir):
                 source = source.absolute().resolve()
-            sources.append(source)
+            sources.append((source, source))
 
     for mod_name in modules:
-        sources.extend(get_pkg_sources(mod_name))
+        sources.extend(get_pkg_paths(mod_name))
     return sources
 
 
@@ -959,10 +960,10 @@ def run(argv=None):
         sys.exit(1)
 
     sources = _collect_sources(arguments.files, arguments.modules)
-    for source in sources:
-        # if (out_dir != "") and source.is_absolute():
-        #     source = source.relative_to(source.root)
-        stub = Path(out_dir, source.with_suffix(".pyi"))
+    for source, subpath in sources:
+        if (out_dir != "") and subpath.is_absolute():
+            subpath = subpath.relative_to(subpath.root)
+        stub = Path(out_dir, subpath.with_suffix(".pyi"))
         _logger.info("generating stub for %s to path %s", source, stub)
         code = source.read_text(encoding="utf-8")
         stub_code = get_stub(code, generic=arguments.generic)
