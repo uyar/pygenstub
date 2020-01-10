@@ -106,10 +106,12 @@ def test_output_directory_should_be_created_if_necessary():
     assert os.path.exists(os.path.join("typeshed", "example1.pyi"))
 
 
-def test_input_absolute_path_should_generate_stub_file_in_given_output_directory(source_root):
-    os.chdir(os.path.dirname(__file__))
-    source = os.path.join(source_root, "example1.py")
-    stub = os.path.join(source_root, "example1.pyi")
-    assert not os.path.exists(stub)
-    pygenstub.run(["pygenstub", os.path.abspath(source), "-o", "typeshed"])
-    assert os.path.exists(stub)
+#
+#
+# def test_input_absolute_path_should_generate_stub_file_in_given_output_directory(source_root):
+#     os.chdir(os.path.dirname(__file__))
+#     source = os.path.join(source_root, "example1.py")
+#     stub = os.path.join(source_root, "example1.pyi")
+#     assert not os.path.exists(stub)
+#     pygenstub.run(["pygenstub", os.path.abspath(source), "-o", "typeshed"])
+#     assert os.path.exists(stub)

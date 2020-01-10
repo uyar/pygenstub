@@ -905,6 +905,23 @@ def _make_parser(prog):
     return parser
 
 
+def collect_sources(files, modules, out_dir):
+    sources = []
+    for path in files:
+        paths = Path(path).glob("**/*.py") if Path(path).is_dir() else [Path(path)]
+        for source in paths:
+            if str(source).startswith(os.path.pardir):
+                source = source.absolute().resolve()
+            if (out_dir != "") and source.is_absolute():
+                source = source.relative_to(source.root)
+            stub = Path(out_dir, source.with_suffix(".pyi"))
+            sources.append((source, stub))
+
+    for mod_name in modules:
+        sources.extend(get_pkg_paths(mod_name, out_dir))
+    return sources
+
+
 def run(argv=None):
     """Start the command line interface.
 
@@ -926,21 +943,8 @@ def run(argv=None):
         print("Output directory must be given when generating stubs for modules.")
         sys.exit(1)
 
-    modules = []
-    for path in arguments.files:
-        paths = Path(path).glob("**/*.py") if Path(path).is_dir() else [Path(path)]
-        for source in paths:
-            if str(source).startswith(os.path.pardir):
-                source = source.absolute().resolve()
-            if (out_dir != "") and source.is_absolute():
-                source = source.relative_to(source.root)
-            destination = Path(out_dir, source.with_suffix(".pyi"))
-            modules.append((source, destination))
-
-    for mod_name in arguments.modules:
-        modules.extend(get_pkg_paths(mod_name, out_dir))
-
-    for source, destination in modules:
+    sources = collect_sources(arguments.files, arguments.modules, out_dir)
+    for source, destination in sources:
         _logger.info("generating stub for %s to path %s", source, destination)
         code = source.read_text(encoding="utf-8")
         try:
