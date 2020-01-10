@@ -752,37 +752,54 @@ def get_stub(source, generic=False):
     return stub
 
 
-def get_mod_paths(mod_name, out_dir):
-    """Get source and stub paths for a module."""
-    paths = []
-    try:
-        mod = get_loader(mod_name)
-        source = Path(mod.path)
-        if source.name.endswith(".py"):
-            source_rel = Path(*mod_name.split("."))
-            if source.name == "__init__.py":
-                source_rel = source_rel.joinpath("__init__.py")
-            destination = Path(out_dir, source_rel.with_suffix(".pyi"))
-            paths.append((source, destination))
-    except Exception as e:
-        _logger.debug(e)
-        _logger.warning("cannot handle module, skipping: %s", mod_name)
-    return paths
+############################################################
+# UTILITIES
+############################################################
 
 
-def get_pkg_paths(pkg_name, out_dir):
-    """Recursively get all source and stub paths for a package."""
-    paths = []
+def get_mod_source(mod_name):
+    """Get source file path of a module.
+
+    :sig: (str) -> Optional[Path]
+    :param mod_name: Name of module to get the source path for.
+    :return: Path of module source file, or ``None`` if it can not be found.
+    """
+    mod = get_loader(mod_name)
+    if mod is None:
+        _logger.debug("failed to find module: %s", mod_name)
+        return None
+    source = Path(mod.path)
+    if not source.name.endswith(".py"):
+        _logger.debug("failed to find python source for module: %s", mod_name)
+        return None
+    # source_rel = Path(*mod_name.split("."))
+    # if source.name == "__init__.py":
+    #     source_rel = source_rel.joinpath("__init__.py")
+    return source
+
+
+def get_pkg_sources(pkg_name):
+    """Get all source file paths in a package.
+
+    :sig: (str) -> List[Path]
+    :param pkg_name: Name of package to get the source paths for.
+    :return: Paths of source files in package.
+    """
     try:
         pkg = import_module(pkg_name)
-        if not hasattr(pkg, "__path__"):
-            return get_mod_paths(pkg_name, out_dir)
-        for mod_info in walk_packages(pkg.__path__, pkg.__name__ + "."):
-            mod_paths = get_mod_paths(mod_info.name, out_dir)
-            paths.extend(mod_paths)
-    except Exception as e:
-        _logger.debug(e)
-        _logger.warning("cannot handle package, skipping: %s", pkg_name)
+    except ModuleNotFoundError:
+        _logger.debug("failed to load module: %s", pkg_name)
+        return []
+
+    if not hasattr(pkg, "__path__"):
+        mod_path = get_mod_source(pkg_name)
+        return [mod_path] if mod_path is not None else []
+
+    paths = []
+    for mod_info in walk_packages(pkg.__path__, pkg.__name__ + "."):
+        mod_path = get_mod_source(mod_info.name)
+        if mod_path is not None:
+            paths.append(mod_path)
     return paths
 
 
@@ -905,20 +922,17 @@ def _make_parser(prog):
     return parser
 
 
-def collect_sources(files, modules, out_dir):
+def _collect_sources(files, modules):
     sources = []
     for path in files:
         paths = Path(path).glob("**/*.py") if Path(path).is_dir() else [Path(path)]
         for source in paths:
             if str(source).startswith(os.path.pardir):
                 source = source.absolute().resolve()
-            if (out_dir != "") and source.is_absolute():
-                source = source.relative_to(source.root)
-            stub = Path(out_dir, source.with_suffix(".pyi"))
-            sources.append((source, stub))
+            sources.append(source)
 
     for mod_name in modules:
-        sources.extend(get_pkg_paths(mod_name, out_dir))
+        sources.extend(get_pkg_sources(mod_name))
     return sources
 
 
@@ -939,24 +953,23 @@ def run(argv=None):
         _logger.debug("running in debug mode")
 
     out_dir = arguments.out_dir if arguments.out_dir is not None else ""
+
     if (out_dir == "") and (len(arguments.modules) > 0):
-        print("Output directory must be given when generating stubs for modules.")
+        print("output directory is required when generating stubs for modules", file=sys.stderr)
         sys.exit(1)
 
-    sources = collect_sources(arguments.files, arguments.modules, out_dir)
-    for source, destination in sources:
-        _logger.info("generating stub for %s to path %s", source, destination)
+    sources = _collect_sources(arguments.files, arguments.modules)
+    for source in sources:
+        # if (out_dir != "") and source.is_absolute():
+        #     source = source.relative_to(source.root)
+        stub = Path(out_dir, source.with_suffix(".pyi"))
+        _logger.info("generating stub for %s to path %s", source, stub)
         code = source.read_text(encoding="utf-8")
-        try:
-            stub = get_stub(code, generic=arguments.generic)
-        except Exception as e:
-            print(source, "-", e, file=sys.stderr)
-            continue
-
-        if stub != "":
-            if not destination.parent.exists():
-                destination.parent.mkdir(parents=True)
-            destination.write_text("# %s\n\n%s" % (_EDIT_WARNING, stub), encoding="utf-8")
+        stub_code = get_stub(code, generic=arguments.generic)
+        if stub_code != "":
+            if not stub.parent.exists():
+                stub.parent.mkdir(parents=True)
+            stub.write_text("# %s\n\n%s" % (_EDIT_WARNING, stub_code), encoding="utf-8")
 
 
 if __name__ == "__main__":
