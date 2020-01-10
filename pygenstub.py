@@ -882,13 +882,8 @@ def setup(app):
 ############################################################
 
 
-def run(argv=None):
-    """Start the command line interface.
-
-    :sig: (Optional[List[str]]) -> None
-    :param argv: Command line arguments.
-    """
-    parser = ArgumentParser(prog="pygenstub")
+def _make_parser(prog):
+    parser = ArgumentParser(prog=prog)
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("files", nargs="*", help="generate stubs for given files")
     parser.add_argument(
@@ -907,6 +902,16 @@ def run(argv=None):
         "--generic", action="store_true", default=False, help="generate generic stubs"
     )
     parser.add_argument("--debug", action="store_true", help="enable debug messages")
+    return parser
+
+
+def run(argv=None):
+    """Start the command line interface.
+
+    :sig: (Optional[List[str]]) -> None
+    :param argv: Command line arguments.
+    """
+    parser = _make_parser("pygenstub")
 
     argv = argv if argv is not None else sys.argv
     arguments = parser.parse_args(argv[1:])
