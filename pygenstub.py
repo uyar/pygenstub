@@ -34,7 +34,7 @@ from pkgutil import get_loader, walk_packages
 from docutils.core import publish_doctree
 
 
-__version__ = "1.5.0b1"  # sig: str
+__version__ = "1.4.1"  # sig: str
 
 
 PY3 = sys.version_info >= (3, 0)
