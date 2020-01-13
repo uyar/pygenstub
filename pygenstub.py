@@ -15,9 +15,8 @@
 
 """A utility for generating stub files from docstrings."""
 
-from __future__ import absolute_import, print_function, unicode_literals
-
 import ast
+import builtins
 import inspect
 import logging
 import os
@@ -37,14 +36,8 @@ from docutils.core import publish_doctree
 __version__ = "2.0.0b1"  # sig: str
 
 
-PY3 = sys.version_info >= (3, 0)
 PY35 = sys.version_info >= (3, 5)
 PY36 = sys.version_info >= (3, 6)
-
-if not PY3:
-    import __builtin__ as builtins
-else:
-    import builtins
 
 if not PY35:
     from pathlib2 import Path
@@ -246,10 +239,7 @@ class VariableNode(StubNode):
         :param name: Name of variable that is being assigned to.
         :param type_: Type of variable.
         """
-        if not PY3:
-            StubNode.__init__(self)
-        else:
-            super().__init__()
+        super().__init__()
         self.name = name  # sig: str
         self.type_ = type_  # sig: str
 
@@ -277,10 +267,7 @@ class FunctionNode(StubNode):
         :param rtype: Type of return value.
         :param decorators: Decorators of function.
         """
-        if not PY3:
-            StubNode.__init__(self)
-        else:
-            super().__init__()
+        super().__init__()
         self.name = name  # sig: str
         self.parameters = parameters  # sig: Sequence[Tuple[str, str, bool]]
         self.rtype = rtype  # sig: str
@@ -343,10 +330,7 @@ class ClassNode(StubNode):
         :param bases: Base classes of class.
         :param signature: Signature of class, to be used in __init__ method.
         """
-        if not PY3:
-            StubNode.__init__(self)
-        else:
-            super().__init__()
+        super().__init__()
         self.name = name  # sig: str
         self.bases = bases  # sig: Sequence[str]
         self.signature = signature  # sig: Optional[str]
@@ -364,7 +348,7 @@ class ClassNode(StubNode):
             stub.append("class %(n)s%(b)s: ..." % slots)
         else:
             stub.append("class %(n)s%(b)s:" % slots)
-            super_code = super().get_code() if PY3 else StubNode.get_code(self)
+            super_code = super().get_code()
             for line in super_code:
                 stub.append(INDENT + line)
         return stub
@@ -506,7 +490,7 @@ class StubGenerator(ast.NodeVisitor):
         if (signature is None) and (not self.generic):
             return None
 
-        param_names = [arg.arg if PY3 else arg.id for arg in node.args.args]
+        param_names = [arg.arg for arg in node.args.args]
         n_args = len(param_names)
 
         if signature is None:
@@ -531,11 +515,11 @@ class StubGenerator(ast.NodeVisitor):
         self.required_types |= requires
 
         if node.args.vararg is not None:
-            param_names.append("*" + (node.args.vararg.arg if PY3 else node.args.vararg))
+            param_names.append("*" + node.args.vararg.arg)
             param_types.append("")
 
         if node.args.kwarg is not None:
-            param_names.append("**" + (node.args.kwarg.arg if PY3 else node.args.kwarg))
+            param_names.append("**" + node.args.kwarg.arg)
             param_types.append("")
 
         kwonly_args = getattr(node.args, "kwonlyargs", [])

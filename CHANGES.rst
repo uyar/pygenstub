@@ -4,6 +4,8 @@ Changes
 2.0.0b1 (unreleased)
 --------------------
 
+- Drop support for Python 2.
+
 1.4.1 (2020-01-13)
 ------------------
 

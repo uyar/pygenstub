@@ -26,7 +26,6 @@ classifiers = [
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.4",
-    "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Documentation :: Sphinx",
@@ -42,10 +41,10 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.4 || ~2.7"
+python = "^3.4"
 docutils = "^0.15.2"
-typing = {version = "^3.7.4", python = "~3.4 || ~2.7"}
-pathlib2 = {version = "^2.3.5", python = "~3.4 || ~2.7"}
+typing = {version = "^3.7.4", python = "~3.4"}
+pathlib2 = {version = "^2.3.5", python = "~3.4"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.6.9"
@@ -71,13 +70,14 @@ line-length = 96
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{38,37,36,35,34,27}, pypy{3,2}, style, docs
+envlist = py{38,37,36,35,34}, pypy3, style, docs
 isolated_build = True
 
 [testenv]
 deps =
     pytest
-    py34,py27,pypy2: typing
+    docutils
+    py34: typing
 commands =
     pytest {posargs:tests}
 

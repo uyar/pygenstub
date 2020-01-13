@@ -25,7 +25,7 @@ def source_root():
 
     yield root_dir
 
-    # shutil.rmtree(root_dir)
+    shutil.rmtree(root_dir)
 
 
 @fixture(autouse=True)
@@ -49,7 +49,6 @@ def test_version_should_print_version_number(capsys):
     with raises(SystemExit):
         pygenstub.run(["pygenstub", "--version"])
     out, err = capsys.readouterr()
-    out = out if sys.version_info >= (3,) else err
     assert out == "pygenstub %s\n" % pygenstub.__version__
 
 

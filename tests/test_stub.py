@@ -1,8 +1,5 @@
-from __future__ import unicode_literals
+from pytest import raises
 
-from pytest import mark, raises
-
-import sys
 from io import StringIO
 
 from pygenstub import get_stub
@@ -244,13 +241,11 @@ def test_stub_should_ignore_vararg_and_kwargs_types():
     assert get_stub(code) == "def f(i: int, *args, **kwargs) -> None: ...\n"
 
 
-@mark.skipif(sys.version_info < (3, 0), reason="syntax introduced in py3")
 def test_stub_should_honor_kwonly_args():
     code = get_function("f", params=["i", "*", "j"], ptypes=["int", "int"], rtype="None")
     assert get_stub(code) == "def f(i: int, *, j: int) -> None: ...\n"
 
 
-@mark.skipif(sys.version_info < (3, 0), reason="syntax introduced in py3")
 def test_stub_should_honor_kwonly_args_with_default():
     code = get_function(
         "f", params=["i", "*", "j=0"], ptypes=["int", "Optional[int]"], rtype="None"
