@@ -37,12 +37,6 @@ from docutils.core import publish_doctree
 __version__ = "2.0.0b1"  # sig: str
 
 
-PY36 = sys.version_info >= (3, 6)
-
-if not PY36:
-    ModuleNotFoundError = ImportError
-
-
 # sigalias: Document = docutils.nodes.document
 
 
@@ -777,8 +771,7 @@ def get_pkg_paths(pkg_name):
 
     paths = []
     for mod_info in walk_packages(pkg.__path__, pkg.__name__ + "."):
-        mod_name = mod_info.name if PY36 else mod_info[1]
-        mod_path = get_mod_paths(mod_name)
+        mod_path = get_mod_paths(mod_info.name)
         if mod_path is not None:
             paths.append(mod_path)
     return paths

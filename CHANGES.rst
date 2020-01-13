@@ -4,7 +4,7 @@ Changes
 2.0.0b1 (unreleased)
 --------------------
 
-- Drop support for Python 2 and Python 3.4.
+- Drop support for Python 2, 3.4, and 3.5.
 
 1.4.1 (2020-01-13)
 ------------------

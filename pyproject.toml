@@ -24,7 +24,6 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Documentation :: Sphinx",
@@ -40,7 +39,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.5"
+python = "^3.6"
 docutils = "^0.15.2"
 
 [tool.poetry.dev-dependencies]
@@ -67,7 +66,7 @@ line-length = 96
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{38,37,36,35}, pypy3, style, docs
+envlist = py{38,37,36}, pypy3, style, docs
 isolated_build = True
 
 [testenv]
@@ -78,7 +77,7 @@ commands =
     pytest {posargs:tests}
 
 [testenv:coverage]
-basepython = python3.7
+basepython = python3.6
 deps =
     {[testenv]deps}
     pytest-cov
@@ -86,7 +85,7 @@ commands =
     pytest --cov=pygenstub --cov-report=term-missing tests
 
 [testenv:style]
-basepython = python3.7
+basepython = python3.6
 deps =
     flake8
     flake8-isort
@@ -95,7 +94,7 @@ commands =
     flake8 pygenstub.py
 
 [testenv:docs]
-basepython = python3.7
+basepython = python3.6
 deps =
     sphinx
     sphinx_rtd_theme
