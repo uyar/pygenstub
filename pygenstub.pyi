@@ -2,8 +2,6 @@
 
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
-from collections import OrderedDict
-
 import ast
 import docutils.nodes
 
@@ -63,16 +61,16 @@ class ClassNode(StubNode):
     ) -> None: ...
     def get_code(self) -> List[str]: ...
 
-def get_aliases(lines: Sequence[str]) -> OrderedDict[str, str]: ...
+def get_aliases(lines: Sequence[str]) -> Dict[str, str]: ...
 
 class StubGenerator(ast.NodeVisitor):
     root = ...  # type: StubNode
     generic = ...  # type: bool
-    imported_namespaces = ...  # type: OrderedDict[str, str]
-    imported_names = ...  # type: OrderedDict[str, str]
+    imported_namespaces = ...  # type: Dict[str, str]
+    imported_names = ...  # type: Dict[str, str]
     defined_types = ...  # type: Set[str]
     required_types = ...  # type: Set[str]
-    aliases = ...  # type: OrderedDict[str, str]
+    aliases = ...  # type: Dict[str, str]
     _parents = ...  # type: List[StubNode]
     _code_lines = ...  # type: List[str]
     def __init__(self, source: str, generic: bool = ...) -> None: ...

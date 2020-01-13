@@ -25,7 +25,6 @@ import sys
 import textwrap
 from argparse import ArgumentParser
 from bisect import bisect
-from collections import OrderedDict
 from importlib import import_module
 from io import StringIO
 from pathlib import Path
@@ -346,11 +345,11 @@ class ClassNode(StubNode):
 def get_aliases(lines):
     """Get the type aliases in the source.
 
-    :sig: (Sequence[str]) -> OrderedDict[str, str]
+    :sig: (Sequence[str]) -> Dict[str, str]
     :param lines: Lines of the source code.
     :return: Aliases and their their definitions.
     """
-    aliases = OrderedDict()
+    aliases = {}
     for line in lines:
         line = line.strip()
         if len(line) > 0 and line.startswith(SIG_ALIAS):
@@ -374,11 +373,11 @@ class StubGenerator(ast.NodeVisitor):
 
         self.generic = generic  # sig: bool
 
-        self.imported_namespaces = OrderedDict()  # sig: OrderedDict[str, str]
-        self.imported_names = OrderedDict()  # sig: OrderedDict[str, str]
+        self.imported_namespaces = {}  # sig: Dict[str, str]
+        self.imported_names = {}  # sig: Dict[str, str]
         self.defined_types = set()  # sig: Set[str]
         self.required_types = set()  # sig: Set[str]
-        self.aliases = OrderedDict()  # sig: OrderedDict[str, str]
+        self.aliases = {}  # sig: Dict[str, str]
 
         self._parents = [self.root]  # sig: List[StubNode]
         self._code_lines = source.splitlines()  # sig: List[str]
