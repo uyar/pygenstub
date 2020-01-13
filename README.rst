@@ -31,7 +31,7 @@ as an example.
 Getting started
 ---------------
 
-pygenstub runs on Python 3.4+. It also supports Python 2.7 and PyPy.
+pygenstub runs on Python 3.5+.
 You can install the latest version from `PyPI`_::
 
   pip install pygenstub

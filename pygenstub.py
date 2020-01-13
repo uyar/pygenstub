@@ -28,6 +28,7 @@ from bisect import bisect
 from collections import OrderedDict
 from importlib import import_module
 from io import StringIO
+from pathlib import Path
 from pkgutil import get_loader, walk_packages
 
 from docutils.core import publish_doctree
@@ -36,13 +37,7 @@ from docutils.core import publish_doctree
 __version__ = "2.0.0b1"  # sig: str
 
 
-PY35 = sys.version_info >= (3, 5)
 PY36 = sys.version_info >= (3, 6)
-
-if not PY35:
-    from pathlib2 import Path
-else:
-    from pathlib import Path
 
 if not PY36:
     ModuleNotFoundError = ImportError
@@ -650,14 +645,10 @@ class StubGenerator(ast.NodeVisitor):
         needed_namespaces -= imported_names
         _logger.debug("used imported types: %s", imported_types)
 
-        try:
-            typing_mod = __import__("typing")
-            typing_types = {n for n in needed_types if hasattr(typing_mod, n)}
-            needed_types -= typing_types
-            _logger.debug("types from typing module: %s", typing_types)
-        except ImportError:
-            typing_types = set()
-            _logger.warn("typing module not installed")
+        typing_mod = __import__("typing")
+        typing_types = {n for n in needed_types if hasattr(typing_mod, n)}
+        needed_types -= typing_types
+        _logger.debug("types from typing module: %s", typing_types)
 
         if len(needed_types) > 0:
             raise ValueError("Unknown types: " + ", ".join(needed_types))
@@ -757,11 +748,7 @@ def get_mod_paths(mod_name):
         _logger.debug("failed to find module: %s", mod_name)
         return None
 
-    source = None
-    if hasattr(mod, "path"):
-        source = mod.path
-    elif hasattr(mod, "get_filename"):
-        source = mod.get_filename()
+    source = mod.path if hasattr(mod, "path") else None  # for pypy3
     if (source is None) or (not source.endswith(".py")):
         _logger.debug("failed to find python source for module: %s", mod_name)
         return None
