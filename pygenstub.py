@@ -39,6 +39,7 @@ __version__ = "1.5.0b1"  # sig: str
 
 PY3 = sys.version_info >= (3, 0)
 PY35 = sys.version_info >= (3, 5)
+PY36 = sys.version_info >= (3, 6)
 
 if not PY3:
     import __builtin__ as builtins
@@ -49,6 +50,9 @@ if not PY35:
     from pathlib2 import Path
 else:
     from pathlib import Path
+
+if not PY36:
+    ModuleNotFoundError = ImportError
 
 
 # sigalias: Document = docutils.nodes.document
@@ -769,14 +773,20 @@ def get_mod_paths(mod_name):
     if mod is None:
         _logger.debug("failed to find module: %s", mod_name)
         return None
-    source = Path(mod.path)
-    if not source.name.endswith(".py"):
+
+    source = None
+    if hasattr(mod, "path"):
+        source = mod.path
+    elif hasattr(mod, "get_filename"):
+        source = mod.get_filename()
+    if (source is None) or (not source.endswith(".py")):
         _logger.debug("failed to find python source for module: %s", mod_name)
         return None
+
     subpath = Path(*mod_name.split("."))
-    if source.name == "__init__.py":
+    if source == "__init__.py":
         subpath = subpath.joinpath("__init__.py")
-    return source, subpath
+    return Path(source), subpath
 
 
 def get_pkg_paths(pkg_name):
@@ -798,7 +808,8 @@ def get_pkg_paths(pkg_name):
 
     paths = []
     for mod_info in walk_packages(pkg.__path__, pkg.__name__ + "."):
-        mod_path = get_mod_paths(mod_info.name)
+        mod_name = mod_info.name if PY36 else mod_info[1]
+        mod_path = get_mod_paths(mod_name)
         if mod_path is not None:
             paths.append(mod_path)
     return paths
