@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pygenstub"
-version = "1.4.0"
+version = "1.5.0b1"
 description = "Python stub file generator."
 readme = "README.rst"
 
