@@ -3,7 +3,6 @@
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 from collections import OrderedDict
-from pathlib import Path
 
 import ast
 import docutils.nodes
@@ -11,6 +10,10 @@ import docutils.nodes
 Document = docutils.nodes.document
 
 __version__ = ...  # type: str
+SIG_FIELD = ...  # type: str
+SIG_COMMENT = ...  # type: str
+SIG_ALIAS = ...  # type: str
+DECORATORS = ...  # type: Set[str]
 
 def get_fields(node: Document, fields_tag: str = ...) -> Dict[str, str]: ...
 def extract_signature(docstring: str) -> Optional[str]: ...
@@ -82,6 +85,3 @@ class StubGenerator(ast.NodeVisitor):
     def generate_stub(self) -> str: ...
 
 def get_stub(source: str, generic: bool = ...) -> str: ...
-def get_mod_paths(mod_name: str) -> Optional[Tuple[Path, Path]]: ...
-def get_pkg_paths(pkg_name: str) -> List[Tuple[Path, Path]]: ...
-def run(argv: Optional[List[str]] = ...) -> None: ...
