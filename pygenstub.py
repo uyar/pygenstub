@@ -732,6 +732,7 @@ def get_stub(source, generic=False):
 def get_mod_paths(mod_name):
     """Get source and output file paths of a module.
 
+    :sig: (str) -> Tuple[Path, Path]
     :param mod_name: Name of module to get the paths for.
     :return: Path of source file and subpath in output directory,
         or ``None`` if module can not be found.
@@ -755,6 +756,7 @@ def get_mod_paths(mod_name):
 def get_pkg_paths(pkg_name):
     """Get all module paths in a package.
 
+    :sig: (str) -> List[Tuple[Path, Path]]
     :param pkg_name: Name of package to get the module paths for.
     :return: Paths of modules in package.
     """
@@ -873,6 +875,10 @@ def setup(app):
 
 
 def _make_parser(prog):
+    """Create a parser for command line arguments.
+
+    :sig: (str) -> ArgumentParser
+    """
     parser = ArgumentParser(prog=prog)
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("files", nargs="*", help="generate stubs for given files")
@@ -896,6 +902,10 @@ def _make_parser(prog):
 
 
 def _collect_sources(files, modules):
+    """Collect the source file paths.
+
+    :sig: (List[str], List[str]) -> List[Path]
+    """
     sources = []
     for path in files:
         paths = Path(path).glob("**/*.py") if Path(path).is_dir() else [Path(path)]
@@ -912,6 +922,7 @@ def _collect_sources(files, modules):
 def run(argv=None):
     """Start the command line interface.
 
+    :sig: (Optional[List[str]]) -> None
     :param argv: Command line arguments.
     """
     parser = _make_parser("pygenstub")
