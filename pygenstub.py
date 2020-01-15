@@ -66,19 +66,20 @@ def extract_signature(docstring):
     :sig: (str) -> Optional[str]
     :raise ValueError: When docstring contains multiple signature fields.
     """
-    root = publish_doctree(docstring, settings_overrides={"report_level": 5}).asdom()
-    sigs = [
-        f
-        for f in root.getElementsByTagName("field")
-        for n in f.getElementsByTagName("field_name")
-        if n.firstChild.nodeValue == SIG_FIELD
+    root = publish_doctree(docstring, settings_overrides={"report_level": 5})
+    sig_fields = [
+        field
+        for node in root.children
+        if node.tagname == "field_list"
+        for field in node.children
+        for field_info in field.children
+        if (field_info.tagname == "field_name") and (field_info.rawsource == SIG_FIELD)
     ]
-    if len(sigs) == 0:
+    if len(sig_fields) == 0:
         return None
-    if len(sigs) > 1:
+    if len(sig_fields) > 1:
         raise ValueError("multiple signature fields")
-    body = sigs[0].getElementsByTagName("field_body")[0]
-    return "".join(c.firstChild.nodeValue for c in body.childNodes)
+    return "".join(f.rawsource for f in sig_fields[0].children if f.tagname == "field_body")
 
 
 def _split_types(decl):
