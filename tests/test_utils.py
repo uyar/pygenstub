@@ -1,4 +1,19 @@
-from pygenstub import get_mod_paths, get_pkg_paths
+from pytest import raises
+
+from pygenstub import extract_signature, get_mod_paths, get_pkg_paths
+
+
+def test_extract_signature_should_return_value_of_sig_field():
+    assert extract_signature("foo\n\n:sig: () -> None\n:param a: b\n") == "() -> None"
+
+
+def test_extract_signature_should_return_none_if_no_sig_field():
+    assert extract_signature("foo\n\n:param a: b\n") is None
+
+
+def test_extract_signature_should_fail_if_multiple_sig_fields():
+    with raises(ValueError):
+        extract_signature("foo\n\n:sig: () -> None\n:sig: () -> None\n")
 
 
 def test_get_mod_source_should_return_python_file_path():

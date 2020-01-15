@@ -60,50 +60,25 @@ _RE_COMMENT_IN_STRING = re.compile(r"""['"]\s*%(text)s\s*.*['"]""" % {"text": _S
 _logger = logging.getLogger(__name__)
 
 
-def get_fields(node, fields_tag="field_list"):
-    """Get the field names and their values from a node.
-
-    :sig: (Document, str) -> Dict[str, str]
-    :param node: Node to get the fields from.
-    :param fields_tag: Tag of child node that contains the fields.
-    :return: Names and values of fields.
-    """
-    fields_nodes = [c for c in node.children if c.tagname == fields_tag]
-    if len(fields_nodes) == 0:
-        return {}
-    assert len(fields_nodes) == 1, "multiple nodes with tag " + fields_tag
-    fields_node = fields_nodes[0]
-    fields = [
-        {f.tagname: f.rawsource.strip() for f in n.children}
-        for n in fields_node.children
-        if n.tagname == "field"
-    ]
-    return {f["field_name"]: f["field_body"] for f in fields}
-
-
 def extract_signature(docstring):
     """Extract the signature from a docstring.
 
     :sig: (str) -> Optional[str]
-    :param docstring: Docstring to extract the signature from.
-    :return: Extracted signature, or ``None`` if there's no signature.
+    :raise ValueError: When docstring contains multiple signature fields.
     """
-    root = publish_doctree(docstring, settings_overrides={"report_level": 5})
-    fields = get_fields(root)
-    return fields.get(SIG_FIELD)
-
-
-def get_signature(node):
-    """Get the signature of a function or a class.
-
-    :sig: (Union[ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef]) -> Optional[str]
-    :param node: Node to get the signature from.
-    :return: Value of signature field in node docstring, or ``None`` if there's no signature.
-    """
-    docstring = ast.get_docstring(node)
-    if docstring is None:
+    root = publish_doctree(docstring, settings_overrides={"report_level": 5}).asdom()
+    sigs = [
+        f
+        for f in root.getElementsByTagName("field")
+        for n in f.getElementsByTagName("field_name")
+        if n.firstChild.nodeValue == SIG_FIELD
+    ]
+    if len(sigs) == 0:
         return None
-    return extract_signature(docstring)
+    if len(sigs) > 1:
+        raise ValueError("multiple signature fields")
+    body = sigs[0].getElementsByTagName("field_body")[0]
+    return "".join(c.firstChild.nodeValue for c in body.childNodes)
 
 
 def _split_types(decl):
@@ -466,7 +441,8 @@ class StubGenerator(ast.NodeVisitor):
             elif hasattr(d, "value"):
                 decorators.append(d.value.id + "." + d.attr)
 
-        signature = get_signature(node)
+        docstring = ast.get_docstring(node)
+        signature = extract_signature(docstring) if docstring is not None else None
 
         if signature is None:
             parent = self._parents[-1]
@@ -574,7 +550,8 @@ class StubGenerator(ast.NodeVisitor):
             bases.append(".".join(base_parts[::-1]))
         self.required_types |= set(bases)
 
-        signature = get_signature(node)
+        docstring = ast.get_docstring(node)
+        signature = extract_signature(docstring) if docstring is not None else None
         stub_node = ClassNode(node.name, bases=bases, signature=signature)
         self._parents[-1].add_child(stub_node)
 
