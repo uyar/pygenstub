@@ -16,6 +16,17 @@ def test_extract_signature_should_raise_error_if_multiple_sig_fields():
         extract_signature("foo\n\n:sig: () -> None\n:sig: () -> None\n")
 
 
+def test_extract_signature_should_reduce_multiple_spaces():
+    assert extract_signature("foo\n\n:sig: (str,  int) -> None\n") == "(str, int) -> None"
+
+
+def test_extract_signature_should_join_multiline_sig_field():
+    assert (
+        extract_signature("foo\n\n:sig: (\n  str,\n  int\n  ) -> None\n")
+        == "( str, int ) -> None"
+    )
+
+
 def test_parse_signature_should_return_input_types_return_type_and_required_types():
     assert parse_signature("(str) -> int") == (["str"], "int", {"str", "int"})
 
@@ -72,6 +83,10 @@ def test_parse_signature_should_consider_components_of_nested_bracketed_types_as
 
 def test_parse_signature_should_treat_signature_as_variable_type_comment_if_no_arrow():
     assert parse_signature("int") == (None, "int", {"int"})
+
+
+def test_parse_signature_should_correctly_handle_multiline_signature():
+    assert parse_signature("(\n  str\n) -> int") == (["str"], "int", {"str", "int"})
 
 
 def test_get_mod_source_should_return_python_file_path():
