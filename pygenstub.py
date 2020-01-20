@@ -149,27 +149,16 @@ class StubNode:
 
         :sig: () -> None
         """
-        self.variables = []  # sig: List[VariableNode]
-        self.variable_names = set()  # sig: Set[str]
-        self.children = []  # sig: List[Union[FunctionNode, ClassNode]]
         self.parent = None  # sig: Optional[StubNode]
+        """Parent node of this node."""
 
-    def add_variable(self, node):
-        """Add a variable node to this node.
-
-        :sig: (VariableNode) -> None
-        :param node: Variable node to add.
-        """
-        if node.name not in self.variable_names:
-            self.variables.append(node)
-            self.variable_names.add(node.name)
-            node.parent = self
+        self.children = []  # sig: List[StubNode]
+        """Child nodes of this node."""
 
     def add_child(self, node):
-        """Add a function/method or class node to this node.
+        """Add a child node to this node.
 
-        :sig: (Union[FunctionNode, ClassNode]) -> None
-        :param node: Function or class node to add.
+        :sig: (StubNode) -> None
         """
         self.children.append(node)
         node.parent = self
@@ -184,15 +173,17 @@ class StubNode:
         :return: Lines of stub code for this node.
         """
         stub = []
-        for child in self.variables:
+        variables = [n for n in self.children if isinstance(n, VariableNode)]
+        nonvariables = [n for n in self.children if not isinstance(n, VariableNode)]
+        for child in variables:
             stub.extend(child.get_code())
         if (
-            (len(self.variables) > 0)
-            and (len(self.children) > 0)
+            (len(variables) > 0)
+            and (len(nonvariables) > 0)
             and (not isinstance(self, ClassNode))
         ):
             stub.append("")
-        for child in self.children:
+        for child in nonvariables:
             stub.extend(child.get_code())
         return stub
 
@@ -312,7 +303,7 @@ class ClassNode(StubNode):
         stub = []
         bases = ("(" + ", ".join(self.bases) + ")") if len(self.bases) > 0 else ""
         slots = {"n": self.name, "b": bases}
-        if (len(self.children) == 0) and (len(self.variables) == 0):
+        if len(self.children) == 0:
             stub.append("class %(n)s%(b)s: ..." % slots)
         else:
             stub.append("class %(n)s%(b)s:" % slots)
@@ -430,7 +421,7 @@ class StubGenerator(ast.NodeVisitor):
                     return_type = "Any"
                     self.required_types.add(return_type)
                 stub_node = VariableNode(name, return_type)
-                p.add_variable(stub_node)
+                p.add_child(stub_node)
 
     def get_function_node(self, node):
         """Process a function node.
@@ -604,7 +595,7 @@ class StubGenerator(ast.NodeVisitor):
         needed_types -= self.defined_types
         _logger.debug("defined types: %s", self.defined_types)
 
-        module_vars = {v.name for v in self.root.variables}
+        module_vars = {n for n in self.root.children if isinstance(n, VariableNode)}
         _logger.debug("module variables: %s", module_vars)
 
         qualified_types = {n for n in needed_types if "." in n}
