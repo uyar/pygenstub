@@ -46,7 +46,7 @@ SIG_FIELD = "sig"
 _SIG_COMMENT = "# sig:"
 _SIG_ALIAS = "# sigalias:"
 
-SUPPORTED_DECORATORS = {"property", "staticmethod", "classmethod"}
+_SUPPORTED_DECORATORS = {"property", "staticmethod", "classmethod"}
 
 LINE_LENGTH_LIMIT = 79
 INDENT = 4 * " "
@@ -64,6 +64,7 @@ def extract_signature(docstring):
     """Extract the signature from a docstring.
 
     :sig: (str) -> Optional[str]
+    :return: Signature, or ``None`` if no signature found.
     :raise ValueError: When docstring contains multiple signature fields.
     """
     root = publish_doctree(docstring, settings_overrides={"report_level": 5})
@@ -246,7 +247,7 @@ class FunctionNode(StubNode):
         stub = []
 
         for deco in self.decorators:
-            if (deco in SUPPORTED_DECORATORS) or deco.endswith(".setter"):
+            if (deco in _SUPPORTED_DECORATORS) or deco.endswith(".setter"):
                 stub.append("@" + deco)
 
         parameters = []

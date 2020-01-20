@@ -11,7 +11,7 @@ def test_extract_signature_should_return_none_if_no_sig_field():
     assert extract_signature("foo\n\n:param a: b\n") is None
 
 
-def test_extract_signature_should_fail_if_multiple_sig_fields():
+def test_extract_signature_should_raise_error_if_multiple_sig_fields():
     with raises(ValueError):
         extract_signature("foo\n\n:sig: () -> None\n:sig: () -> None\n")
 
