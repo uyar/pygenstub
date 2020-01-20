@@ -6,9 +6,6 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 import ast
-import docutils.nodes
-
-Document = docutils.nodes.document
 
 __version__ = ...  # type: str
 
