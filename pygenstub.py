@@ -62,6 +62,7 @@ def extract_signature(docstring):
     """Extract the signature from a docstring.
 
     :sig: (str) -> Optional[str]
+    :param docstring: Docstring to extract the signature from.
     :return: Signature, or ``None`` if no signature found.
     :raise ValueError: When docstring contains multiple signature fields.
     """
@@ -84,10 +85,9 @@ def extract_signature(docstring):
 def _split_types(decl):
     """Split a parameter types declaration into individual types.
 
-    The input is the left hand side of a signature (the part before the arrow),
-    excluding the parentheses.
-
     :sig: (str) -> List[str]
+    :param decl: Parameter types declaration (excluding the parentheses).
+    :return: List of individual parameter types.
     """
     if decl == "":
         return []
@@ -114,13 +114,15 @@ def _split_types(decl):
 
 
 def parse_signature(signature):
-    """Parse a signature into its input and return parameter types.
+    """Parse input and return parameter types from a signature.
 
     This will also collect the types that are required by any of the input
     and return types.
 
     :sig: (str) -> Tuple[List[str], str, Set[str]]
+    :param signature: Signature to parse.
     :return: Input parameter types, return type, and all required types.
+    :raise ValueError: When signature cannot be correctly parsed.
     """
     sig_parts = _RE_SIG_ARROW.split(signature)
     if len(sig_parts) > 2:
@@ -156,6 +158,7 @@ class StubNode:
         """Add a child node to this node.
 
         :sig: (StubNode) -> None
+        :param node: Node to add.
         """
         self.children.append(node)
         node.parent = self
