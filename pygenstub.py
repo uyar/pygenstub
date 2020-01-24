@@ -58,6 +58,11 @@ _RE_SIG_ALIAS = re.compile(r"\s*#\s+sigalias:\s+([^\s]*)\s+=\s+([^\s]*)\s*$")
 _logger = logging.getLogger(__name__)
 
 
+############################################################
+# SIGNATURE PROCESSING
+############################################################
+
+
 def extract_signature(docstring):
     """Extract the signature from a docstring.
 
@@ -138,6 +143,11 @@ def parse_signature(signature):
         param_types = _split_types(csv)
     requires = set(_RE_QUALIFIED_TYPES.findall(signature))
     return param_types, return_type, requires
+
+
+############################################################
+# AST PROCESSING
+############################################################
 
 
 class StubNode:
@@ -228,11 +238,10 @@ class FunctionNode(StubNode):
         """
         super().__init__()
         self.name = name  # sig: str
+        self.async_ = False  # sig: bool
         self.parameters = parameters  # sig: Sequence[Tuple[str, str, bool]]
         self.rtype = rtype  # sig: str
         self.decorators = decorators if decorators is not None else []  # sig: Sequence[str]
-
-        self._async = False  # sig: bool
 
     def get_code(self):
         """Get the stub code for this function.
@@ -256,7 +265,7 @@ class FunctionNode(StubNode):
             parameters.append(decl)
 
         slots = {
-            "a": "async " if self._async else "",
+            "a": "async " if self.async_ else "",
             "n": self.name,
             "p": ", ".join(parameters),
             "r": self.rtype,

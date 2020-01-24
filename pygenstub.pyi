@@ -28,10 +28,10 @@ class VariableNode(StubNode):
 
 class FunctionNode(StubNode):
     name = ...  # type: str
+    async_ = ...  # type: bool
     parameters = ...  # type: Sequence[Tuple[str, str, bool]]
     rtype = ...  # type: str
     decorators = ...  # type: Sequence[str]
-    _async = ...  # type: bool
     def __init__(
         self,
         name: str,
