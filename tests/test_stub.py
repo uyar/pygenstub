@@ -139,7 +139,7 @@ def test_if_returns_unknown_type_should_raise_error():
     code = get_function("f", rtype="Foo")
     with raises(ValueError) as e:
         get_stub(code)
-    assert "Unknown types: Foo" in str(e)
+    assert "unresolved types: Foo" in str(e)
 
 
 def test_if_one_param_then_stub_should_have_one_param():
@@ -215,7 +215,7 @@ def test_if_param_type_unknown_should_raise_error():
     code = get_function("f", params=["i"], ptypes=["Foo"], rtype="None")
     with raises(ValueError) as e:
         get_stub(code)
-    assert "Unknown types: Foo" in str(e)
+    assert "unresolved types: Foo" in str(e)
 
 
 def test_if_param_has_default_then_stub_should_include_ellipses():

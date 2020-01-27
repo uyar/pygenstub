@@ -592,50 +592,72 @@ class StubGenerator(ast.NodeVisitor):
             line += "from %(m)s import %(n)s as %(a)s" % {"m": module_, "n": n, "a": a}
         return line
 
+    def analyze_types(self):
+        """Scan required types and determine type groups.
+
+        :sig: () -> Dict[str, Set[str]]
+        :return: Report containing imported types and needed namespaces.
+        :raise ValueError: When all needed types cannot be resolved.
+        """
+        report = {}
+        needed_types = self.required_types - _BUILTIN_TYPES
+
+        _logger.debug("defined types: %s", self.defined_types)
+        needed_types -= self.defined_types
+
+        qualified_types = {name for name in needed_types if "." in name}
+        _logger.debug("qualified types: %s", qualified_types)
+        needed_types -= qualified_types
+
+        module_vars = {name for name in self.root.children if isinstance(name, VariableNode)}
+        _logger.debug("module variables: %s", module_vars)
+
+        needed_modules = {
+            name[: name.rfind(".")] for name in qualified_types if name not in module_vars
+        }
+
+        imported_names = {name.split("::")[0] for name in self.imported_names}
+        imported_used = imported_names & (needed_types | needed_modules)
+        if len(imported_used) > 0:
+            _logger.debug("used imported types: %s", imported_used)
+            report["imported"] = imported_used
+            needed_types -= imported_used
+
+        needed_modules -= imported_names
+        if len(needed_modules) > 0:
+            _logger.debug("needed modules: %s", needed_modules)
+            report["modules"] = needed_modules
+
+        typing_mod = __import__("typing")
+        typing_types = {name for name in needed_types if hasattr(typing_mod, name)}
+        if len(typing_types) > 0:
+            _logger.debug("types from typing module: %s", typing_types)
+            report["typing"] = typing_types
+            needed_types -= typing_types
+
+        if len(needed_types) > 0:
+            raise ValueError("unresolved types: " + ", ".join(needed_types))
+        return report
+
     def generate_stub(self):
         """Generate the stub code for this source.
 
         :sig: () -> str
         :return: Generated stub code.
         """
-        needed_types = self.required_types - _BUILTIN_TYPES
-
-        needed_types -= self.defined_types
-        _logger.debug("defined types: %s", self.defined_types)
-
-        module_vars = {n for n in self.root.children if isinstance(n, VariableNode)}
-        _logger.debug("module variables: %s", module_vars)
-
-        qualified_types = {n for n in needed_types if "." in n}
-        qualified_namespaces = {".".join(n.split(".")[:-1]) for n in qualified_types}
-
-        needed_namespaces = qualified_namespaces - module_vars
-        needed_types -= qualified_types
-        _logger.debug("needed namespaces: %s", needed_namespaces)
-
-        imported_names = {n.split("::")[0] for n in self.imported_names}
-        imported_types = imported_names & (needed_types | needed_namespaces)
-        needed_types -= imported_types
-        needed_namespaces -= imported_names
-        _logger.debug("used imported types: %s", imported_types)
-
-        typing_mod = __import__("typing")
-        typing_types = {n for n in needed_types if hasattr(typing_mod, n)}
-        needed_types -= typing_types
-        _logger.debug("types from typing module: %s", typing_types)
-
-        if len(needed_types) > 0:
-            raise ValueError("Unknown types: " + ", ".join(needed_types))
+        types = self.analyze_types()
 
         out = StringIO()
         started = False
 
-        if len(typing_types) > 0:
+        typing_types = types.get("typing")
+        if typing_types is not None:
             line = self.generate_import_from("typing", typing_types)
             out.write(line + "\n")
             started = True
 
-        if len(imported_types) > 0:
+        imported_types = types.get("imported")
+        if imported_types is not None:
             if started:
                 out.write("\n")
             # preserve the import order in the source file
@@ -645,11 +667,12 @@ class StubGenerator(ast.NodeVisitor):
                     out.write(line + "\n")
             started = True
 
-        if len(needed_namespaces) > 0:
+        needed_modules = types.get("modules")
+        if needed_modules is not None:
             if started:
                 out.write("\n")
             as_names = {n.split("::")[0]: n for n in self.imported_namespaces if "::" in n}
-            for module_ in sorted(needed_namespaces):
+            for module_ in sorted(needed_modules):
                 if module_ in as_names:
                     a, n = as_names[module_].split("::")
                     out.write("import " + n + " as " + a + "\n")
