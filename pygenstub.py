@@ -25,6 +25,7 @@ import sys
 import textwrap
 from argparse import ArgumentParser
 from bisect import bisect
+from contextlib import redirect_stdout
 from importlib import import_module
 from io import StringIO
 from pathlib import Path
@@ -84,7 +85,9 @@ def extract_signature(docstring):
         return None
     if len(sig_fields) > 1:
         raise ValueError("multiple signature fields")
-    return "".join(f.rawsource for f in sig_fields[0].children if f.tagname == "field_body")
+    return "".join(
+        field.rawsource for field in sig_fields[0].children if field.tagname == "field_body"
+    )
 
 
 def _split_types(decl):
@@ -100,21 +103,21 @@ def _split_types(decl):
     # only consider the top level commas, ignore the ones in []
     commas = []
     bracket_depth = 0
-    for i, char in enumerate(decl):
+    for pos, char in enumerate(decl):
         if (char == ",") and (bracket_depth == 0):
-            commas.append(i)
+            commas.append(pos)
         elif char == "[":
             bracket_depth += 1
         elif char == "]":
             bracket_depth -= 1
 
     types = []
-    last_i = 0
-    for i in commas:
-        types.append(decl[last_i:i].strip())
-        last_i = i + 1
+    last_pos = 0
+    for pos in commas:
+        types.append(decl[last_pos:pos].strip())
+        last_pos = pos + 1
     else:
-        types.append(decl[last_i:].strip())
+        types.append(decl[last_pos:].strip())
     return types
 
 
@@ -143,6 +146,54 @@ def parse_signature(signature):
         param_types = _split_types(csv)
     requires = set(_RE_QUALIFIED_TYPES.findall(signature))
     return param_types, return_type, requires
+
+
+############################################################
+# PRINTING UTILITIES
+############################################################
+
+
+def print_line(indent_level, *args):
+    """Print a line at a given indent level.
+
+    :sig: (int) -> None
+    :param indent_level: Level of indentation for line.
+    :param args: Arguments to print.
+    """
+    print(indent_level * INDENT, *args, sep="")
+
+
+def print_import_from(mod, names, *, indent_level=0, **config):
+    """Print an "import ... from ..." line.
+
+    :sig: (str, Set[str], Optional[int]) -> None
+    :param mod: Name of module to import the names from.
+    :param names: Names to import.
+    :param indent_level: Indentation level for generated lines.
+    """
+    regular = sorted(n for n in names if "::" not in n)
+    renamed = [n for n in names if "::" in n]
+
+    if len(regular) > 0:
+        line = "from %(mod)s import %(names)s" % {
+            "mod": mod,
+            "names": ", ".join(regular),
+        }
+        if len(line) <= config.get("max_line_length", MAX_LINE_LENGTH):
+            print_line(indent_level, line)
+        else:
+            line = "from %(mod)s import (" % {"mod": mod}
+            print_line(indent_level, line)
+            for name in regular:
+                print_line(indent_level + 1, name, ",")
+            print_line(indent_level, ")")
+        if len(renamed) > 0:
+            print()
+
+    for as_name in renamed:
+        new, old = as_name.split("::")
+        line = "from %(mod)s import %(old)s as %(new)s" % {"mod": mod, "old": old, "new": new}
+        print_line(indent_level, line)
 
 
 ############################################################
@@ -565,33 +616,6 @@ class StubGenerator(ast.NodeVisitor):
         self.generic_visit(node)
         del self._parents[-1]
 
-    @staticmethod
-    def generate_import_from(module_, names):
-        """Generate an import line.
-
-        :sig: (str, Set[str]) -> str
-        :param module_: Name of module to import the names from.
-        :param names: Names to import.
-        :return: Import line in stub code.
-        """
-        regular_names = [n for n in names if "::" not in n]
-        as_names = [n for n in names if "::" in n]
-
-        line = ""
-        if len(regular_names) > 0:
-            slots = {"m": module_, "n": ", ".join(sorted(regular_names))}
-            line = "from %(m)s import %(n)s" % slots
-            if len(line) > MAX_LINE_LENGTH:
-                slots["n"] = INDENT + (",\n" + INDENT).join(sorted(regular_names)) + ","
-                line = "from %(m)s import (\n%(n)s\n)" % slots
-            if len(as_names) > 0:
-                line += "\n"
-
-        for as_name in as_names:
-            a, n = as_name.split("::")
-            line += "from %(m)s import %(n)s as %(a)s" % {"m": module_, "n": n, "a": a}
-        return line
-
     def analyze_types(self):
         """Scan required types and determine type groups.
 
@@ -639,56 +663,53 @@ class StubGenerator(ast.NodeVisitor):
             raise ValueError("unresolved types: " + ", ".join(needed_types))
         return report
 
-    def generate_stub(self):
-        """Generate the stub code for this source.
+    def print_stub(self):
+        """Print the stub code for this source.
 
         :sig: () -> str
         :return: Generated stub code.
         """
         types = self.analyze_types()
 
-        out = StringIO()
         started = False
 
         typing_types = types.get("typing")
         if typing_types is not None:
-            line = self.generate_import_from("typing", typing_types)
-            out.write(line + "\n")
+            print_import_from("typing", typing_types)
             started = True
 
         imported_types = types.get("imported")
         if imported_types is not None:
             if started:
-                out.write("\n")
+                print()
             # preserve the import order in the source file
             for name in self.imported_names:
                 if name.split("::")[0] in imported_types:
-                    line = self.generate_import_from(self.imported_names[name], {name})
-                    out.write(line + "\n")
+                    print_import_from(self.imported_names[name], {name})
             started = True
 
         needed_modules = types.get("modules")
         if needed_modules is not None:
             if started:
-                out.write("\n")
+                print()
             as_names = {n.split("::")[0]: n for n in self.imported_namespaces if "::" in n}
             for module_ in sorted(needed_modules):
                 if module_ in as_names:
                     a, n = as_names[module_].split("::")
-                    out.write("import " + n + " as " + a + "\n")
+                    print("import " + n + " as " + a)
                 else:
-                    out.write("import " + module_ + "\n")
+                    print("import " + module_)
             started = True
 
         if len(self.aliases) > 0:
             if started:
-                out.write("\n")
+                print()
             for alias, signature in self.aliases.items():
-                out.write("%s = %s\n" % (alias, signature))
+                print("%s = %s" % (alias, signature))
             started = True
 
         if started:
-            out.write("\n")
+            print()
         stub_lines = self.root.get_code()
         n_lines = len(stub_lines)
         for line_no in range(n_lines):
@@ -703,16 +724,15 @@ class StubGenerator(ast.NodeVisitor):
                     or (next_line and next_line.startswith(" "))
                 )
             ):
-                out.write("\n")
+                print()
             if (
                 line.startswith("def ")
                 and (prev_line is not None)
                 and (prev_line.startswith((" ", "class ")))
             ):
-                out.write("\n")
-            out.write(line + "\n")
+                print()
+            print(line)
             line_no += 1
-        return out.getvalue()
 
 
 def get_stub(source, *, generic=False):
@@ -724,8 +744,10 @@ def get_stub(source, *, generic=False):
     :return: Generated stub code.
     """
     generator = StubGenerator(source, generic=generic)
-    stub = generator.generate_stub()
-    return stub
+    out = StringIO()
+    with redirect_stdout(out):
+        generator.print_stub()
+    return out.getvalue()
 
 
 ############################################################
