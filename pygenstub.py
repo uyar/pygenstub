@@ -224,7 +224,7 @@ class VariableNode(StubNode):
 class FunctionNode(StubNode):
     """A node representing a function in a stub tree."""
 
-    def __init__(self, name, parameters, rtype, decorators=None):
+    def __init__(self, name, parameters, rtype, *, decorators=None):
         """Initialize this function node.
 
         The parameters have to given as a list of triples where each item specifies
@@ -290,7 +290,7 @@ class FunctionNode(StubNode):
 class ClassNode(StubNode):
     """A node representing a class in a stub tree."""
 
-    def __init__(self, name, bases, signature=None):
+    def __init__(self, name, *, bases, signature=None):
         """Initialize this class node.
 
         :sig: (str, Sequence[str], Optional[str]) -> None
@@ -341,7 +341,7 @@ def get_aliases(lines):
 class StubGenerator(ast.NodeVisitor):
     """A transformer that generates stub declarations from a source code."""
 
-    def __init__(self, source, generic=False):
+    def __init__(self, source, *, generic=False):
         """Initialize this stub generator.
 
         :sig: (str, bool) -> None
@@ -692,7 +692,7 @@ class StubGenerator(ast.NodeVisitor):
         return out.getvalue()
 
 
-def get_stub(source, generic=False):
+def get_stub(source, *, generic=False):
     """Get the stub code for a source code.
 
     :sig: (str, bool) -> str
