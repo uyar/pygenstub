@@ -5,6 +5,7 @@ Changes
 --------------------
 
 - Drop support for Python 2, 3.4, and 3.5.
+- Support type annotations for *args and **kwargs.
 
 1.4.1 (2020-01-13)
 ------------------

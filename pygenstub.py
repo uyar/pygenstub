@@ -156,7 +156,7 @@ def parse_signature(signature):
 def print_line(indent_level, *args):
     """Print a line at a given indent level.
 
-    :sig: (int) -> None
+    :sig: (int, Tuple[Any, ...]) -> None
     :param indent_level: Level of indentation for line.
     :param args: Arguments to print.
     """
@@ -166,10 +166,11 @@ def print_line(indent_level, *args):
 def print_import_from(mod, names, *, indent_level=0, **config):
     """Print an "import ... from ..." line.
 
-    :sig: (str, Set[str], Optional[int]) -> None
+    :sig: (str, Set[str], int, Dict[str, Any]) -> None
     :param mod: Name of module to import the names from.
     :param names: Names to import.
     :param indent_level: Indentation level for generated lines.
+    :param config: Configuration settings.
     """
     regular = sorted(n for n in names if "::" not in n)
     renamed = [n for n in names if "::" in n]
@@ -533,19 +534,21 @@ class StubGenerator(ast.NodeVisitor):
 
         self.required_types |= requires
 
-        if node.args.vararg is not None:
-            param_names.append("*" + node.args.vararg.arg)
-            param_types.append("")
-
-        if node.args.kwarg is not None:
-            param_names.append("**" + node.args.kwarg.arg)
-            param_types.append("")
-
         kwonly_args = getattr(node.args, "kwonlyargs", [])
         if len(kwonly_args) > 0:
             param_names.extend([arg.arg for arg in kwonly_args])
             if signature is None:
                 param_types.extend(["Any"] * len(kwonly_args))
+
+        if node.args.vararg is not None:
+            param_names.append("*" + node.args.vararg.arg)
+            if len(param_types) < len(param_names):
+                param_types.append("")
+
+        if node.args.kwarg is not None:
+            param_names.append("**" + node.args.kwarg.arg)
+            if len(param_types) < len(param_names):
+                param_types.append("")
 
         if len(param_types) != len(param_names):
             raise ValueError("Parameter names and types don't match: " + node.name)
