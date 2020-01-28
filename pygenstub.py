@@ -34,7 +34,7 @@ from pkgutil import get_loader, walk_packages
 from docutils.core import publish_doctree
 
 
-__version__ = "2.0.0b1"  # sig: str
+__version__ = "2.0.0a1"  # sig: str
 
 
 _BUILTIN_TYPES = {k for k, t in builtins.__dict__.items() if isinstance(t, type)}
@@ -153,27 +153,17 @@ def parse_signature(signature):
 ############################################################
 
 
-def print_line(indent_level, *args):
-    """Print a line at a given indent level.
-
-    :sig: (int, Tuple[Any, ...]) -> None
-    :param indent_level: Level of indentation for line.
-    :param args: Arguments to print.
-    """
-    print(indent_level * INDENT, *args, sep="")
-
-
-def print_import_from(mod, names, *, indent_level=0, **config):
+def print_import_from(mod, names, *, indent="", **config):
     """Print an "import ... from ..." line.
 
-    :sig: (str, Set[str], int, Dict[str, Any]) -> None
+    :sig: (str, Set[str], str, Dict[str, Any]) -> None
     :param mod: Name of module to import the names from.
     :param names: Names to import.
-    :param indent_level: Indentation level for generated lines.
+    :param indent: Indentation for generated lines.
     :param config: Configuration settings.
     """
-    regular = sorted(n for n in names if "::" not in n)
-    renamed = [n for n in names if "::" in n]
+    regular = sorted(name for name in names if "::" not in name)
+    renamed = [name for name in names if "::" in name]
 
     if len(regular) > 0:
         line = "from %(mod)s import %(names)s" % {
@@ -181,20 +171,20 @@ def print_import_from(mod, names, *, indent_level=0, **config):
             "names": ", ".join(regular),
         }
         if len(line) <= config.get("max_line_length", MAX_LINE_LENGTH):
-            print_line(indent_level, line)
+            print(indent, line, sep="")
         else:
             line = "from %(mod)s import (" % {"mod": mod}
-            print_line(indent_level, line)
+            print(indent, line, sep="")
             for name in regular:
-                print_line(indent_level + 1, name, ",")
-            print_line(indent_level, ")")
+                print(indent + INDENT, name, ",", sep="")
+            print(indent, ")", sep="")
         if len(renamed) > 0:
             print()
 
     for as_name in renamed:
         new, old = as_name.split("::")
         line = "from %(mod)s import %(old)s as %(new)s" % {"mod": mod, "old": old, "new": new}
-        print_line(indent_level, line)
+        print(indent, line, sep="")
 
 
 ############################################################
