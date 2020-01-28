@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.0.0b1 (unreleased)
+2.0.0a1 (2020-01-28)
 --------------------
 
 - Drop support for Python 2, 3.4, and 3.5.
