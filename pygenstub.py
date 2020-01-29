@@ -507,7 +507,8 @@ class StubGenerator(ast.NodeVisitor):
             param_types, rtype, requires = ["Any"] * n_args, "Any", {"Any"}
         else:
             _logger.debug("parsing signature for %s", node.name)
-            param_types, rtype, requires = parse_signature(signature)
+            input_types, rtype, requires = parse_signature(signature)
+            param_types = input_types if input_types is not None else []
 
         # TODO: only in classes
         if ((n_args > 0) and (param_names[0] == "self")) or (
@@ -659,8 +660,7 @@ class StubGenerator(ast.NodeVisitor):
     def print_stub(self):
         """Print the stub code for this source.
 
-        :sig: () -> str
-        :return: Generated stub code.
+        :sig: () -> None
         """
         types = self.analyze_types()
 
@@ -751,7 +751,7 @@ def get_stub(source, *, generic=False):
 def get_mod_paths(mod_name):
     """Get source and output file paths of a module.
 
-    :sig: (str) -> Tuple[Path, Path]
+    :sig: (str) -> Optional[Tuple[Path, Path]]
     :param mod_name: Name of module to get the paths for.
     :return: Path of source file and subpath in output directory,
         or ``None`` if module can not be found.
@@ -761,7 +761,7 @@ def get_mod_paths(mod_name):
         _logger.debug("failed to find module: %s", mod_name)
         return None
 
-    source = mod.path if hasattr(mod, "path") else None  # for pypy3
+    source = getattr(mod, "path", None)  # for pypy3
     if (source is None) or (not source.endswith(".py")):
         _logger.debug("failed to find python source for module: %s", mod_name)
         return None
@@ -923,7 +923,7 @@ def _make_parser(prog):
 def _collect_sources(files, modules):
     """Collect the source file paths.
 
-    :sig: (List[str], List[str]) -> List[Path]
+    :sig: (List[str], List[str]) -> List[Tuple[Path, Path]]
     """
     sources = []
     for path in files:
