@@ -10,15 +10,6 @@ install:
 
 script: tox -e py
 
-jobs:
-  include:
-    - stage: style
-      python: 3.7
-      script: tox -e style
-    - stage: docs
-      python: 3.7
-      script: tox -e docs
-
 notifications:
   email:
     on_success: always
