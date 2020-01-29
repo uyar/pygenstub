@@ -7,7 +7,7 @@ from pathlib import Path
 
 import ast
 
-__version__ = ...  # type: str
+__version__: str
 
 def extract_signature(docstring: str) -> Optional[str]: ...
 def _split_types(decl: str) -> List[str]: ...
@@ -19,24 +19,24 @@ def print_import_from(
 ) -> None: ...
 
 class StubNode:
-    parent = ...  # type: Optional[StubNode]
-    children = ...  # type: List[StubNode]
+    parent: Optional[StubNode]
+    children: List[StubNode]
     def __init__(self) -> None: ...
     def add_child(self, node: StubNode) -> None: ...
     def get_code(self) -> List[str]: ...
 
 class VariableNode(StubNode):
-    name = ...  # type: str
-    type_ = ...  # type: str
+    name: str
+    type_: str
     def __init__(self, name: str, type_: str) -> None: ...
     def get_code(self) -> List[str]: ...
 
 class FunctionNode(StubNode):
-    name = ...  # type: str
-    async_ = ...  # type: bool
-    parameters = ...  # type: Sequence[Tuple[str, str, bool]]
-    rtype = ...  # type: str
-    decorators = ...  # type: Sequence[str]
+    name: str
+    async_: bool
+    parameters: Sequence[Tuple[str, str, bool]]
+    rtype: str
+    decorators: Sequence[str]
     def __init__(
         self,
         name: str,
@@ -48,9 +48,9 @@ class FunctionNode(StubNode):
     def get_code(self) -> List[str]: ...
 
 class ClassNode(StubNode):
-    name = ...  # type: str
-    bases = ...  # type: Sequence[str]
-    signature = ...  # type: Optional[str]
+    name: str
+    bases: Sequence[str]
+    signature: Optional[str]
     def __init__(
         self, name: str, *, bases: Sequence[str], signature: Optional[str] = ...
     ) -> None: ...
@@ -59,15 +59,15 @@ class ClassNode(StubNode):
 def get_aliases(lines: Sequence[str]) -> Dict[str, str]: ...
 
 class StubGenerator(ast.NodeVisitor):
-    root = ...  # type: StubNode
-    generic = ...  # type: bool
-    imported_namespaces = ...  # type: Dict[str, str]
-    imported_names = ...  # type: Dict[str, str]
-    defined_types = ...  # type: Set[str]
-    required_types = ...  # type: Set[str]
-    aliases = ...  # type: Dict[str, str]
-    _parents = ...  # type: List[StubNode]
-    _code_lines = ...  # type: List[str]
+    root: StubNode
+    generic: bool
+    imported_namespaces: Dict[str, str]
+    imported_names: Dict[str, str]
+    defined_types: Set[str]
+    required_types: Set[str]
+    aliases: Dict[str, str]
+    _parents: List[StubNode]
+    _code_lines: List[str]
     def __init__(self, source: str, *, generic: bool = ...) -> None: ...
     def collect_aliases(self) -> None: ...
     def get_function_node(

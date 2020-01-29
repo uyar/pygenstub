@@ -1,10 +1,11 @@
 Changes
 =======
 
-2.0.0a1 (2020-01-28)
---------------------
+2.0.0 (unreleased)
+------------------
 
 - Drop support for Python 2, 3.4, and 3.5.
+- Generate PEP-526 style variable annotations.
 - Support type annotations for *args and **kwargs.
 
 1.4.1 (2020-01-13)

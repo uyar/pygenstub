@@ -381,45 +381,43 @@ def test_if_method_decorated_property_setter_then_stub_should_include_decorator(
 
 def test_module_variable_type_comment_builtin_should_be_ellipsized():
     code = "n = 42  # sig: int\n"
-    assert get_stub(code) == "n = ...  # type: int\n"
+    assert get_stub(code) == "n: int\n"
 
 
 def test_module_variable_type_comment_from_imported_should_include_import():
     code = "from x import A\n\nn = 42  # sig: A\n" ""
-    assert get_stub(code) == "from x import A\n\nn = ...  # type: A\n"
+    assert get_stub(code) == "from x import A\n\nn: A\n"
 
 
 def test_module_variable_type_comment_imported_qualified_should_include_import():
     code = "import x\n\nn = 42  # sig: x.A\n" ""
-    assert get_stub(code) == "import x\n\nn = ...  # type: x.A\n"
+    assert get_stub(code) == "import x\n\nn: x.A\n"
 
 
 def test_module_variable_type_comment_relative_qualified_should_include_import():
     code = "from . import x\n\nn = 42  # sig: x.A\n" ""
-    assert get_stub(code) == "from . import x\n\nn = ...  # type: x.A\n"
+    assert get_stub(code) == "from . import x\n\nn: x.A\n"
 
 
 def test_module_variable_type_comment_unimported_qualified_should_include_import():
     code = "n = 42  # sig: x.y.A\n" ""
-    assert get_stub(code) == "import x.y\n\nn = ...  # type: x.y.A\n"
+    assert get_stub(code) == "import x.y\n\nn: x.y.A\n"
 
 
 def test_get_stub_comment_class_variable():
     code = get_class("C", classvars=["a = 42  # sig: int"])
-    assert get_stub(code) == "class C:\n    a = ...  # type: int\n"
+    assert get_stub(code) == "class C:\n    a: int\n"
 
 
 def test_get_stub_comment_instance_variable():
     method = get_function("m", params=["self"], rtype="None", body="self.a = 42  # sig: int")
     code = get_class("C", methods=[method])
-    assert (
-        get_stub(code) == "class C:\n    a = ...  # type: int\n    def m(self) -> None: ...\n"
-    )
+    assert get_stub(code) == "class C:\n    a: int\n    def m(self) -> None: ...\n"
 
 
 def test_stub_should_use_alias_comment():
     code = "# sigalias: B = int\n\nn = 42  # sig: B\n" ""
-    assert get_stub(code) == "B = int\n\nn = ...  # type: B\n"
+    assert get_stub(code) == "B = int\n\nn: B\n"
 
 
 def test_stub_should_exclude_function_without_sig():

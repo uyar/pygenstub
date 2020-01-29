@@ -260,7 +260,7 @@ class VariableNode(StubNode):
         :sig: () -> List[str]
         :return: Lines of stub code for this variable.
         """
-        return ["%(n)s = ...  # type: %(t)s" % {"n": self.name, "t": self.type_}]
+        return ["%(n)s: %(t)s" % {"n": self.name, "t": self.type_}]
 
 
 class FunctionNode(StubNode):
