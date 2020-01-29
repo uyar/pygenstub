@@ -127,7 +127,7 @@ def parse_signature(signature):
     This will also collect the types that are required by any of the input
     and return types.
 
-    :sig: (str) -> Tuple[List[str], str, Set[str]]
+    :sig: (str) -> Tuple[Optional[List[str]], str, Set[str]]
     :param signature: Signature to parse.
     :return: Input parameter types, return type, and all required types.
     :raise ValueError: When signature cannot be correctly parsed.
@@ -476,7 +476,7 @@ class StubGenerator(ast.NodeVisitor):
     def get_function_node(self, node):
         """Process a function node.
 
-        :sig: (Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> FunctionNode
+        :sig: (Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> Optional[FunctionNode]
         :param node: Node to process.
         :return: Generated function node in stub tree.
         """
