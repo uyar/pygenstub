@@ -34,7 +34,7 @@ from pkgutil import get_loader, walk_packages
 from docutils.core import publish_doctree
 
 
-__version__ = "2.0.0a1"  # sig: str
+__version__ = "2.0.0a2"  # sig: str
 
 
 _BUILTIN_TYPES = {k for k, t in builtins.__dict__.items() if isinstance(t, type)}
