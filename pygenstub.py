@@ -17,12 +17,10 @@
 
 import ast
 import builtins
-import inspect
 import logging
 import os
 import re
 import sys
-import textwrap
 from argparse import ArgumentParser
 from bisect import bisect
 from contextlib import redirect_stdout
@@ -38,7 +36,6 @@ __version__ = "2.0.0a2"  # sig: str
 _BUILTIN_TYPES = {k for k, t in builtins.__dict__.items() if isinstance(t, type)}
 _BUILTIN_TYPES.add("None")
 
-SIG_FIELD = "sig"
 _SIG_COMMENT = "# sig:"
 
 _SUPPORTED_DECORATORS = {"property", "staticmethod", "classmethod"}
@@ -62,38 +59,6 @@ _logger = logging.getLogger(__name__)
 ############################################################
 # SIGNATURE PROCESSING
 ############################################################
-
-
-# collect_aliases:: (Sequence[str]) -> Dict[str, str]
-def collect_aliases(lines):
-    """Collect the type aliases in the source code.
-
-    :param lines: Lines of the source code.
-    :return: Aliases and their definitions.
-    """
-    aliases = {}
-    for line in lines:
-        match = _RE_SIGALIAS_COMMENT.match(line)
-        if match:
-            alias, signature = match.groups()
-            aliases[alias] = signature
-    return aliases
-
-
-# collect_signatures:: (Sequence[str]) -> Dict[str, str]
-def collect_signatures(lines):
-    """Collect the signatures in the source code.
-
-    :param lines: Lines of the source code.
-    :return: Names and their signatures.
-    """
-    signatures = {}
-    for line in lines:
-        match = _RE_SIG_COMMENT.match(line)
-        if match:
-            name, signature = match.groups()
-            signatures[name] = signature
-    return signatures
 
 
 # _split_types:: (str) -> List[str]
@@ -198,8 +163,8 @@ class StubNode:
 
     # StubNode.add_child:: (StubNode) -> None
     def add_child(self, node):
-        self.children.append(node)
         node.parent = self
+        self.children.append(node)
 
     # StubNode.get_code:: () -> List[str]
     def get_code(self):
@@ -344,13 +309,15 @@ class StubGenerator(ast.NodeVisitor):
         self.imported_names = {}  # sig: Dict[str, str]
         self.defined_types = set()  # sig: Set[str]
         self.required_types = set()  # sig: Set[str]
-        self.aliases = {}  # sig: Dict[str, str]
 
         self._parents = [self.root]  # sig: List[StubNode]
         self._code_lines = source.splitlines()  # sig: List[str]
 
+        self.aliases = {}  # sig: Dict[str, str]
         self.collect_aliases()
-        self.signatures = collect_signatures(self._code_lines)
+
+        self.signatures = {}  # sig: Dict[str, str]
+        self.collect_signatures()
 
         ast_tree = ast.parse(source)
         self.visit(ast_tree)
@@ -358,11 +325,23 @@ class StubGenerator(ast.NodeVisitor):
     # StubGenerator.collect_aliases:: () -> None
     def collect_aliases(self):
         """Collect the type aliases in the source."""
-        self.aliases = collect_aliases(self._code_lines)
+        for line in self._code_lines:
+            match = _RE_SIGALIAS_COMMENT.match(line)
+            if match:
+                alias, signature = match.groups()
+                self.aliases[alias] = signature
         for alias, signature in self.aliases.items():
             _, _, requires = parse_signature(signature)
             self.required_types |= requires
             self.defined_types |= {alias}
+
+    # StubGenerator.collect_signatures:: () -> None
+    def collect_signatures(self):
+        for line in self._code_lines:
+            match = _RE_SIG_COMMENT.match(line)
+            if match:
+                name, signature = match.groups()
+                self.signatures[name] = signature
 
     def visit_Import(self, node):
         line = self._code_lines[node.lineno - 1]
@@ -731,96 +710,6 @@ def get_pkg_paths(pkg_name):
         if mod_path is not None:
             paths.append(mod_path)
     return paths
-
-
-############################################################
-# SPHINX
-############################################################
-
-
-def process_docstring(app, what, name, obj, options, lines):
-    """Modify the docstring before generating documentation.
-
-    This will insert type declarations for parameters and return type
-    into the docstring, and remove the signature field so that it will
-    be excluded from the generated document.
-    """
-    aliases = getattr(app, "_sigaliases", None)
-    if aliases is None:
-        if what == "module":
-            aliases = collect_aliases(inspect.getsource(obj).splitlines())
-            app._sigaliases = aliases
-
-    sig_marker = ":" + SIG_FIELD + ":"
-    is_class = what in ("class", "exception")
-
-    signature = extract_signature("\n".join(lines))
-    if signature is None:
-        if not is_class:
-            return
-
-        init_method = getattr(obj, "__init__")
-        init_doc = init_method.__doc__
-        init_lines = init_doc.splitlines()[1:]
-        if len(init_lines) > 1:
-            init_doc = textwrap.dedent("\n".join(init_lines[1:]))
-            init_lines = init_doc.splitlines()
-        if sig_marker not in init_doc:
-            return
-
-        sig_started = False
-        for line in init_lines:
-            if line.lstrip().startswith(sig_marker):
-                sig_started = True
-            if sig_started:
-                lines.append(line)
-        signature = extract_signature("\n".join(lines))
-
-    if is_class:
-        obj = init_method
-
-    param_types, rtype, _ = parse_signature(signature)
-    param_names = [p for p in inspect.signature(obj).parameters]
-
-    if is_class and (param_names[0] == "self"):
-        del param_names[0]
-
-    # if something goes wrong, don't insert parameter types
-    if len(param_names) == len(param_types):
-        for name, type_ in zip(param_names, param_types):
-            find = ":param %(name)s:" % {"name": name}
-            alias = aliases.get(type_)
-            if alias is not None:
-                type_ = "*%(type)s* :sup:`%(alias)s`" % {"type": type_, "alias": alias}
-            for i, line in enumerate(lines):
-                if line.startswith(find):
-                    lines.insert(i, ":type %(name)s: %(type)s" % {"name": name, "type": type_})
-                    break
-
-    if not is_class:
-        for i, line in enumerate(lines):
-            if line.startswith((":return:", ":returns:")):
-                lines.insert(i, ":rtype: " + rtype)
-                break
-
-    # remove the signature field
-    sig_start = 0
-    while sig_start < len(lines):
-        if lines[sig_start].startswith(sig_marker):
-            break
-        sig_start += 1
-    sig_end = sig_start + 1
-    while sig_end < len(lines):
-        if (not lines[sig_end]) or (lines[sig_end][0] != " "):
-            break
-        sig_end += 1
-    for i in reversed(range(sig_start, sig_end)):
-        del lines[i]
-
-
-def setup(app):
-    app.connect("autodoc-process-docstring", process_docstring)
-    return {"version": __version__}
 
 
 ############################################################

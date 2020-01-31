@@ -9,8 +9,6 @@ import ast
 
 __version__: str
 
-def collect_aliases(lines: Sequence[str]) -> Dict[str, str]: ...
-def collect_signatures(lines: Sequence[str]) -> Dict[str, str]: ...
 def _split_types(decl: str) -> List[str]: ...
 def parse_signature(
     signature: str
@@ -64,11 +62,13 @@ class StubGenerator(ast.NodeVisitor):
     imported_names: Dict[str, str]
     defined_types: Set[str]
     required_types: Set[str]
-    aliases: Dict[str, str]
     _parents: List[StubNode]
     _code_lines: List[str]
+    aliases: Dict[str, str]
+    signatures: Dict[str, str]
     def __init__(self, source: str, *, generic: bool = ...) -> None: ...
     def collect_aliases(self) -> None: ...
+    def collect_signatures(self) -> None: ...
     def get_function_node(
         self, node: Union[ast.FunctionDef, ast.AsyncFunctionDef]
     ) -> Optional[FunctionNode]: ...
