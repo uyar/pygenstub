@@ -493,12 +493,12 @@ class StubGenerator(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         node = self.get_function_node(node)
         if node is not None:
-            node._async = False
+            node.async_ = False
 
     def visit_AsyncFunctionDef(self, node):
         node = self.get_function_node(node)
         if node is not None:
-            node._async = True
+            node.async_ = True
 
     def visit_ClassDef(self, node):
         self.defined_types.add(node.name)
