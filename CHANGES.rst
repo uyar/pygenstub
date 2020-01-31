@@ -4,6 +4,7 @@ Changes
 2.0.0 (unreleased)
 ------------------
 
+- Use signature comments instead of docstring fields.
 - Drop support for Python 2, 3.4, and 3.5.
 - Generate PEP-526 style variable annotations.
 - Support type annotations for ``*args`` and ``**kwargs``.

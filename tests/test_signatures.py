@@ -1,19 +1,6 @@
 from pytest import raises
 
-from pygenstub import extract_signature, parse_signature
-
-
-def test_extract_signature_should_return_value_of_sig_field():
-    assert extract_signature("foo\n\n:sig: () -> None\n:param a: b\n") == "() -> None"
-
-
-def test_extract_signature_should_return_none_if_no_sig_field():
-    assert extract_signature("foo\n\n:param a: b\n") is None
-
-
-def test_extract_signature_should_raise_error_if_multiple_sig_fields():
-    with raises(ValueError):
-        extract_signature("foo\n\n:sig: () -> None\n:sig: () -> None\n")
+from pygenstub import parse_signature
 
 
 def test_parse_signature_should_return_input_types_return_type_and_required_types():

@@ -113,7 +113,7 @@ version = "5.0.3"
 toml = ["toml"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Docutils -- Python Documentation Utilities"
 name = "docutils"
 optional = false
@@ -706,7 +706,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "f3ef27d801bde0ecb5a873632853f0d11725689a85f02ea2f055f4270d13c1d1"
+content-hash = "bebc4d6f45054871d8fad6b526c40388767279c508bad708ab705a47e06ce707"
 python-versions = "^3.6"
 
 [metadata.files]
