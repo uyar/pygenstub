@@ -98,11 +98,7 @@ def collect_signatures(lines):
 
 # _split_types:: (str) -> List[str]
 def _split_types(decl):
-    """Split a parameter types declaration into individual types.
-
-    :param decl: Parameter types declaration (excluding the parentheses).
-    :return: List of individual parameter types.
-    """
+    """Split a parameter types declaration into individual types."""
     if decl == "":
         return []
 
@@ -161,13 +157,7 @@ def parse_signature(signature):
 
 # print_import_from:: (str, Set[str], str, Dict[str, Any]) -> None
 def print_import_from(mod, names, *, indent="", **config):
-    """Print an "import ... from ..." line.
-
-    :param mod: Name of module to import the names from.
-    :param names: Names to import.
-    :param indent: Indentation for generated lines.
-    :param config: Configuration settings.
-    """
+    """Print an "import ... from ..." line."""
     regular = sorted(name for name in names if "::" not in name)
     renamed = [name for name in names if "::" in name]
 
@@ -203,31 +193,16 @@ class StubNode:
 
     # StubNode.__init__:: () -> None
     def __init__(self):
-        """Initialize this stub node."""
         self.parent = None  # sig: Optional[StubNode]
-        """Parent node of this node."""
-
         self.children = []  # sig: List[StubNode]
-        """Child nodes of this node."""
 
     # StubNode.add_child:: (StubNode) -> None
     def add_child(self, node):
-        """Add a child node to this node.
-
-        :param node: Node to add.
-        """
         self.children.append(node)
         node.parent = self
 
     # StubNode.get_code:: () -> List[str]
     def get_code(self):
-        """Get the stub code for this node.
-
-        The stub code for a node consists of the type annotations of its variables,
-        followed by the prototypes of its functions/methods and classes.
-
-        :return: Lines of stub code for this node.
-        """
         stub = []
         variables = [n for n in self.children if isinstance(n, VariableNode)]
         nonvariables = [n for n in self.children if not isinstance(n, VariableNode)]
@@ -249,21 +224,12 @@ class VariableNode(StubNode):
 
     # VariableNode.__init__:: (str, str) -> None
     def __init__(self, name, type_):
-        """Initialize this variable node.
-
-        :param name: Name of variable that is being assigned to.
-        :param type_: Type of variable.
-        """
         super().__init__()
         self.name = name  # sig: str
         self.type_ = type_  # sig: str
 
     # VariableNode.get_code:: () -> List[str]
     def get_code(self):
-        """Get the type annotation for this variable.
-
-        :return: Lines of stub code for this variable.
-        """
         return ["%(n)s: %(t)s" % {"n": self.name, "t": self.type_}]
 
 
@@ -291,10 +257,6 @@ class FunctionNode(StubNode):
 
     # FunctionNode.get_code:: () -> List[str]
     def get_code(self):
-        """Get the stub code for this function.
-
-        :return: Lines of stub code for this function.
-        """
         stub = []
 
         for deco in self.decorators:
@@ -351,10 +313,6 @@ class ClassNode(StubNode):
 
     # ClassNode.get_code:: () -> List[str]
     def get_code(self):
-        """Get the stub code for this class.
-
-        :return: Lines of stub code for this class.
-        """
         stub = []
         bases = ("(" + ", ".join(self.bases) + ")") if len(self.bases) > 0 else ""
         slots = {"n": self.name, "b": bases}
@@ -407,7 +365,6 @@ class StubGenerator(ast.NodeVisitor):
             self.defined_types |= {alias}
 
     def visit_Import(self, node):
-        """Visit an import node."""
         line = self._code_lines[node.lineno - 1]
         module_name = line.split("import")[0].strip()
         for name in node.names:
@@ -417,7 +374,6 @@ class StubGenerator(ast.NodeVisitor):
             self.imported_namespaces[imported_name] = module_name
 
     def visit_ImportFrom(self, node):
-        """Visit an from-import node."""
         line = self._code_lines[node.lineno - 1]
         module_name = line.split("from")[1].split("import")[0].strip()
         for name in node.names:
@@ -427,7 +383,6 @@ class StubGenerator(ast.NodeVisitor):
             self.imported_names[imported_name] = module_name
 
     def visit_Assign(self, node):
-        """Visit an assignment node."""
         line = self._code_lines[node.lineno - 1]
         if _SIG_COMMENT in line:
             line = _RE_COMMENT_IN_STRING.sub("", line)
@@ -462,11 +417,6 @@ class StubGenerator(ast.NodeVisitor):
 
     # StubGenerator.get_function_node:: (Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> Optional[FunctionNode]
     def get_function_node(self, node):
-        """Process a function node.
-
-        :param node: Node to process.
-        :return: Generated function node in stub tree.
-        """
         decorators = []
         for d in node.decorator_list:
             if hasattr(d, "id"):
@@ -562,19 +512,16 @@ class StubGenerator(ast.NodeVisitor):
         return stub_node
 
     def visit_FunctionDef(self, node):
-        """Visit a function node."""
         node = self.get_function_node(node)
         if node is not None:
             node._async = False
 
     def visit_AsyncFunctionDef(self, node):
-        """Visit an async function node."""
         node = self.get_function_node(node)
         if node is not None:
             node._async = True
 
     def visit_ClassDef(self, node):
-        """Visit a class node."""
         self.defined_types.add(node.name)
 
         bases = []
@@ -872,7 +819,6 @@ def process_docstring(app, what, name, obj, options, lines):
 
 
 def setup(app):
-    """Register to Sphinx."""
     app.connect("autodoc-process-docstring", process_docstring)
     return {"version": __version__}
 
@@ -884,7 +830,6 @@ def setup(app):
 
 # _make_parser:: (str) -> ArgumentParser
 def _make_parser(prog):
-    """Create a parser for command line arguments."""
     parser = ArgumentParser(prog=prog)
     parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     parser.add_argument("files", nargs="*", help="generate stubs for given files")
@@ -925,10 +870,6 @@ def _collect_sources(files, modules):
 
 # run:: (Optional[List[str]]) -> None
 def run(argv=None):
-    """Start the command line interface.
-
-    :param argv: Command line arguments.
-    """
     parser = _make_parser("pygenstub")
 
     argv = argv if argv is not None else sys.argv
