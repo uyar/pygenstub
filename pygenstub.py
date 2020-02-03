@@ -121,7 +121,6 @@ def parse_signature(signature):
 
 # _print_import_from:: (str, Set[str], str) -> None
 def _print_import_from(mod, names, *, indent=""):
-    """Print an "import ... from ..." line."""
     regular = sorted(name for name in names if "::" not in name)
     if len(regular) > 0:
         line = "from %(mod)s import %(names)s" % {"mod": mod, "names": ", ".join(regular)}
@@ -135,15 +134,16 @@ def _print_import_from(mod, names, *, indent=""):
 
 
 ############################################################
-# AST PROCESSING
+# STUB TREE MODEL
 ############################################################
 
 
 class StubNode:
     """A node in a stub tree."""
 
-    # StubNode.__init__:: () -> None
-    def __init__(self):
+    # StubNode.__init__:: (str) -> None
+    def __init__(self, name):
+        self.name = name  # sig: str
         self.parent = None  # sig: Optional[StubNode]
         self.children = []  # sig: List[StubNode]
 
@@ -169,8 +169,7 @@ class VariableNode(StubNode):
 
     # VariableNode.__init__:: (str, str) -> None
     def __init__(self, name, type_):
-        super().__init__()
-        self.name = name  # sig: str
+        super().__init__(name)
         self.type_ = type_  # sig: str
 
     # VariableNode.get_code:: () -> List[str]
@@ -195,8 +194,7 @@ class FunctionNode(StubNode):
         :param rtype: Type of return value.
         :param decorators: Decorators of function.
         """
-        super().__init__()
-        self.name = name  # sig: str
+        super().__init__(name)
         self.async_ = False  # sig: bool
         self.parameters = parameters  # sig: Sequence[Tuple[str, str, bool]]
         self.rtype = rtype  # sig: str
@@ -242,8 +240,7 @@ class ClassNode(StubNode):
         :param bases: Base classes of class.
         :param signature: Signature of class, to be used in __init__ method.
         """
-        super().__init__()
-        self.name = name  # sig: str
+        super().__init__(name)
         self.bases = bases  # sig: Sequence[str]
         self.signature = signature  # sig: Optional[str]
 
@@ -262,6 +259,43 @@ class ClassNode(StubNode):
         return stub
 
 
+############################################################
+# AST PROCESSING
+############################################################
+
+
+# _get_args:: (
+#     Union[ast.FunctionDef, ast.AsyncFunctionDef]
+# ) -> List[Tuple[Tuple[int, int], str]]
+def _get_args(node):
+    args = [((arg.lineno, arg.col_offset), arg.arg) for arg in node.args.args]
+    if node.args.vararg is not None:
+        arg = node.args.vararg
+        args.append(((arg.lineno, arg.col_offset), "*" + arg.arg))
+    kwonlyargs = node.args.kwonlyargs
+    if (node.args.vararg is None) and (len(kwonlyargs) > 0):
+        arg = kwonlyargs[0]
+        args.append(((arg.lineno, arg.col_offset - 1), "*"))
+    args.extend(((arg.lineno, arg.col_offset), arg.arg) for arg in kwonlyargs)
+    if node.args.kwarg is not None:
+        arg = node.args.kwarg
+        args.append(((arg.lineno, arg.col_offset), "**" + arg.arg))
+    return args
+
+
+# get_decorators:: (Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> List[str]
+def _get_decorators(node):
+    decorators = []
+    for d in node.decorator_list:
+        if hasattr(d, "id"):
+            decorators.append(d.id)
+        elif hasattr(d, "func"):
+            decorators.append(d.func.id)
+        elif hasattr(d, "value"):
+            decorators.append(d.value.id + "." + d.attr)
+    return decorators
+
+
 class StubGenerator(ast.NodeVisitor):
     """A transformer that generates stub declarations from a source code."""
 
@@ -272,7 +306,7 @@ class StubGenerator(ast.NodeVisitor):
         :param source: Source code to generate the stub for.
         :param generic: Whether to produce generic stubs.
         """
-        self.root = StubNode()  # sig: StubNode
+        self.root = StubNode("")  # sig: StubNode
 
         self.generic = generic  # sig: bool
 
@@ -384,14 +418,7 @@ class StubGenerator(ast.NodeVisitor):
     #     Union[ast.FunctionDef, ast.AsyncFunctionDef]
     # ) -> Optional[FunctionNode]
     def get_function_node(self, node):
-        decorators = []
-        for d in node.decorator_list:
-            if hasattr(d, "id"):
-                decorators.append(d.id)
-            elif hasattr(d, "func"):
-                decorators.append(d.func.id)
-            elif hasattr(d, "value"):
-                decorators.append(d.value.id + "." + d.attr)
+        decorators = _get_decorators(node)
 
         signature_key = node.name
         if isinstance(self._parents[-1], ClassNode):
@@ -406,67 +433,56 @@ class StubGenerator(ast.NodeVisitor):
         if (signature is None) and (not self.generic):
             return None
 
-        param_names = [arg.arg for arg in node.args.args]
-        n_args = len(param_names)
+        args = _get_args(node)
+        n_args = len(args)
 
         if signature is None:
-            param_types, rtype, requires = ["Any"] * n_args, "Any", {"Any"}
+            arg_types, rtype, requires = ["Any"] * n_args, "Any", {"Any"}
         else:
             _logger.debug("parsing signature for %s", node.name)
             input_types, rtype, requires = parse_signature(signature)
-            param_types = input_types if input_types is not None else []
+            arg_types = input_types if input_types is not None else []
+
+        arg_names = [arg[1] for arg in args]
 
         # TODO: only in classes
-        if ((n_args > 0) and (param_names[0] == "self")) or (
-            (n_args > 0) and (param_names[0] == "cls") and ("classmethod" in decorators)
+        if ((n_args > 0) and (arg_names[0] == "self")) or (
+            (n_args > 0) and (arg_names[0] == "cls") and ("classmethod" in decorators)
         ):
             if signature is None:
-                param_types[0] = ""
+                arg_types[0] = ""
             else:
-                param_types.insert(0, "")
+                arg_types.insert(0, "")
 
-        _logger.debug("parameter types: %s", param_types)
+        try:
+            kwonly_pos = arg_names.index("*")
+            arg_types.insert(kwonly_pos, "")
+        except ValueError:
+            pass
+
+        _logger.debug("parameter types: %s", arg_types)
         _logger.debug("return type: %s", rtype)
         _logger.debug("required types: %s", requires)
 
         self.required_types |= requires
 
-        kwonly_args = getattr(node.args, "kwonlyargs", [])
-        if len(kwonly_args) > 0:
-            param_names.extend([arg.arg for arg in kwonly_args])
-            if signature is None:
-                param_types.extend(["Any"] * len(kwonly_args))
-
-        if node.args.vararg is not None:
-            param_names.append("*" + node.args.vararg.arg)
-            if len(param_types) < len(param_names):
-                param_types.append("")
-
-        if node.args.kwarg is not None:
-            param_names.append("**" + node.args.kwarg.arg)
-            if len(param_types) < len(param_names):
-                param_types.append("")
-
-        if len(param_types) != len(param_names):
+        if len(arg_types) != len(arg_names):
             raise ValueError("Parameter names and types don't match: " + node.name)
 
-        param_locs = [(a.lineno, a.col_offset) for a in (node.args.args + kwonly_args)]
-        param_defaults = {
-            bisect(param_locs, (d.lineno, d.col_offset)) - 1 for d in node.args.defaults
+        arg_locs = [arg[0] for arg in args]
+        arg_defaults = {
+            bisect(arg_locs, (d.lineno, d.col_offset)) - 1 for d in node.args.defaults
         }
 
-        kwonly_defaults = getattr(node.args, "kw_defaults", [])
-        for i, d in enumerate(kwonly_defaults):
+        kw_defaults = node.args.kw_defaults
+        for i, d in enumerate(kw_defaults):
             if d is not None:
-                param_defaults.add(n_args + i)
+                arg_defaults.add(len(node.args.args) + i + 1)
 
         params = [
-            (name, type_, i in param_defaults)
-            for i, (name, type_) in enumerate(zip(param_names, param_types))
+            (name, type_, i in arg_defaults)
+            for i, (name, type_) in enumerate(zip(arg_names, arg_types))
         ]
-
-        if len(kwonly_args) > 0:
-            params.insert(n_args, ("*", "", False))
 
         stub_node = FunctionNode(
             node.name, parameters=params, rtype=rtype, decorators=decorators
