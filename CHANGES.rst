@@ -4,11 +4,12 @@ Changes
 2.0.0 (unreleased)
 ------------------
 
-- Use signature comments instead of docstring fields.
-- Remove Sphinx extension (use "retype" before Sphinx).
 - Drop support for Python 2, 3.4, and 3.5.
+- Use signature comments instead of docstring fields.
 - Generate PEP-526 style variable annotations.
 - Support type annotations for ``*args`` and ``**kwargs``.
+- Remove Sphinx extension (use "retype" before Sphinx).
+- Don't try to pretty-print output.
 
 1.4.1 (2020-01-13)
 ------------------
