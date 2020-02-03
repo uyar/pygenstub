@@ -17,7 +17,6 @@
 
 import ast
 import builtins
-import logging
 import os
 import re
 import sys
@@ -54,9 +53,6 @@ _RE_SIGALIAS_COMMENT = re.compile(r"\s*#\s*sigalias\s*:\s*(\w+)\s*=\s*(.*)\s*")
 _RE_QUALIFIED_TYPES = re.compile(r"\w+(?:\.\w+)*")
 _RE_COMMENT_IN_STRING = re.compile(r"""['"]\s*%(text)s\s*.*['"]""" % {"text": _SIG_COMMENT})
 _RE_SIG_ARROW = re.compile(r"\s+->\s+")
-
-
-_logger = logging.getLogger(__name__)
 
 
 ############################################################
@@ -427,7 +423,6 @@ class StubGenerator(ast.NodeVisitor):
         if signature is None:
             arg_types, rtype, requires = ["Any"] * n_args, "Any", {"Any"}
         else:
-            _logger.debug("parsing signature for %s", node.name)
             input_types, rtype, requires = parse_signature(signature)
             arg_types = input_types if input_types is not None else []
 
@@ -447,10 +442,6 @@ class StubGenerator(ast.NodeVisitor):
             arg_types.insert(kwonly_pos, "")
         except ValueError:
             pass
-
-        _logger.debug("parameter types: %s", arg_types)
-        _logger.debug("return type: %s", rtype)
-        _logger.debug("required types: %s", requires)
 
         self.required_types |= requires
 
@@ -526,17 +517,15 @@ class StubGenerator(ast.NodeVisitor):
         :raise ValueError: When all needed types cannot be resolved.
         """
         report = {}
+
         needed_types = self.required_types - _BUILTIN_TYPES
 
-        _logger.debug("defined types: %s", self.defined_types)
         needed_types -= self.defined_types
 
         qualified_types = {name for name in needed_types if "." in name}
-        _logger.debug("qualified types: %s", qualified_types)
         needed_types -= qualified_types
 
         module_vars = {name for name in self.root.children if isinstance(name, VariableNode)}
-        _logger.debug("module variables: %s", module_vars)
 
         needed_modules = {
             name[: name.rfind(".")] for name in qualified_types if name not in module_vars
@@ -545,19 +534,16 @@ class StubGenerator(ast.NodeVisitor):
         imported_names = {name.split("::")[0] for name in self.imported_names}
         imported_used = imported_names & (needed_types | needed_modules)
         if len(imported_used) > 0:
-            _logger.debug("used imported types: %s", imported_used)
             report["imported"] = imported_used
             needed_types -= imported_used
 
         needed_modules -= imported_names
         if len(needed_modules) > 0:
-            _logger.debug("needed modules: %s", needed_modules)
             report["modules"] = needed_modules
 
         typing_mod = __import__("typing")
         typing_types = {name for name in needed_types if hasattr(typing_mod, name)}
         if len(typing_types) > 0:
-            _logger.debug("types from typing module: %s", typing_types)
             report["typing"] = typing_types
             needed_types -= typing_types
 
@@ -629,12 +615,10 @@ def get_mod_paths(mod_name):
     """
     mod = get_loader(mod_name)
     if mod is None:
-        _logger.debug("failed to find module: %s", mod_name)
         return None
 
     source = getattr(mod, "path", None)  # for pypy3
     if (source is None) or (not source.endswith(".py")):
-        _logger.debug("failed to find python source for module: %s", mod_name)
         return None
 
     subpath = Path(*mod_name.split("."))
@@ -653,7 +637,6 @@ def get_pkg_paths(pkg_name):
     try:
         pkg = import_module(pkg_name)
     except ModuleNotFoundError:
-        _logger.debug("failed to load module: %s", pkg_name)
         return []
 
     if not hasattr(pkg, "__path__"):
@@ -693,7 +676,6 @@ def _make_parser(prog):
     parser.add_argument(
         "--generic", action="store_true", default=False, help="generate generic stubs"
     )
-    parser.add_argument("--debug", action="store_true", help="enable debug messages")
     return parser
 
 
@@ -720,11 +702,6 @@ def run(argv=None):
     argv = argv if argv is not None else sys.argv
     arguments = parser.parse_args(argv[1:])
 
-    # set debug mode
-    if arguments.debug:
-        logging.basicConfig(level=logging.DEBUG)
-        _logger.debug("running in debug mode")
-
     out_dir = arguments.out_dir if arguments.out_dir is not None else ""
 
     if (out_dir == "") and (len(arguments.modules) > 0):
@@ -736,7 +713,6 @@ def run(argv=None):
         if (out_dir != "") and subpath.is_absolute():
             subpath = subpath.relative_to(subpath.root)
         stub = Path(out_dir, subpath.with_suffix(".pyi"))
-        _logger.info("generating stub for %s to path %s", source, stub)
         code = source.read_text(encoding="utf-8")
         stub_code = get_stub(code, generic=arguments.generic)
         if stub_code != "":
