@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with pygenstub.  If not, see <http://www.gnu.org/licenses/>.
 
-"""A utility for generating stub files from docstrings."""
+"""A utility for generating stub files from signature comments."""
 
 import ast
 import builtins
@@ -115,25 +115,6 @@ def parse_signature(signature):
 
 
 ############################################################
-# PRINTING UTILITIES
-############################################################
-
-
-# _print_import_from:: (str, Set[str], str) -> None
-def _print_import_from(mod, names, *, indent=""):
-    regular = sorted(name for name in names if "::" not in name)
-    if len(regular) > 0:
-        line = "from %(mod)s import %(names)s" % {"mod": mod, "names": ", ".join(regular)}
-        print(indent, line, sep="")
-
-    renamed = [name for name in names if "::" in name]
-    for as_name in renamed:
-        new, old = as_name.split("::")
-        line = "from %(mod)s import %(old)s as %(new)s" % {"mod": mod, "old": old, "new": new}
-        print(indent, line, sep="")
-
-
-############################################################
 # STUB TREE MODEL
 ############################################################
 
@@ -152,16 +133,15 @@ class StubNode:
         node.parent = self
         self.children.append(node)
 
-    # StubNode.get_code:: () -> List[str]
-    def get_code(self):
-        stub = []
+    # StubNode.print_stub:: (str) -> None
+    def print_stub(self, indent=""):
         variables = [n for n in self.children if isinstance(n, VariableNode)]
-        nonvariables = [n for n in self.children if not isinstance(n, VariableNode)]
         for child in variables:
-            stub.extend(child.get_code())
+            child.print_stub(indent=indent)
+
+        nonvariables = [n for n in self.children if not isinstance(n, VariableNode)]
         for child in nonvariables:
-            stub.extend(child.get_code())
-        return stub
+            child.print_stub(indent=indent)
 
 
 class VariableNode(StubNode):
@@ -172,67 +152,63 @@ class VariableNode(StubNode):
         super().__init__(name)
         self.type_ = type_  # sig: str
 
-    # VariableNode.get_code:: () -> List[str]
-    def get_code(self):
-        return ["%(name)s: %(type)s" % {"name": self.name, "type": self.type_}]
+    # VariableNode.print_stub:: (str) -> None
+    def print_stub(self, indent=""):
+        line = "%(name)s: %(type)s" % {"name": self.name, "type": self.type_}
+        print(indent, line, sep="")
 
 
 class FunctionNode(StubNode):
     """A node representing a function in a stub tree."""
 
     # FunctionNode.__init__:: (
-    #     str, Sequence[Tuple[str, str, bool]], str, Optional[Sequence[str]]
+    #     str, List[Tuple[str, str, bool]], str, Optional[List[str]]
     # ) -> None
     def __init__(self, name, parameters, rtype, *, decorators=None):
         """Initialize this function node.
 
-        The parameters have to given as a list of triples where each item specifies
+        Parameters have to given as triples where each item specifies
         the name of the parameter, its type, and whether it has a default value or not.
 
         :param name: Name of function.
-        :param parameters: List of parameter triples (name, type, has_default).
+        :param parameters: Parameter triples (name, type, has_default).
         :param rtype: Type of return value.
         :param decorators: Decorators of function.
         """
         super().__init__(name)
         self.async_ = False  # sig: bool
-        self.parameters = parameters  # sig: Sequence[Tuple[str, str, bool]]
+        self.parameters = parameters  # sig: List[Tuple[str, str, bool]]
         self.rtype = rtype  # sig: str
-        self.decorators = decorators if decorators is not None else []  # sig: Sequence[str]
+        self.decorators = decorators if decorators is not None else []  # sig: List[str]
 
-    # FunctionNode.get_code:: () -> List[str]
-    def get_code(self):
-        stub = []
-
+    # FunctionNode.print_stub:: (str) -> None
+    def print_stub(self, indent=""):
         for deco in self.decorators:
             if (deco in _SUPPORTED_DECORATORS) or deco.endswith(".setter"):
-                stub.append("@" + deco)
+                print(indent, "@" + deco, sep="")
 
         parameters = []
         for name, type_, has_default in self.parameters:
-            decl = "%(n)s%(t)s%(d)s" % {
-                "n": name,
-                "t": ": " + type_ if type_ else "",
-                "d": " = ..." if has_default else "",
+            decl = "%(name)s%(type)s%(default)s" % {
+                "name": name,
+                "type": ": " + type_ if type_ else "",
+                "default": " = ..." if has_default else "",
             }
             parameters.append(decl)
 
-        slots = {
-            "a": "async " if self.async_ else "",
-            "n": self.name,
-            "p": ", ".join(parameters),
-            "r": self.rtype,
+        line = "%(async)sdef %(name)s(%(params)s) -> %(return)s: ..." % {
+            "async": "async " if self.async_ else "",
+            "name": self.name,
+            "params": ", ".join(parameters),
+            "return": self.rtype,
         }
-
-        prototype = "%(a)sdef %(n)s(%(p)s) -> %(r)s: ..." % slots
-        stub.append(prototype)
-        return stub
+        print(indent, line, sep="")
 
 
 class ClassNode(StubNode):
     """A node representing a class in a stub tree."""
 
-    # ClassNode.__init__:: (str, Sequence[str], Optional[str]) -> None
+    # ClassNode.__init__:: (str, List[str], Optional[str]) -> None
     def __init__(self, name, *, bases, signature=None):
         """Initialize this class node.
 
@@ -241,22 +217,18 @@ class ClassNode(StubNode):
         :param signature: Signature of class, to be used in __init__ method.
         """
         super().__init__(name)
-        self.bases = bases  # sig: Sequence[str]
+        self.bases = bases  # sig: List[str]
         self.signature = signature  # sig: Optional[str]
 
-    # ClassNode.get_code:: () -> List[str]
-    def get_code(self):
-        stub = []
+    # ClassNode.print_stub:: (str) -> None
+    def print_stub(self, indent=""):
         bases = ("(" + ", ".join(self.bases) + ")") if len(self.bases) > 0 else ""
-        slots = {"n": self.name, "b": bases}
+        slots = {"name": self.name, "bases": bases}
         if len(self.children) == 0:
-            stub.append("class %(n)s%(b)s: ..." % slots)
+            print(indent, "class %(name)s%(bases)s: ..." % slots, sep="")
         else:
-            stub.append("class %(n)s%(b)s:" % slots)
-            super_code = super().get_code()
-            for line in super_code:
-                stub.append(INDENT + line)
-        return stub
+            print(indent, "class %(name)s%(bases)s:" % slots, sep="")
+            super().print_stub(indent=indent + INDENT)
 
 
 ############################################################
@@ -296,6 +268,20 @@ def _get_decorators(node):
     return decorators
 
 
+# _print_import_from:: (str, Set[str], str) -> None
+def _print_import_from(mod, names, *, indent=""):
+    regular = sorted(name for name in names if "::" not in name)
+    if len(regular) > 0:
+        line = "from %(mod)s import %(names)s" % {"mod": mod, "names": ", ".join(regular)}
+        print(indent, line, sep="")
+
+    renamed = [name for name in names if "::" in name]
+    for as_name in renamed:
+        new, old = as_name.split("::")
+        line = "from %(mod)s import %(old)s as %(new)s" % {"mod": mod, "old": old, "new": new}
+        print(indent, line, sep="")
+
+
 class StubGenerator(ast.NodeVisitor):
     """A transformer that generates stub declarations from a source code."""
 
@@ -329,7 +315,6 @@ class StubGenerator(ast.NodeVisitor):
 
     # StubGenerator.collect_aliases:: () -> None
     def collect_aliases(self):
-        """Collect the type aliases in the source."""
         for line in self._code_lines:
             match = _RE_SIGALIAS_COMMENT.match(line)
             if match:
@@ -608,8 +593,7 @@ class StubGenerator(ast.NodeVisitor):
             for alias, signature in self.aliases.items():
                 print("%s = %s" % (alias, signature))
 
-        for line in self.root.get_code():
-            print(line)
+        self.root.print_stub()
 
 
 # get_stub:: (str, bool) -> str
