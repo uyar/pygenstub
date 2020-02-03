@@ -5,6 +5,9 @@ from argparse import ArgumentParser
 from pathlib import Path
 import ast
 
+ParsedParameter = Tuple[str, str, bool]
+FunctionDef = Union[ast.FunctionDef, ast.AsyncFunctionDef]
+
 __version__: str
 
 def _split_types(decl: str) -> List[str]: ...
@@ -25,13 +28,13 @@ class VariableNode(StubNode):
 
 class FunctionNode(StubNode):
     async_: bool
-    parameters: List[Tuple[str, str, bool]]
+    parameters: List[ParsedParameter]
     rtype: str
     decorators: List[str]
     def __init__(
         self,
         name: str,
-        parameters: List[Tuple[str, str, bool]],
+        parameters: List[ParsedParameter],
         rtype: str,
         *,
         decorators: Optional[List[str]] = ...
@@ -46,9 +49,7 @@ class ClassNode(StubNode):
     ) -> None: ...
     def print_stub(self, indent: str = ...) -> None: ...
 
-def _get_args(
-    node: Union[ast.FunctionDef, ast.AsyncFunctionDef]
-) -> List[Tuple[Tuple[int, int], str]]: ...
+def _get_args(node: FunctionDef) -> List[Tuple[Tuple[int, int], str]]: ...
 def _print_import_from(mod: str, names: Set[str], *, indent: str = ...) -> None: ...
 
 class StubGenerator(ast.NodeVisitor):
@@ -65,9 +66,7 @@ class StubGenerator(ast.NodeVisitor):
     def __init__(self, source: str, *, generic: bool = ...) -> None: ...
     def collect_aliases(self) -> None: ...
     def collect_signatures(self) -> None: ...
-    def get_function_node(
-        self, node: Union[ast.FunctionDef, ast.AsyncFunctionDef]
-    ) -> Optional[FunctionNode]: ...
+    def get_function_node(self, node: FunctionDef) -> Optional[FunctionNode]: ...
     def analyze_types(self) -> Dict[str, Set[str]]: ...
     def print_stub(self) -> None: ...
 
