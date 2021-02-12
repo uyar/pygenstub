@@ -10,7 +10,6 @@ __pycache__
 .venv
 .buildinfo
 
-typed-src
 build
 dist
 

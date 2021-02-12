@@ -25,7 +25,6 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Documentation :: Sphinx",
     "Topic :: Software Development :: Documentation"
 ]
@@ -39,8 +38,6 @@ docutils = "^0.16"
 [tool.poetry.dev-dependencies]
 pytest = "^5.3.2"
 pytest-cov = "^2.8.1"
-mypy = "^0.761"
-retype = "^19.9.0"
 flake8 = "^3.7.9"
 flake8-isort = "^2.8.0"
 flake8-docstrings = "^1.5.0"
@@ -58,7 +55,7 @@ line-length = 96
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{39,38,37,36}, mypy, style, docs
+envlist = py{39,38,37,36}, style, docs
 isolated_build = True
 
 [testenv]
@@ -75,17 +72,6 @@ deps =
     pytest-cov
 commands =
     pytest --cov=pygenstub --cov-report=term-missing tests
-
-[testenv:mypy]
-basepython = python3.8
-setenv =
-    MYPYPATH = {toxinidir}/stubs
-deps =
-    mypy
-    retype
-commands =
-    retype -p . pygenstub.py
-    mypy typed-src/pygenstub.py
 
 [testenv:style]
 basepython = python3.8
