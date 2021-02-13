@@ -13,5 +13,7 @@ __pycache__
 build
 dist
 
+*.wpr
+*.wpu
 .idea
 .vscode

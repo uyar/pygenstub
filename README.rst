@@ -31,7 +31,7 @@ as an example.
 Getting started
 ---------------
 
-pygenstub runs on Python 3.6+.
+pygenstub runs on Python 3.6 and later versions.
 You can install the latest version from `PyPI`_::
 
   pip install pygenstub
@@ -73,7 +73,7 @@ The source code can be obtained from: https://github.com/uyar/pygenstub
 License
 -------
 
-Copyright (C) 2016-2020 H. Turgut Uyar <uyar@tekir.org>
+Copyright (C) 2016-2021 H. Turgut Uyar <uyar@tekir.org>
 
 pygenstub is released under the GPL license, version 3 or later.
 Read the included `LICENSE.txt`_ for details.

@@ -379,7 +379,7 @@ def test_if_method_decorated_property_setter_then_stub_should_include_decorator(
     assert get_stub(code) == "class C:\n    @x.setter\n    def m(self) -> None: ...\n"
 
 
-def test_module_variable_type_comment_builtin_should_be_ellipsized():
+def test_module_variable_type_comment_builtin_should_not_be_ellipsized():
     code = "n = 42  # sig: int\n"
     assert get_stub(code) == "n: int\n"
 

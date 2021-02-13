@@ -199,14 +199,9 @@ Type hints for assignments can be written using ``# sig:`` comments.
 
    .. code-block:: python
 
-      n = ...  # type: int
+      n: int
 
 The rules for importing names as described above also apply here.
-
-.. note::
-
-   The reason for using ``# sig`` comment instead of a ``# type`` comment
-   would be to avoid having to import the types.
 
 Instance variables
 ------------------
@@ -227,7 +222,7 @@ assignments with type comments under the class:
    .. code-block:: python
 
       class Foo:
-          y = ...  # type: str
+          y: str
 
 Long lines
 ----------
