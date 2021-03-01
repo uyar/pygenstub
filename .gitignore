@@ -9,6 +9,7 @@ __pycache__
 .tox
 .venv
 .buildinfo
+.python-version
 
 build
 dist
