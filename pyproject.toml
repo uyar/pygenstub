@@ -16,11 +16,12 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Documentation :: Sphinx",
     "Topic :: Software Development :: Documentation"
 ]
@@ -31,15 +32,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
+tests = [
     "pytest",
     "pytest-cov",
     "importlib-metadata; python_version < '3.8'",
+]
+lint = [
     "flake8",
     "flake8-isort",
     "mypy",
+]
+docs = [
     "sphinx",
     "sphinx-rtd-theme",
+]
+dev = [
+    "pygenstub[tests,lint,docs]",
     "tox",
     "build",
 ]
@@ -48,48 +56,39 @@ dev = [
 pygenstub = "pygenstub:run"
 
 [project.urls]
-"Homepage" = "https://tekir.org/pygenstub/"
-"Documentation" = "https://pygenstub.readthedocs.io/"
-"Repository" = "https://github.com/uyar/pygenstub"
+homepage = "https://tekir.org/pygenstub/"
+documentation = "https://pygenstub.readthedocs.io/"
+repository = "https://github.com/uyar/pygenstub"
 
 [tool.isort]
 lines_after_imports = 2
+multi_line_output = 2
 known_test = "pytest,unittest"
 sections = "TEST,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{311,310,39,38,37}, pypy{39,38,37}, style, docs
+envlist = py{37,38,39,310,311}, pypy{37,38,39}, style, docs
 isolated_build = True
 
 [testenv]
-deps =
-    pytest
-    docutils
-    py37: importlib-metadata
-    pypy37: importlib-metadata
+extras = tests
 commands =
     pytest {posargs:tests}
 
 [testenv:coverage]
-deps =
-    {[testenv]deps}
-    pytest-cov
+extras = tests
 commands =
     pytest --cov=pygenstub --cov-report=term-missing tests
 
 [testenv:style]
-deps =
-    flake8
-    flake8-isort
+extras = lint
 commands =
     flake8 pygenstub.py
 
 [testenv:docs]
-deps =
-    sphinx
-    sphinx_rtd_theme
+extras = docs
 changedir = docs/
 commands =
     sphinx-build -b html source/ build/html/
